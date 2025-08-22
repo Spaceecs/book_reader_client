@@ -1,0 +1,13 @@
+{
+  "login": {
+    "title": "Sign In",
+    "username": "Username",
+    "enterUsername": "Enter your username",
+    "password": "Password",
+    "enterPassword": "Enter your password",
+    "signIn": "Sign In",
+    "noAccount": "Don't have an account?",
+    "register": "Register",
+    "error": "Invalid username or password"
+  }
+}
