@@ -1,10 +1,16 @@
-import {Text, View, StyleSheet} from "react-native";
+import {Text, View, StyleSheet, Image} from "react-native";
+import {useEffect} from "react";
 
 export function BookCard({book}) {
+    useEffect(() => {
+        console.log(book);
+    }, []);
+
     return (
         <View style={styles.container}>
             <Text style={styles.title}>{book.title}</Text>
             <Text style={styles.subtitle}>{book.format}</Text>
+            <Image style={styles.image} source={{ uri: book.imageUrl }} />
         </View>
     )
 }
@@ -21,7 +27,8 @@ const styles = StyleSheet.create({
         textAlign: "center",
         fontSize: 20,
     },
-    subtitle: {
-
+    image: {
+        width: 200,
+        height: 200,
     }
 })

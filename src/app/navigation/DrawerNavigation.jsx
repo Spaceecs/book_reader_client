@@ -1,4 +1,3 @@
-import {NavigationContainer} from "@react-navigation/native";
 import {BookListScreen} from "../../screens/BookList";
 import React from "react";
 import {createDrawerNavigator} from "@react-navigation/drawer";

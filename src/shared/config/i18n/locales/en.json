@@ -1,4 +1,10 @@
 {
+  "welcomeScreen": {
+    "welcomeTitle": "Welcome!",
+    "welcomeText": "Welcome to the community of conscious book lovers!{\"\\n\"}\nTogether we will make reading a pleasant habit, help you discover \nnew worlds and always have your favorite books at hand.",
+    "login": "Login",
+    "register": "Registration"
+  },
   "login": {
     "title": "Sign In",
     "username": "Username",

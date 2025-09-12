@@ -7,6 +7,7 @@ import {DrawerNavigator} from "./DrawerNavigation";
 import {useSelector} from "react-redux";
 import {selectLanguage} from "../../entities";
 import i18n from "i18next";
+import WelcomeScreen from "../../screens/WelcomeScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -20,7 +21,8 @@ export function MainNavigator() {
 
     return (
         <NavigationContainer>
-            <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Navigator initialRouteName={"WelcomeScreen"} screenOptions={{ headerShown: false }}>
+                <Stack.Screen name={"WelcomeScreen"} component={WelcomeScreen} />
                 <Stack.Screen name={"LoginScreen"} component={LoginScreen}/>
                 <Stack.Screen name={"RegisterScreen"} component={RegisterScreen}/>
                 <Stack.Screen
