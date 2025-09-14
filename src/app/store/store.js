@@ -4,10 +4,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { settingsReducer } from '../../entities';
 import { userReducer } from '../../entities';
+import { booksReducer } from '../../entities';
 
 const rootReducer = combineReducers({
     settings: settingsReducer,
     user: userReducer,
+    books: booksReducer,
 });
 
 const persistConfig = {

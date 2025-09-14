@@ -19,8 +19,8 @@ const settingsSlice = createSlice({
         setLanguage(state, action) {
             state.language = action.payload;
         },
-        clearSettings(state, action) {
-            state = initialState;
+        clearSettings() {
+            return initialState;
         }
     },
 });

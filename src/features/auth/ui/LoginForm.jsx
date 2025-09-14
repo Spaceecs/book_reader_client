@@ -4,7 +4,7 @@ import { Formik } from 'formik';
 import { useNavigation } from '@react-navigation/native';
 import { loginSchema } from '../model/LoginSchema';
 import { login } from '../api/login';
-import { Button, Label } from '../../../shared';
+import {Button, Label, OtherButton} from '../../../shared';
 import { useTranslation } from 'react-i18next';
 
 export const LoginForm = () => {
@@ -79,9 +79,9 @@ export const LoginForm = () => {
 
                         <View style={styles.footer}>
                             <Text style={styles.footerText}>{t('login.noAccount')}</Text>
-                            <Button onClick={() => navigation.navigate('RegisterScreen')} disabled={isSubmitting}>
+                            <OtherButton onClick={() => navigation.navigate('RegisterScreen')} disabled={isSubmitting}>
                                 <Text style={styles.link}>{t('login.register')}</Text>
-                            </Button>
+                            </OtherButton>
                         </View>
                     </>
                 )}
@@ -135,10 +135,5 @@ const styles = StyleSheet.create({
     footerText: {
         fontSize: 14,
         color: '#555',
-    },
-    link: {
-        color: '#ffffff',
-        fontWeight: 'bold',
-        marginTop: 5,
     },
 });

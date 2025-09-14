@@ -1,10 +1,33 @@
-import {StyleSheet, Dimensions, View, TouchableOpacity, Text, Image} from 'react-native';
+import {StyleSheet, Dimensions, View, Text, Image} from 'react-native';
 import {useNavigation} from "@react-navigation/native";
+import {useTranslation} from "react-i18next";
+import {Button, OtherButton} from "../shared";
+import {useEffect} from "react";
+import * as SecureStore from "expo-secure-store";
 
 const { width } = Dimensions.get('window');
 
 export default function WelcomeScreen() {
     const navigation = useNavigation();
+    const { t } = useTranslation();
+
+    useEffect(() => {
+        const checkToken = async () => {
+            try {
+                const token = await SecureStore.getItemAsync('token');
+                if (token) {
+                    console.log(token);
+                } else {
+                    console.log("No access token");
+                }
+            } catch (error) {
+                console.error("Error reading token:", error);
+            }
+        };
+
+        checkToken();
+    }, []);
+
     return (
         <View style={styles.container}>
             <View style={styles.logoContainer}>
@@ -17,28 +40,30 @@ export default function WelcomeScreen() {
 
             <View style={styles.content}>
                 <View style={styles.welcomeSection}>
-                    <Text style={styles.welcomeTitle}>Ласкаво просимо!</Text>
+                    <Text style={styles.welcomeTitle}>{t('welcomeScreen.welcomeTitle')}</Text>
                     <Text style={styles.welcomeText}>
-                        Вітаємо у спільноті свідомих книголюбів!{"\n"}
-                        Разом ми зробимо читання приємною звичкою, допоможемо тобі відкривати
-                        нові світи та завжди мати улюблені книги під рукою.
+                        {t('welcomeScreen.welcomeText')}
                     </Text>
                 </View>
 
                 <View style={styles.authOptions}>
-                    <TouchableOpacity
-                        style={[styles.btn, styles.btnLogin]}
-                        onPress={() => navigation.navigate('LoginScreen')}
+                    <Button
+                        onClick={() => navigation.reset({
+                            index: 0,
+                            routes: [{ name: "LoginScreen" }],
+                        })}
                     >
-                        <Text style={styles.btnText}>Вхід</Text>
-                    </TouchableOpacity>
+                        <Text>{t('welcomeScreen.login')}</Text>
+                    </Button>
 
-                    <TouchableOpacity
-                        style={[styles.btn, styles.btnRegister]}
-                        onPress={() => navigation.navigate('RegisterScreen')}
+                    <OtherButton
+                        onClick={() => navigation.reset({
+                            index: 0,
+                            routes: [{ name: "RegisterScreen" }],
+                        })}
                     >
-                        <Text style={[styles.btnText, styles.btnRegisterText]}>Реєстрація</Text>
-                    </TouchableOpacity>
+                        <Text>{t('welcomeScreen.register')}</Text>
+                    </OtherButton>
                 </View>
             </View>
         </View>
@@ -91,27 +116,5 @@ const styles = StyleSheet.create({
     },
     authOptions: {
         width: '100%',
-    },
-    btn: {
-        padding: 16,
-        borderRadius: 12,
-        marginBottom: 16,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    btnLogin: {
-        backgroundColor: '#2E8B57',
-    },
-    btnRegister: {
-        backgroundColor: '#fff',
-        borderWidth: 2,
-        borderColor: '#8fc9b9',
-    },
-    btnText: {
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    btnRegisterText: {
-        color: '#2E8B57',
     },
 });

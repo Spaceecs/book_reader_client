@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 
 import { register } from '../api/register';
 import { registerSchema } from '../model/RegisterSchema';
-import { Button } from '../../../shared';
+import {Button, OtherButton} from '../../../shared';
 
 export function RegisterForm() {
     const navigation = useNavigation();
@@ -86,9 +86,9 @@ export function RegisterForm() {
 
             <View style={styles.bottom}>
                 <Text style={{ marginBottom: 8 }}>Уже зареєстровані?</Text>
-                <Button onClick={() => navigation.navigate('LoginScreen')}>
+                <OtherButton onClick={() => navigation.navigate('LoginScreen')}>
                     Увійти
-                </Button>
+                </OtherButton>
             </View>
         </View>
     );
