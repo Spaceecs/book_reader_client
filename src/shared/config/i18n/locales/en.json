@@ -1,0 +1,19 @@
+{
+  "welcomeScreen": {
+    "welcomeTitle": "Welcome!",
+    "welcomeText": "Welcome to the community of conscious book lovers!\nTogether we will make reading a pleasant habit, help you discover \nnew worlds and always have your favorite books at hand.",
+    "login": "Login",
+    "register": "Registration"
+  },
+  "login": {
+    "title": "Sign In",
+    "username": "Username",
+    "enterUsername": "Enter your username",
+    "password": "Password",
+    "enterPassword": "Enter your password",
+    "signIn": "Sign In",
+    "noAccount": "Don't have an account?",
+    "register": "Register",
+    "error": "Invalid username or password"
+  }
+}
