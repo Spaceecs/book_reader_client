@@ -27,10 +27,9 @@ export const LoginForm = () => {
 
                         navigation.reset({
                             index: 0,
-                            routes: [
-                                { name: 'DrawerRoot', params: { screen: 'Home' } },
-                            ],
+                            routes: [{ name: 'DrawerRoot' }],
                         });
+
                     } catch (error) {
                         setErrors({
                             password: error.message || t('login.error'),

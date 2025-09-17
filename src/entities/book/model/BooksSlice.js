@@ -5,7 +5,7 @@ const initialState = {
 };
 
 const booksSlice = createSlice({
-    name: 'reading',
+    name: 'books',
     initialState,
     reducers: {
         setLastBook(state, action) {

@@ -4,12 +4,14 @@ import { useAuthRefresh } from "../../shared";
 import { useTranslation } from "react-i18next";
 import { useSelector, useDispatch } from "react-redux";
 import { BookCard, getAllBooks, getMe, selectId } from "../../entities";
+import {useNavigation} from "@react-navigation/native";
 
 export function BookListWidget() {
     const [books, setBooks] = useState([]);
     useAuthRefresh();
     const { t } = useTranslation();
     const dispatch = useDispatch();
+    const navigation = useNavigation();
 
     const id = useSelector(selectId);
 
@@ -35,9 +37,9 @@ export function BookListWidget() {
     return (
         <View style={styles.container}>
             <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Новинки</Text>
+                <Text style={styles.sectionTitle}>{t('novelty')}</Text>
                 <TouchableOpacity onPress={() => navigation.navigate('Category', { title: 'Новинки' })}>
-                    <Text style={styles.seeAll}>Більше</Text>
+                    <Text style={styles.seeAll}>{t('more')}</Text>
                 </TouchableOpacity>
             </View>
 

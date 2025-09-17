@@ -1,8 +1,10 @@
 import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 import {selectLastBook} from "../../entities";
 import {useSelector} from "react-redux";
+import {useTranslation} from "react-i18next";
 
 export function LOBookWidget() {
+    const {t} = useTranslation();
     const book = useSelector(selectLastBook);
 
     if (!book) return null;
@@ -11,10 +13,10 @@ export function LOBookWidget() {
         <View style={styles.currentReadingSection}>
             {(
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>Читати далі</Text>
+                    <Text style={styles.sectionTitle}>{t('readMore')}</Text>
                     {(
                         <TouchableOpacity>
-                            <Text style={styles.seeAll}>Більше</Text>
+                            <Text style={styles.seeAll}>{t('more')}</Text>
                         </TouchableOpacity>
                     )}
                 </View>
@@ -48,7 +50,7 @@ export function LOBookWidget() {
                     </Text>
 
                     <TouchableOpacity style={styles.continueButton} onPress={() => console.log("Continue")}>
-                        <Text style={styles.continueButtonText}>Продовжити читання</Text>
+                        <Text style={styles.continueButtonText}>{t("continueReading")}</Text>
                     </TouchableOpacity>
                 </View>
             </TouchableOpacity>
