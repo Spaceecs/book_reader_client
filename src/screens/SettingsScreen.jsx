@@ -1,22 +1,51 @@
-import {View} from "react-native";
-import {Button, Label} from "../shared";
-import {useDispatch} from "react-redux";
-import {useEffect, useState} from "react";
-import {selectLogin} from "../entities";
+import {useDispatch, useSelector} from 'react-redux';
+import {useNavigation} from '@react-navigation/native';
+import {Button, Label} from '../shared';
+import {logout, selectLogin} from '../entities';
+import {View, StyleSheet} from "react-native";
+import Header from "../shared/ui/Header";
+import {ChangeLanguage} from "../features";
+import {useTranslation} from "react-i18next";
 
 export default function SettingsScreen() {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
-    const [user, setUser] = useState(null);
+    const navigation = useNavigation();
 
-    useEffect(() => {
-        const user =  dispatch(selectLogin())
-        setUser(user);
-    })
-    return(
-        <View>
+    const user = useSelector(selectLogin);
+
+    const handleLogout = () => {
+        logout(dispatch, navigation);
+    };
+
+    return (
+        <View style={styles.container}>
+            <Header />
             <Label>{user}</Label>
+            <Button onClick={handleLogout}>{t('settings.logout')}</Button>
+            <View style={styles.language}>
+                <Label>English</Label>
+                <ChangeLanguage/>
+                <Label>Ukraine</Label>
+            </View>
 
-            <Button onPress={() => logout()}></Button>
         </View>
-    )
+    );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#ffffff',
+        padding: 16,
+        justifyContent: 'flex-start',
+        alignItems: 'center'
+    },
+    language: {
+        flex: 1,
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: 'flex-start',
+        gap: 15,
+    }
+})

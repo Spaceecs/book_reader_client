@@ -3,7 +3,7 @@ import { initReactI18next } from 'react-i18next';
 import { NativeModules, Platform } from 'react-native';
 
 import en from './locales/en.json';
-import uk from './locales/uk.json';
+import ua from './locales/ua.json';
 
 const deviceLanguage =
     Platform.OS === 'ios'
@@ -12,7 +12,7 @@ const deviceLanguage =
         : NativeModules.I18nManager.localeIdentifier;
 
 const defaultLang = deviceLanguage?.split('_')[0] || 'en';
-const supported = ['en', 'uk'];
+const supported = ['en', 'ua'];
 
 i18n.use(initReactI18next).init({
     compatibilityJSON: 'v3',
@@ -20,7 +20,7 @@ i18n.use(initReactI18next).init({
     fallbackLng: 'en',
     resources: {
         en: { translation: en },
-        uk: { translation: uk },
+        ua: { translation: ua },
     },
     interpolation: {
         escapeValue: false,

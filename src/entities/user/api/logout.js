@@ -1,11 +1,18 @@
-import * as SecureStore from 'expo-secure-store';
+import * as SecureStore from "expo-secure-store";
+import {clearUser} from "../model/userSlice";
 
-export async function logout() {
+export const logout = async (dispatch, navigation) => {
     try {
         await SecureStore.deleteItemAsync('token');
         await SecureStore.deleteItemAsync('refreshToken');
+
+        dispatch(clearUser());
+        navigation.reset({
+            index: 0,
+            routes: [{ name: 'WelcomeScreen' }],
+        });
+        console.log('Logged out');
+    } catch (error) {
+        console.error('Logout error:', error);
     }
-    catch (error) {
-        console.error(error);
-    }
-}
+};

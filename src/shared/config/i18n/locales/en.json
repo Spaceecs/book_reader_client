@@ -15,5 +15,18 @@
     "noAccount": "Don't have an account?",
     "register": "Register",
     "error": "Invalid username or password"
-  }
+  },
+  "settings": {
+    "logout": "Logout"
+  },
+  "drawerMenu" : {
+    "Home": "Home",
+    "Settings": "Settings",
+    "AddBook": "Add book"
+  },
+  "header": "Searching for a book...",
+  "novelty": "Novelty",
+  "more": "more",
+  "readMore": "Read more",
+  "continueReading": "Continue reading"
 }

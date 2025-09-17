@@ -1,10 +1,7 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-import { settingsReducer } from '../../entities';
-import { userReducer } from '../../entities';
-import { booksReducer } from '../../entities';
+import {booksReducer, settingsReducer, userReducer} from "../../entities";
 
 const rootReducer = combineReducers({
     settings: settingsReducer,
@@ -15,7 +12,7 @@ const rootReducer = combineReducers({
 const persistConfig = {
     key: 'root',
     storage: AsyncStorage,
-    whitelist: ['settings', 'user'],
+    whitelist: ['settings', 'user', 'books'],
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
