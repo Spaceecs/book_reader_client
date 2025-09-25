@@ -1,10 +1,11 @@
 import {myApi} from "../../../shared";
 
-export async function getAllBooks(params = {}) {
+export async function getHomePageBooks(params = {}) {
     try {
-        const response = await myApi.get('/books/public', {
+        const response = await myApi.get('/books/home', {
             params,
         });
+        console.log(response);
         return response.data;
     } catch (error) {
         console.error('Помилка при отриманні публічних книг:', error);

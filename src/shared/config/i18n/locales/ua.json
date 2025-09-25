@@ -14,7 +14,10 @@
     "signIn": "Увійти",
     "noAccount": "Ще не маєш акаунта?",
     "register": "Зареєструватися",
-    "error": "Невірний логін або пароль"
+    "error": "Невірний логін або пароль",
+    "enterEmail": "Введіть email",
+    "forgotPassword": "Забули пароль?",
+    "or": "або"
   },
   "settings": {
     "logout": "Вийти"
@@ -24,8 +27,69 @@
     "Settings": "Налаштування",
     "AddBook": "Додати книгу"
   },
+  "validation": {
+    "username": {
+      "min": "Імʼя повинно містити мінімум {{count}} символів",
+      "required": "Імʼя обовʼязкове"
+    },
+    "email": {
+      "format": "Невірний формат електронної пошти",
+      "min": "Пошта повинна містити мінімум {{count}} символи",
+      "required": "Пошта обовʼязкова"
+    },
+    "password": {
+      "min": "Пароль повинен містити мінімум {{count}} символів",
+      "pattern": "Пароль має містити лише латинські літери та цифри, без спецсимволів",
+      "required": "Пароль обовʼязковий"
+    },
+    "confirmPassword": {
+      "oneOf": "Паролі не збігаються",
+      "required": "Підтвердження паролю обовʼязкове"
+    }
+  },
+  "register": {
+    "title": "Реєстрація",
+    "name": "Імʼя",
+    "namePlaceholder": "Ваше імʼя та прізвище",
+    "email": "Електронна пошта",
+    "emailPlaceholder": "Ваша електронна пошта",
+    "password": "Пароль",
+    "passwordPlaceholder": "Ваш пароль",
+    "confirmPassword": "Підтвердження паролю",
+    "confirmPasswordPlaceholder": "Повторіть пароль",
+    "submit": "Зареєструватись",
+    "submitting": "Зачекай...",
+    "divider": "Або",
+    "social": {
+      "google": "Google",
+      "apple": "Apple",
+      "facebook": "Facebook"
+    },
+    "redirectText": "Вже маєте акаунт?",
+    "redirectLink": "Вхід",
+    "errorRegister": "Помилка реєстрації"
+  },
+  "forgotPassword": {
+    "title": "Забули пароль?",
+    "emailLabel": "Електронна пошта",
+    "emailPlaceholder": "Введіть вашу пошту",
+    "sendBtn": "Надіслати посилання",
+    "rememberText": "Пам'ятаєте пароль?",
+    "loginLink": "Увійти"
+  },
+  "resetPassword": {
+    "backBtn": "Назад",
+    "title": "Створіть новий пароль",
+    "subtitle": "Ваш новий пароль має відрізнятися від паролів, що використовувалися раніше.",
+    "passwordLabel": "Пароль",
+    "passwordPlaceholder": "Ваш пароль",
+    "confirmPasswordLabel": "Підтвердження паролю",
+    "confirmPasswordPlaceholder": "Підтвердьте свій пароль",
+    "submitBtn": "Скинути пароль"
+  },
   "header": "Пошук книги...",
   "novelty": "Новинки",
+  "topRated": "Найвище оцінені",
   "more": "більше",
   "readMore": "Читати далі",
   "continueReading": "Продовжити читати"

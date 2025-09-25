@@ -1,2 +1,2 @@
-export { LoginForm, RegisterForm } from "./auth";
+export { LoginForm, RegisterForm, ResetPasswordForm, ForgotPasswordForm } from "./auth";
 export { ChangeLanguage } from "./settings"

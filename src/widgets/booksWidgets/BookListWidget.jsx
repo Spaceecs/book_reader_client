@@ -1,13 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {View, Text, StyleSheet, FlatList, TouchableOpacity} from 'react-native';
 import { useAuthRefresh } from "../../shared";
 import { useTranslation } from "react-i18next";
 import { useSelector, useDispatch } from "react-redux";
-import { BookCard, getAllBooks, getMe, selectId } from "../../entities";
+import { BookCard, getMe, selectId } from "../../entities";
 import {useNavigation} from "@react-navigation/native";
 
-export function BookListWidget() {
-    const [books, setBooks] = useState([]);
+export function BookListWidget({sectionHeader, books}) {
     useAuthRefresh();
     const { t } = useTranslation();
     const dispatch = useDispatch();
@@ -21,23 +20,10 @@ export function BookListWidget() {
         }
     }, [id]);
 
-    useEffect(() => {
-        const loadBooks = async () => {
-            try {
-                const response = await getAllBooks();
-                setBooks(response.books || []);
-            } catch (error) {
-                console.error('Помилка при отриманні книг:', error);
-            }
-        };
-
-        loadBooks();
-    }, []);
-
     return (
         <View style={styles.container}>
             <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>{t('novelty')}</Text>
+                <Text style={styles.sectionTitle}>{t(sectionHeader)}</Text>
                 <TouchableOpacity onPress={() => navigation.navigate('Category', { title: 'Новинки' })}>
                     <Text style={styles.seeAll}>{t('more')}</Text>
                 </TouchableOpacity>

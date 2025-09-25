@@ -1,2 +1,2 @@
-export { LoginWidget, RegisterWidget } from "./authWidgets"
-export { LOBookWidget, BookListWidget} from "./booksWidgets"
+export {LOBookWidget} from "./booksWidgets/LOBookWidget"
+export {BookListWidget} from "./booksWidgets/BookListWidget"

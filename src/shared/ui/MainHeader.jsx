@@ -4,7 +4,7 @@ import {useState} from "react";
 import {useNavigation} from "@react-navigation/native";
 import {useTranslation} from "react-i18next";
 
-export default function Header() {
+export function MainHeader() {
     const {t} = useTranslation();
     const navigation = useNavigation();
     const [searchQuery, setSearchQuery] = useState("");
@@ -14,13 +14,17 @@ export default function Header() {
                 <Ionicons name="menu" size={28} color="#000" />
             </TouchableOpacity>
             <View style={styles.searchContainer}>
-                <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
                 <TextInput
                     style={styles.searchInput}
                     placeholder={t('header')}
                     value={searchQuery}
                     onChangeText={setSearchQuery}
+                    returnKeyType="search"
+                    onSubmitEditing={() => navigation.navigate("SearchScreen", { title: searchQuery })}
                 />
+                <TouchableOpacity onPress={() => navigation.navigate("SearchScreen", {title: searchQuery} )}>
+                    <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+                </TouchableOpacity>
             </View>
         </View>
     )

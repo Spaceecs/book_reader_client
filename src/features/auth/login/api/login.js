@@ -1,5 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
-import { myApi } from "../../../shared";
+import { myApi } from "../../../../shared";
 
 
 export const login = async (data) => {

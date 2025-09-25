@@ -14,7 +14,10 @@
     "signIn": "Sign In",
     "noAccount": "Don't have an account?",
     "register": "Register",
-    "error": "Invalid username or password"
+    "error": "Invalid username or password",
+    "enterEmail": "Enter email",
+    "forgotPassword": "Forgot password?",
+    "or": "or"
   },
   "settings": {
     "logout": "Logout"
@@ -24,8 +27,69 @@
     "Settings": "Settings",
     "AddBook": "Add book"
   },
+  "validation": {
+    "username": {
+      "min": "Username must be at least {{count}} characters long",
+      "required": "Username is required"
+    },
+    "email": {
+      "format": "Invalid email format",
+      "min": "Email must be at least {{count}} characters long",
+      "required": "Email is required"
+    },
+    "password": {
+      "min": "Password must be at least {{count}} characters long",
+      "pattern": "Password must contain only Latin letters and numbers, no special characters",
+      "required": "Password is required"
+    },
+    "confirmPassword": {
+      "oneOf": "Passwords do not match",
+      "required": "Password confirmation is required"
+    }
+  },
+  "register": {
+    "title": "Register",
+    "name": "Name",
+    "namePlaceholder": "Your full name",
+    "email": "Email",
+    "emailPlaceholder": "Your email address",
+    "password": "Password",
+    "passwordPlaceholder": "Your password",
+    "confirmPassword": "Confirm Password",
+    "confirmPasswordPlaceholder": "Repeat your password",
+    "submit": "Register",
+    "submitting": "Please wait...",
+    "divider": "Or",
+    "social": {
+      "google": "Google",
+      "apple": "Apple",
+      "facebook": "Facebook"
+    },
+    "redirectText": "Already have an account?",
+    "redirectLink": "Login",
+    "errorRegister": "Registration error"
+  },
+  "forgotPassword": {
+    "title": "Forgot Password?",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Enter your email",
+    "sendBtn": "Send reset link",
+    "rememberText": "Remember your password?",
+    "loginLink": "Login"
+  },
+  "resetPassword": {
+    "backBtn": "Back",
+    "title": "Create a new password",
+    "subtitle": "Your new password must be different from previously used passwords.",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Your password",
+    "confirmPasswordLabel": "Confirm password",
+    "confirmPasswordPlaceholder": "Confirm your password",
+    "submitBtn": "Reset password"
+  },
   "header": "Searching for a book...",
   "novelty": "Novelty",
+  "topRated": "Top rated",
   "more": "more",
   "readMore": "Read more",
   "continueReading": "Continue reading"

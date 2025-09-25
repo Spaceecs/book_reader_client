@@ -1,5 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
-import { myApi } from "../../../shared";
+import { myApi } from "../../../../shared";
 
 export const register = async (data) => {
     const response = await myApi.post("/auth/register", data);

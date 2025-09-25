@@ -1,9 +1,8 @@
 import {useDispatch, useSelector} from 'react-redux';
 import {useNavigation} from '@react-navigation/native';
-import {Button, Label} from '../shared';
+import {Button, Label, MainHeader} from '../shared';
 import {logout, selectLogin} from '../entities';
 import {View, StyleSheet} from "react-native";
-import Header from "../shared/ui/Header";
 import {ChangeLanguage} from "../features";
 import {useTranslation} from "react-i18next";
 
@@ -20,7 +19,7 @@ export default function SettingsScreen() {
 
     return (
         <View style={styles.container}>
-            <Header />
+            <MainHeader />
             <Label>{user}</Label>
             <Button onClick={handleLogout}>{t('settings.logout')}</Button>
             <View style={styles.language}>
