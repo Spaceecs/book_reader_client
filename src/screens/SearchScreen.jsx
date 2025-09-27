@@ -1,6 +1,6 @@
 import {FlatList, Text, View} from "react-native";
 import {useEffect, useState} from "react";
-import {BookCard, getAllBooks} from "../entities";
+import {HomeBookCard, getAllBooks} from "../entities";
 
 export function SearchScreen({route}) {
     const param = route.params;
@@ -30,7 +30,7 @@ export function SearchScreen({route}) {
                 numColumns={2}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={({ item }) => (
-                    <BookCard book={item} />
+                    <HomeBookCard book={item} />
                 )}
 
             />

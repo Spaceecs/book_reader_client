@@ -1,37 +1,38 @@
-import React, { useEffect, useState } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { ActivityIndicator, View } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
-import { LoginScreen } from '../../screens/LoginScreen';
-import { RegisterScreen } from '../../screens/RegisterScreen';
-import WelcomeScreen from '../../screens/WelcomeScreen';
-import { DrawerNavigator } from './DrawerNavigation';
-import { useSelector } from 'react-redux';
-import { selectLanguage } from '../../entities';
-import i18n from 'i18next';
-import {ForgotPasswordScreen} from "../../screens/ForgotPasswordScreen";
-import {ResetPasswordScreen} from "../../screens/ResetPasswordScreen";
+import React, { useEffect, useState } from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { ActivityIndicator, View } from "react-native";
+import * as SecureStore from "expo-secure-store";
+import { useSelector } from "react-redux";
+import i18n from "i18next";
+
+import { LoginScreen } from "../../screens/LoginScreen";
+import { RegisterScreen } from "../../screens/RegisterScreen";
+import WelcomeScreen from "../../screens/WelcomeScreen";
+import { ForgotPasswordScreen } from "../../screens/ForgotPasswordScreen";
+import { ResetPasswordScreen } from "../../screens/ResetPasswordScreen";
+
+import { selectLanguage } from "../../entities";
+import {DrawerNavigator} from "./DrawerNavigation";
 
 const Stack = createNativeStackNavigator();
 
 export function MainNavigator() {
     const language = useSelector(selectLanguage);
+    const [loading, setLoading] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     useEffect(() => {
         i18n.changeLanguage(language);
     }, [language]);
 
-    const [loading, setLoading] = useState(true);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-
     useEffect(() => {
         const checkToken = async () => {
             try {
-                const token = await SecureStore.getItemAsync('token');
+                const token = await SecureStore.getItemAsync("token");
                 setIsAuthenticated(!!token);
             } catch (error) {
-                console.error('Error reading token:', error);
+                console.error("Error reading token:", error);
                 setIsAuthenticated(false);
             } finally {
                 setLoading(false);
@@ -43,7 +44,7 @@ export function MainNavigator() {
 
     if (loading) {
         return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
                 <ActivityIndicator size="large" />
             </View>
         );
@@ -51,7 +52,10 @@ export function MainNavigator() {
 
     return (
         <NavigationContainer>
-            <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={isAuthenticated?"DrawerRoot":"WelcomeScreen"}>
+            <Stack.Navigator
+                screenOptions={{ headerShown: false }}
+                initialRouteName={isAuthenticated ? "DrawerRoot" : "WelcomeScreen"}
+            >
                 <Stack.Screen name="WelcomeScreen" component={WelcomeScreen} />
                 <Stack.Screen name="LoginScreen" component={LoginScreen} />
                 <Stack.Screen name="RegisterScreen" component={RegisterScreen} />

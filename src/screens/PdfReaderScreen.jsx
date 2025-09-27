@@ -7,15 +7,14 @@ import {
     TouchableOpacity,
     Alert,
 } from 'react-native';
-import PdfViewer from '../features/pickBook/ui/PdfViewer';
 import {
     addBookmark,
     deleteBookmark,
     isBookmarked,
     updateBookProgress,
-} from '../shared/db/database';
+} from '../shared';
 import { MaterialIcons } from '@expo/vector-icons';
-// import ReadingSettingsScreen from './ReadingSettingsScreen';
+import {PdfViewer} from "../features";
 
 export default function PdfReaderScreen({ route }) {
     const { book } = route.params;
@@ -44,7 +43,7 @@ export default function PdfReaderScreen({ route }) {
         try {
             const data = JSON.parse(event.nativeEvent.data);
             if (data.type === 'progress' || data.type === 'init') {
-                const { currentPage= 0, totalPages = 1 } = data;
+                const { currentPage: page = 0, totalPages = 1 } = data; // перейменовуємо currentPage в page
                 setCurrentPage(page);
 
                 if (book?.id) {

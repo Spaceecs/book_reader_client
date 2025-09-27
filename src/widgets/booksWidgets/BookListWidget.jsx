@@ -3,7 +3,7 @@ import {View, Text, StyleSheet, FlatList, TouchableOpacity} from 'react-native';
 import { useAuthRefresh } from "../../shared";
 import { useTranslation } from "react-i18next";
 import { useSelector, useDispatch } from "react-redux";
-import { BookCard, getMe, selectId } from "../../entities";
+import { HomeBookCard, getMe, selectId } from "../../entities";
 import {useNavigation} from "@react-navigation/native";
 
 export function BookListWidget({sectionHeader, books}) {
@@ -32,7 +32,7 @@ export function BookListWidget({sectionHeader, books}) {
             <FlatList
                 data={books}
                 renderItem={({ item }) => (
-                    <BookCard book={item} />
+                    <HomeBookCard book={item} />
                 )}
                 keyExtractor={(item) => item.id.toString()}
                 horizontal

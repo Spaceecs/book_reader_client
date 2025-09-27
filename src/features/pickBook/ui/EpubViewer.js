@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { WebView } from 'react-native-webview';
-import { updateBookProgress } from '../../../shared/db/database';
-export default function EpubViewer({ path, bookId }) {
+import { updateBookProgress } from '../../../shared';
+export function EpubViewer({ path, bookId }) {
     const webViewRef = useRef(null);
 
     const html = `

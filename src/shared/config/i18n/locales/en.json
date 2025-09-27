@@ -25,7 +25,9 @@
   "drawerMenu" : {
     "Home": "Home",
     "Settings": "Settings",
-    "AddBook": "Add book"
+    "AddBook": "Add book",
+    "ReadMore": "Read more",
+    "Collections": "Collections"
   },
   "validation": {
     "username": {

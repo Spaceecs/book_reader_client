@@ -1,26 +1,21 @@
-import {HomeScreen} from "../../screens/HomeScreen";
 import React from "react";
-import {createDrawerNavigator} from "@react-navigation/drawer";
-import SettingsScreen from "../../screens/SettingsScreen";
+import { createDrawerNavigator } from "@react-navigation/drawer";
 import DrawerContent from "./DrawerContent";
-import EpubReaderScreen from "../../screens/EpubReaderScreen";
-import PdfReaderScreen from "../../screens/PdfReaderScreen";
-import {SearchScreen} from "../../screens/SearchScreen";
 
-const Drawer =  createDrawerNavigator();
+import { HomeStack } from "./stacks/HomeStack";
+import { SettingsStack } from "./stacks/SettingsStack";
+
+const Drawer = createDrawerNavigator();
 
 export function DrawerNavigator() {
     return (
-        <Drawer.Navigator screenOptions={{headerShown: false}} initialRouteName="Home" id="main"
-                          drawerContent={(props) => <DrawerContent {...props} />}
+        <Drawer.Navigator
+            screenOptions={{ headerShown: false }}
+            initialRouteName="HomeStack"
+            drawerContent={(props) => <DrawerContent {...props} />}
         >
-
-            <Drawer.Screen name="Home" component={HomeScreen} />
-            <Drawer.Screen name="Settings" component={SettingsScreen} />
-            <Drawer.Screen name="EpubReaderScreen" component={EpubReaderScreen} />
-            <Drawer.Screen name="PdfReaderScreen" component={PdfReaderScreen} />
-            <Drawer.Screen name="SearchScreen" component={SearchScreen} />
+            <Drawer.Screen name="HomeStack" component={HomeStack} />
+            <Drawer.Screen name="SettingsStack" component={SettingsStack} />
         </Drawer.Navigator>
-    )
+    );
 }
-

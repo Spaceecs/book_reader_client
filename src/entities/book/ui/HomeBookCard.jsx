@@ -6,8 +6,9 @@ import { setLastBook } from "../model/BooksSlice";
 import {downloadPublicBook} from "../api/downloadPublicBook";
 import {useNavigation} from "@react-navigation/native";
 import * as FileSystem from "expo-file-system/legacy"
+import {addOnlineBook, getOnlineBookByOnlineId} from "../../../shared";
 
-export function BookCard({ book }) {
+export function HomeBookCard({ book }) {
     const dispatch = useDispatch();
     const navigation = useNavigation();
 
@@ -16,7 +17,7 @@ export function BookCard({ book }) {
     }, []);
 
     const handlePress = async () => {
-        dispatch(setLastBook(book));
+
         console.log("1");
         const filePath = await downloadPublicBook(book.id, book.title);
         console.log("2");
@@ -24,29 +25,28 @@ export function BookCard({ book }) {
             encoding: FileSystem.EncodingType.Base64,
         });
         console.log("3");
-        const newBook = {
-            title: book.title,
-            path: filePath,
-            format: book.format,
-            base64: base64,
-        }
+        await addOnlineBook(book.id, book.title, filePath, book.format, base64, book.imageUrl);
         console.log("4");
-        if (newBook.format === 'pdf') {
-            if (!newBook.base64) {
+        const localOnlineBook = await getOnlineBookByOnlineId(book.id)
+        dispatch(setLastBook(localOnlineBook));
+        console.log("5");
+        if (localOnlineBook.format === 'pdf') {
+            if (!localOnlineBook.base64) {
                 Alert.alert('⛔ Помилка', 'Цей файл не має збережених даних PDF.');
                 return;
             }
 
-            navigation.navigate('PdfReaderScreen', { book: newBook });
-        } else if (newBook.format === 'epub') {
-            const fileInfo = await FileSystem.getInfoAsync(newBook.path);
+            navigation.navigate('PdfReaderScreen', { book: localOnlineBook });
+        } else if (localOnlineBook.format === 'epub') {
+            const fileInfo = await FileSystem.getInfoAsync(localOnlineBook.path);
             if (!fileInfo.exists) {
                 Alert.alert('Файл не знайдено', 'Цей файл більше не існує.');
                 return;
             }
 
-            navigation.navigate('EpubReaderScreen', { book: newBook });
+            navigation.navigate('EpubReaderScreen', { book: localOnlineBook });
         }
+        console.log("6");
     };
 
 

@@ -1,12 +1,14 @@
-import {ScrollView, View, ActivityIndicator, StyleSheet, Text} from "react-native";
+import {ScrollView, View, ActivityIndicator, StyleSheet, Text, Dimensions} from "react-native";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { BookListWidget, LOBookWidget } from "../widgets";
 import { getHomePageBooks, getMe } from "../entities";
 import {MainHeader} from "../shared";
+import {useNavigation} from "@react-navigation/native";
 
 export function HomeScreen() {
     const dispatch = useDispatch();
+    const navigation = useNavigation();
 
     const [books, setBooks] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -68,10 +70,13 @@ export function HomeScreen() {
 
 }
 
+const { height, width } = Dimensions.get("window");
+
 const styles = StyleSheet.create({
     loaderContainer: {
-        flex: 1,
+        height: height,
+        width: width,
         justifyContent: "center",
-        alignItems: "center"
-    }
+        alignItems: "center",
+    },
 });

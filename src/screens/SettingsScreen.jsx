@@ -27,7 +27,6 @@ export default function SettingsScreen() {
                 <ChangeLanguage/>
                 <Label>Ukraine</Label>
             </View>
-
         </View>
     );
 }

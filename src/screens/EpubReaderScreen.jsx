@@ -17,14 +17,10 @@ import {
     deleteBookmark,
     isBookmarked,
     updateBookProgress,
-} from '../shared/db/database';
-
-// import ReadingSettingsScreen from './ReadingSettingsScreen';
-
+} from '../shared';
 
 export default function EpubReaderScreen({ route }) {
-    const {book} = route.params;
-    console.log(book);
+    const { book } = route.params;
     const webViewRef = useRef(null);
 
     const base64 = book.base64.replace(
@@ -39,10 +35,7 @@ export default function EpubReaderScreen({ route }) {
     const [searchResults, setSearchResults] = useState([]);
     const [showResults, setShowResults] = useState(false);
     const [settingsVisible, setSettingsVisible] = useState(false);
-    const [readerSettings, setReaderSettings] = useState({
-        theme: 'light',
-        fontSize: 1.6,
-    });
+    const [restored, setRestored] = useState(false);
 
     const html = `
 <!DOCTYPE html>
@@ -106,19 +99,12 @@ export default function EpubReaderScreen({ route }) {
 
     let totalLocations = 0;
     let currentLocation = 0;
-    const savedLocation = ${currentPage};
 
     book.ready.then(() => {
         return book.locations.generate(1600);
     }).then(() => {
         totalLocations = book.locations.length();
-
-        if (savedLocation > 0 && totalLocations > 0) {
-            const cfi = book.locations.cfiFromLocation(savedLocation);
-            rendition.display(cfi);
-        } else {
-            rendition.display();
-        }
+        rendition.display();
 
         rendition.on("relocated", (location) => {
             currentLocation = book.locations.locationFromCfi(location.start.cfi);
@@ -131,7 +117,7 @@ export default function EpubReaderScreen({ route }) {
 
         window.ReactNativeWebView.postMessage(JSON.stringify({
             type: 'init',
-            currentLocation
+            totalLocations
         }));
     });
 
@@ -140,80 +126,66 @@ export default function EpubReaderScreen({ route }) {
     window.currentFontSize = 120;
 
     window.searchInBook = async function(query) {
-    window.ReactNativeWebView.postMessage(JSON.stringify({
-        type: 'debug',
-        message: '[CALL] searchInBook called with: ' + query
-    }));
+        const results = [];
+        const spineItems = book.spine.spineItems;
 
-    const results = [];
-    const spineItems = book.spine.spineItems;
+        for (let i = 0; i < spineItems.length; i++) {
+            const item = spineItems[i];
+            try {
+                await item.load(book.load.bind(book));
+                const doc = item.document;
+                const body = doc && doc.body;
+                if (!body) continue;
 
-    for (let i = 0; i < spineItems.length; i++) {
-        const item = spineItems[i];
+                const walker = doc.createTreeWalker(body, NodeFilter.SHOW_TEXT, null, false);
+                while (walker.nextNode()) {
+                    const node = walker.currentNode;
+                    const text = node.textContent;
+                    const index = text.toLowerCase().indexOf(query.toLowerCase());
+                    if (index !== -1) {
+                        const range = doc.createRange();
+                        range.setStart(node, index);
+                        range.setEnd(node, index + query.length);
 
-        try {
-            await item.load(book.load.bind(book));
-            const doc = item.document;
-            const body = doc && doc.body;
-            if (!body) continue;
-
-            const walker = doc.createTreeWalker(body, NodeFilter.SHOW_TEXT, null, false);
-            while (walker.nextNode()) {
-                const node = walker.currentNode;
-                const text = node.textContent;
-                const index = text.toLowerCase().indexOf(query.toLowerCase());
-                if (index !== -1) {
-                    const range = doc.createRange();
-                    range.setStart(node, index);
-                    range.setEnd(node, index + query.length);
-
-                    const cfi = item.cfiFromRange(range);
-                    results.push({
-                        cfi,
-                        excerpt: node.textContent.slice(Math.max(0, index - 30), index + query.length + 30)
-                    });
+                        const cfi = item.cfiFromRange(range);
+                        results.push({
+                            cfi,
+                            excerpt: node.textContent.slice(Math.max(0, index - 30), index + query.length + 30)
+                        });
+                    }
                 }
+                await item.unload();
+            } catch (e) {
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                    type: 'debug',
+                    message: '[ERROR] Failed in spineItem: ' + e.message
+                }));
             }
-
-            await item.unload();
-        } catch (e) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({
-                type: 'debug',
-                message: '[ERROR] Failed in spineItem: ' + e.message
-            }));
         }
-    }
 
-    if (results.length > 0) {
-        await rendition.display(results[0].cfi);
-        window.highlightSearchResults(results);
-    }
-
-    window.ReactNativeWebView.postMessage(JSON.stringify({
-        type: 'searchResults',
-        results
-    }));
-};
-
-   window.highlightSearchResults = function(results) {
-    let count = 0;
-    results.forEach(result => {
-        try {
-            rendition.annotations.highlight(result.cfi, {}, () => {}, 'search-highlight');
-            count++;
-        } catch (e) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({
-                type: 'debug',
-                message: '[SKIPPED] Invalid CFI: ' + e.message
-            }));
+        if (results.length > 0) {
+            await rendition.display(results[0].cfi);
+            window.highlightSearchResults(results);
         }
-    });
 
-    window.ReactNativeWebView.postMessage(JSON.stringify({
-        type: 'debug',
-        message: '[✅] Highlighted: ' + count + ' of ' + results.length
-    }));
-}
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'searchResults',
+            results
+        }));
+    };
+
+    window.highlightSearchResults = function(results) {
+        results.forEach(result => {
+            try {
+                rendition.annotations.highlight(result.cfi, {}, () => {}, 'search-highlight');
+            } catch (e) {
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                    type: 'debug',
+                    message: '[SKIPPED] Invalid CFI: ' + e.message
+                }));
+            }
+        });
+    }
 </script>
 </body>
 </html>
@@ -234,7 +206,20 @@ export default function EpubReaderScreen({ route }) {
         try {
             const parsed = JSON.parse(data);
 
-            if (parsed.type === 'progress' || parsed.type === 'init') {
+            if (parsed.type === 'init') {
+                if (!restored && savedPage > 0) {
+                    webViewRef.current?.injectJavaScript(`
+                        (function(){
+                          const cfi = window.book.locations.cfiFromLocation(${savedPage});
+                          window.rendition.display(cfi);
+                        })();
+                        true;
+                    `);
+                    setRestored(true);
+                }
+            }
+
+            if (parsed.type === 'progress') {
                 const { currentLocation, totalLocations } = parsed;
                 setCurrentPage(currentLocation);
 
@@ -253,9 +238,9 @@ export default function EpubReaderScreen({ route }) {
                     setSearchResults(parsed.results);
                     setShowResults(true);
                     webViewRef.current?.injectJavaScript(`
-            window.highlightSearchResults(${JSON.stringify(parsed.results)});
-            true;
-          `);
+                        window.highlightSearchResults(${JSON.stringify(parsed.results)});
+                        true;
+                    `);
                 }
             }
         } catch (err) {
@@ -276,7 +261,7 @@ export default function EpubReaderScreen({ route }) {
     };
 
     return (
-        <View style={{ flex: 1, marginTop: 45}}>
+        <View style={{ flex: 1, marginTop: 45 }}>
             <WebView
                 ref={webViewRef}
                 originWhitelist={['*']}
@@ -295,16 +280,6 @@ export default function EpubReaderScreen({ route }) {
                     size={28}
                     color="black"
                 />
-            </TouchableOpacity>
-            <TouchableOpacity
-                onPress={() => setSettingsVisible(true)}
-                style={{
-                    position: 'absolute',
-                    top: '#fff',
-                    borderRadius: 2,
-                }}
-            >
-                <MaterialIcons name="settings" size={28} color="black" />
             </TouchableOpacity>
 
             <View style={styles.bottomPanel}>
@@ -326,52 +301,24 @@ export default function EpubReaderScreen({ route }) {
                         onPress={() => {
                             const queryEscaped = searchQuery.replace(/"/g, '\\"');
                             webViewRef.current?.injectJavaScript(`
-            window.searchInBook("${queryEscaped}");
-            true;
-        `);
+                                window.searchInBook("${queryEscaped}");
+                                true;
+                            `);
                         }}
                     />
                 </View>
             </View>
 
-            <FlatList
-                data={searchResults}
-                keyExtractor={(item, index) => index.toString()}
-                renderItem={({ item, index }) => {
-                    const highlighted = item.excerpt.replace(
-                        new RegExp(searchQuery, 'gi'),
-                        match => `<mark>${match}</mark>`
-                    );
-                    return (
-                        <TouchableOpacity
-                            onPress={() => {
-                                webViewRef.current?.injectJavaScript(`
-                                    window.rendition.display(${JSON.stringify(item.cfi)});
-                                    true;
-                                `);
-                            }}
-                            style={styles.resultContainer}
-                        >
-                            <Text style={styles.resultIndex}>Результат №{index + 1}</Text>
-                            <WebView
-                                originWhitelist={['*']}
-                                source={{ html: `<div style="padding;font-size;">${highlighted}</div>` }}
-                                style={{ height: 60 }}
-                                scrollEnabled={false}
-                            />
-                        </TouchableOpacity>
-                    );
-                }}
-            />
             <Modal visible={showResults} animationType="slide">
-                <View style={{ flex: '#fff' }}>
+                <View style={{ flex: 1, backgroundColor: '#fff' }}>
                     <View style={{
                         flexDirection: 'row',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        padding: '#ccc',
+                        padding: 10,
+                        backgroundColor: '#ccc',
                     }}>
-                        <Text style={{ fontSize: 'bold' }}>Результати пошуку</Text>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Результати пошуку</Text>
                         <Button title="Закрити" onPress={() => setShowResults(false)} />
                     </View>
 
@@ -387,21 +334,19 @@ export default function EpubReaderScreen({ route }) {
                                 <TouchableOpacity
                                     onPress={() => {
                                         webViewRef.current?.injectJavaScript(`
-                                window.rendition.display(${JSON.stringify(item.cfi)});
-                                true;
-                            `);
+                                            window.rendition.display(${JSON.stringify(item.cfi)});
+                                            true;
+                                        `);
                                         setShowResults(false);
                                     }}
-                                    style={{
-                                        padding: '#eee',
-                                    }}
+                                    style={{ padding: 10, borderBottomWidth: 1, borderBottomColor: '#eee' }}
                                 >
                                     <Text style={{ fontWeight: 'bold', marginBottom: 4 }}>
                                         Результат №{index + 1}
                                     </Text>
                                     <WebView
                                         originWhitelist={['*']}
-                                        source={{ html: `<div style="padding;font-size;">${highlighted}</div>` }}
+                                        source={{ html: `<div style="padding:5px;font-size:14px;">${highlighted}</div>` }}
                                         style={{ height: 60 }}
                                         scrollEnabled={false}
                                     />
@@ -409,29 +354,8 @@ export default function EpubReaderScreen({ route }) {
                             );
                         }}
                     />
-
                 </View>
             </Modal>
-    {/*        <ReadingSettingsScreen*/}
-    {/*            visible={settingsVisible}*/}
-    {/*            onClose={() => setSettingsVisible(false)}*/}
-    {/*            settings={readerSettings}*/}
-    {/*            onApply={(newSettings) => {*/}
-    {/*                setReaderSettings(newSettings);*/}
-
-    {/*                webViewRef.current?.injectJavaScript(`*/}
-    {/*  window.rendition.themes.default({*/}
-    {/*    body: {*/}
-    {/*      'background': '${newSettings.theme === 'dark' ? '#1c1c1c' : newSettings.theme === 'sepia' ? '#f5ecd9' : '#fff'}',*/}
-    {/*      'color': '${newSettings.theme === 'dark' ? '#fff' : '#000'}',*/}
-    {/*      'font-size': '${newSettings.fontSize}px',*/}
-    {/*      'line-height': '${newSettings.lineHeight}',*/}
-    {/*    }*/}
-    {/*  });*/}
-    {/*  true;*/}
-    {/*`);*/}
-    {/*            }}*/}
-    {/*        />*/}
         </View>
     );
 }
@@ -488,4 +412,3 @@ const styles = StyleSheet.create({
         elevation: 4,
     },
 });
-

@@ -3,6 +3,6 @@ export * from './settings';
 export { userReducer } from './user';
 export * from './user';
 export { getMe, logout } from './user';
-export { getHomePageBooks, BookCard, getAllBooks } from './book';
+export { getHomePageBooks, HomeBookCard, getAllBooks } from './book';
 export * from './book';
 export { booksReducer } from './book';

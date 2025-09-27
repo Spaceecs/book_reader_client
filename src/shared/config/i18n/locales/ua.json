@@ -25,7 +25,9 @@
   "drawerMenu" : {
     "Home": "Головна",
     "Settings": "Налаштування",
-    "AddBook": "Додати книгу"
+    "AddBook": "Додати книгу",
+    "ReadMore": "Читати далі",
+    "Collections": "Колекції"
   },
   "validation": {
     "username": {
