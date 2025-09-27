@@ -1,17 +1,11 @@
-import React, { useRef, useState } from 'react';
-import {
-    View,
-    Button,
-    StyleSheet,
-    Alert,
-    TextInput,
-    FlatList,
-    Text,
-    TouchableOpacity,
-    Modal
-} from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { View, Button, StyleSheet, Alert, Text, TouchableOpacity, Modal } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Slider from '@react-native-community/slider';
 import { WebView } from 'react-native-webview';
 import { MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import { ReadingBottomToolbar, ReadingSettingsModal, ReadingChaptersDrawer, ReadingTextSelectionToolbar } from '../widgets';
 import {
     addBookmark,
     deleteBookmark,
@@ -23,6 +17,7 @@ import {
 
 
 export default function EpubReaderScreen({ route }) {
+    const insets = useSafeAreaInsets();
     const {book} = route.params;
     console.log(book);
     const webViewRef = useRef(null);
@@ -35,16 +30,34 @@ export default function EpubReaderScreen({ route }) {
 
     const [currentPage, setCurrentPage] = useState(savedPage);
     const [bookmarked, setBookmarked] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [searchResults, setSearchResults] = useState([]);
-    const [showResults, setShowResults] = useState(false);
+    
     const [settingsVisible, setSettingsVisible] = useState(false);
-    const [readerSettings, setReaderSettings] = useState({
-        theme: 'light',
-        fontSize: 1.6,
-    });
+    const [immersive, setImmersive] = useState(false);
+    const [showToolbar, setShowToolbar] = useState(false);
+    const [fontSizePercent, setFontSizePercent] = useState(120);
+    const [progressPct, setProgressPct] = useState(0);
+    const [settingsVisibleDrawer, setSettingsVisibleDrawer] = useState(false);
+    const [chaptersVisible, setChaptersVisible] = useState(false);
+    const [autoScrollVisible, setAutoScrollVisible] = useState(false);
+    const [drawerTab, setDrawerTab] = useState('chapters');
+    const [expandedChapterIds, setExpandedChapterIds] = useState([]);
+    const [selectionVisible, setSelectionVisible] = useState(false);
+    const [selectionPosition, setSelectionPosition] = useState({ x: 20, y: 180 });
+    const [autoScrollSpeed, setAutoScrollSpeed] = useState(50);
+    const [autoDetectSpeed, setAutoDetectSpeed] = useState(false);
+    const [uiFontSize, setUiFontSize] = useState(16);
+    const [selectedTheme, setSelectedTheme] = useState('#FFFFFF');
+    const [spacing, setSpacing] = useState('Середні');
+    const [lineSpacing, setLineSpacing] = useState('Звичайний');
+    const [selectedFont, setSelectedFont] = useState('SF Pro');
+    const [showFontDropdown, setShowFontDropdown] = useState(false);
+    const [showSpacingDropdown, setShowSpacingDropdown] = useState(false);
+    const [showLineSpacingDropdown, setShowLineSpacingDropdown] = useState(false);
+    const [brightness, setBrightness] = useState(50);
 
-    const html = `
+    const TOOLBAR_SAFE_PADDING_PX = 120;
+
+    const html = useMemo(() => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -85,12 +98,13 @@ export default function EpubReaderScreen({ route }) {
 
     rendition.themes.default({
         body: {
-            "font-size": "120%",
+            "font-size": "${fontSizePercent}%",
             "line-height": "1.6",
             "text-align": "justify",
             "padding": "1em",
             "margin": "0 auto",
             "max-width": "95%",
+            "padding-bottom": "${TOOLBAR_SAFE_PADDING_PX}px",
         },
         img: {
             "max-width": "100%",
@@ -106,7 +120,26 @@ export default function EpubReaderScreen({ route }) {
 
     let totalLocations = 0;
     let currentLocation = 0;
-    const savedLocation = ${currentPage};
+    const savedLocation = ${savedPage};
+
+    // Helper to force font-size across typical text tags inside spine documents
+    window.applyFontSize = function(percent) {
+        try {
+            var selectors = ['html','body','p','div','span','li','a','blockquote','section','article'];
+            for (var i=0;i<selectors.length;i++) {
+                window.rendition.themes.override('font-size', String(percent) + '% !important', selectors[i]);
+            }
+        } catch(e) {}
+    };
+
+    window.applyReadingSafePadding = function(px) {
+        try {
+            var selectors = ['html','body','p','div','span','section','article'];
+            for (var i=0;i<selectors.length;i++) {
+                window.rendition.themes.override('padding-bottom', String(px) + 'px !important', selectors[i]);
+            }
+        } catch(e) {}
+    };
 
     book.ready.then(() => {
         return book.locations.generate(1600);
@@ -117,22 +150,49 @@ export default function EpubReaderScreen({ route }) {
             const cfi = book.locations.cfiFromLocation(savedLocation);
             rendition.display(cfi);
         } else {
-            rendition.display();
+            // Try to open the first real content page (skip cover)
+            if (book.loaded && book.loaded.navigation) {
+                book.loaded.navigation.then((nav) => {
+                    try {
+                        const first = (nav && nav.toc ? nav.toc : []).find((i) => i.href && !/cover/i.test(i.href));
+                        if (first && first.href) {
+                            rendition.display(first.href);
+                        } else {
+                            rendition.display();
+                        }
+                    } catch (e) {
+                        rendition.display();
+                    }
+                });
+            } else {
+                rendition.display();
+            }
         }
 
         rendition.on("relocated", (location) => {
             currentLocation = book.locations.locationFromCfi(location.start.cfi);
+            // Emit progress based on locations
             window.ReactNativeWebView.postMessage(JSON.stringify({
                 type: 'progress',
                 currentLocation,
                 totalLocations
             }));
+            // Also compute percentage using book.locations and toggle toolbar near end
+            try {
+                var cfi = (location && location.end && location.end.cfi) ? location.end.cfi : (location && location.start && location.start.cfi);
+                var percent = book.locations.percentageFromCfi(cfi) || 0; // 0..1
+                window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'toggleToolbar', visible: percent >= 0.85 }));
+            } catch(e) {}
         });
 
         window.ReactNativeWebView.postMessage(JSON.stringify({
             type: 'init',
             currentLocation
         }));
+
+        // Ensure initial font size and bottom padding applied
+        window.applyFontSize(${fontSizePercent});
+        window.applyReadingSafePadding(${TOOLBAR_SAFE_PADDING_PX});
     });
 
     window.book = book;
@@ -209,6 +269,69 @@ export default function EpubReaderScreen({ route }) {
         }
     });
 
+    // Detect user scroll near bottom to show toolbar
+    // Also toggle via CFI location percent if available
+    rendition.on('relocated', (location) => {
+        try {
+            if (location && location.end && typeof location.end.percentage === 'number') {
+                const p = location.end.percentage; // 0..1
+                window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'toggleToolbar', visible: p >= 0.85 }));
+            }
+        } catch(e) {}
+    });
+
+    // Enforce font size/safe padding and detect scrollability/taps per injected document
+    rendition.hooks.content.register(function(contents) {
+        try {
+            function checkScrollability() {
+                try {
+                    var win = contents.window; var doc = contents.document;
+                    var el = doc.scrollingElement || doc.documentElement || doc.body;
+                    var extra = el.scrollHeight - win.innerHeight;
+                    var fullyVisible = el.clientHeight <= (win.innerHeight + 2) || extra <= 2;
+                    // Якщо сторінка повністю вміщується у вікно — показати панель одразу
+                    if (fullyVisible) {
+                        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'toggleToolbar', visible: true }));
+                    } else {
+                        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'toggleToolbar', visible: false }));
+                    }
+                } catch(e) {}
+            }
+
+            contents.on('rendered', function(){
+                window.applyFontSize(${fontSizePercent});
+                window.applyReadingSafePadding(${TOOLBAR_SAFE_PADDING_PX});
+                setTimeout(checkScrollability, 200);
+            });
+
+            var win = contents.window;
+            var doc = contents.document;
+            var scroller = doc.scrollingElement || doc.documentElement || doc.body;
+
+            win.addEventListener('resize', function(){ setTimeout(checkScrollability, 100); }, { passive: true });
+            scroller.addEventListener('scroll', function(){
+                try{
+                    var el = doc.scrollingElement || doc.documentElement || doc.body;
+                    var max = el.scrollHeight - win.innerHeight;
+                    var ratio = max > 0 ? (el.scrollTop + win.innerHeight) / el.scrollHeight : 1;
+                    // Якщо немає скролу (ratio==1) — панель видима; інакше показуємо при 85%
+                    window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'toggleToolbar', visible: ratio >= 0.85 }));
+                }catch(e){}
+            }, { passive: true });
+
+            function onTap(e){
+                try {
+                    var y = (e && e.clientY) || (e && e.changedTouches && e.changedTouches[0] && e.changedTouches[0].clientY) || 0;
+                    if (win.innerHeight && (y / win.innerHeight) >= 0.9) {
+                        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'toggleToolbar', visible: true }));
+                    }
+                } catch(_) {}
+            }
+            doc.addEventListener('click', onTap, { passive: true });
+            doc.addEventListener('touchend', onTap, { passive: true });
+        } catch(e) {}
+    });
+
     window.ReactNativeWebView.postMessage(JSON.stringify({
         type: 'debug',
         message: '[✅] Highlighted: ' + count + ' of ' + results.length
@@ -217,11 +340,13 @@ export default function EpubReaderScreen({ route }) {
 </script>
 </body>
 </html>
-`;
+`, [base64, savedPage]);
 
     const sendCommand = (cmd) => {
         webViewRef.current?.injectJavaScript(`${cmd}; true;`);
     };
+
+    const progressTimerRef = useRef(null);
 
     const handleMessage = async (event) => {
         const data = event.nativeEvent.data;
@@ -231,37 +356,81 @@ export default function EpubReaderScreen({ route }) {
             return;
         }
 
+        let parsed;
         try {
-            const parsed = JSON.parse(data);
+            parsed = JSON.parse(data);
+        } catch (err) {
+            console.error('❌ EPUB WebView parse error:', err);
+            return;
+        }
 
-            if (parsed.type === 'progress' || parsed.type === 'init') {
-                const { currentLocation, totalLocations } = parsed;
-                setCurrentPage(currentLocation);
-
-                const exists = await isBookmarked(book.id, currentLocation);
-                setBookmarked(exists);
-
-                if (book?.id && currentLocation) {
-                    await updateBookProgress(book.id, currentLocation, totalLocations);
-                }
+        if (parsed.type === 'progress' || parsed.type === 'init') {
+            const { currentLocation: loc, totalLocations: total } = parsed;
+            setCurrentPage(loc);
+            if (total && total > 0) {
+                const percentNum = Math.max(0, Math.min(100, Math.round((loc / total) * 100)));
+                setProgressPct(percentNum);
+                setShowToolbar(percentNum >= 85);
             }
 
-            if (parsed.type === 'searchResults') {
-                if (!parsed.results || parsed.results.length === 0) {
-                    Alert.alert('Нічого не знайдено');
-                } else {
-                    setSearchResults(parsed.results);
-                    setShowResults(true);
-                    webViewRef.current?.injectJavaScript(`
+            try {
+                if (book?.id != null && Number.isFinite(loc)) {
+                    const exists = await isBookmarked(String(book.id), Number(loc));
+                    setBookmarked(!!exists);
+                }
+            } catch (e) {
+                console.warn('isBookmarked failed:', e);
+            }
+
+            if (book?.id && (loc ?? 0) >= 0) {
+                if (progressTimerRef.current) clearTimeout(progressTimerRef.current);
+                progressTimerRef.current = setTimeout(async () => {
+                    try {
+                        await updateBookProgress(book.id, loc, total);
+                    } catch (e) {
+                        console.warn('update progress failed:', e);
+                    }
+                }, 400);
+            }
+        }
+
+        if (parsed.type === 'searchResults') {
+            if (!parsed.results || parsed.results.length === 0) {
+                Alert.alert('Нічого не знайдено');
+            } else {
+                setSearchResults(parsed.results);
+                setShowResults(true);
+                webViewRef.current?.injectJavaScript(`
             window.highlightSearchResults(${JSON.stringify(parsed.results)});
             true;
           `);
-                }
             }
-        } catch (err) {
-            console.error('❌ EPUB WebView parse error:', err);
+        }
+
+        if (parsed.type === 'toggleToolbar') {
+            setShowToolbar(!!parsed.visible);
         }
     };
+
+    useEffect(() => () => {
+        if (progressTimerRef.current) clearTimeout(progressTimerRef.current);
+    }, []);
+
+    // Apply font size changes from Settings modal to the EPUB rendition
+    useEffect(() => {
+        try {
+            const percent = Math.max(80, Math.min(300, Math.round((uiFontSize / 16) * 100)));
+            setFontSizePercent(percent);
+            webViewRef.current?.injectJavaScript(`
+                if (window.rendition && window.rendition.themes) {
+                    window.rendition.themes.fontSize("${percent}%");
+                }
+                true;
+            `);
+        } catch (e) {
+            // no-op
+        }
+    }, [uiFontSize]);
 
     const toggleBookmark = async () => {
         if (bookmarked) {
@@ -276,7 +445,18 @@ export default function EpubReaderScreen({ route }) {
     };
 
     return (
-        <View style={{ flex: 1, marginTop: 45}}>
+        <View style={{ flex: 1, paddingTop: immersive ? 0 : Math.max(insets.top, 12), paddingBottom: Math.max(insets.bottom, 0), backgroundColor: '#fff' }}>
+            {!immersive && (
+                <View style={styles.headerBar}>
+                    <TouchableOpacity onPress={() => setSettingsVisible(true)} style={styles.iconButton}>
+                        <Ionicons name="settings-outline" size={22} color="#000" />
+                    </TouchableOpacity>
+                    <Text style={styles.headerBarTitle}>Розділ {book?.chapter ?? ''}</Text>
+                    <TouchableOpacity onPress={toggleBookmark} style={styles.iconButton}>
+                        <Ionicons name={bookmarked ? 'bookmark' : 'bookmark-outline'} size={22} color={bookmarked ? '#008655' : '#000'} />
+                    </TouchableOpacity>
+                </View>
+            )}
             <WebView
                 ref={webViewRef}
                 originWhitelist={['*']}
@@ -286,132 +466,107 @@ export default function EpubReaderScreen({ route }) {
                 onMessage={handleMessage}
             />
 
-            <TouchableOpacity
-                onPress={toggleBookmark}
-                style={styles.bookmarkButton}
-            >
-                <MaterialIcons
-                    name={bookmarked ? 'bookmark' : 'bookmark-border'}
-                    size={28}
-                    color="black"
-                />
-            </TouchableOpacity>
-            <TouchableOpacity
-                onPress={() => setSettingsVisible(true)}
-                style={{
-                    position: 'absolute',
-                    top: '#fff',
-                    borderRadius: 2,
-                }}
-            >
-                <MaterialIcons name="settings" size={28} color="black" />
-            </TouchableOpacity>
+            {/* search UI removed for full-screen reading */}
 
-            <View style={styles.bottomPanel}>
-                <View style={styles.controls}>
-                    <Button title="⬅️ Назад" onPress={() => sendCommand('window.rendition.prev()')} />
-                    <Button title="➡️ Вперед" onPress={() => sendCommand('window.rendition.next()')} />
-                    <Button title="🔎+" onPress={() => sendCommand('window.currentFontSize += 20; window.rendition.themes.fontSize(window.currentFontSize + "%")')} />
-                    <Button title="🔎−" onPress={() => sendCommand('window.currentFontSize = Math.max(80, window.currentFontSize - 20); window.rendition.themes.fontSize(window.currentFontSize + "%")')} />
-                </View>
-                <View style={styles.searchBar}>
-                    <TextInput
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                        placeholder="🔍 Введіть слово для пошуку"
-                        style={styles.input}
-                    />
-                    <Button
-                        title="ЗНАЙТИ"
-                        onPress={() => {
-                            const queryEscaped = searchQuery.replace(/"/g, '\\"');
-                            webViewRef.current?.injectJavaScript(`
-            window.searchInBook("${queryEscaped}");
-            true;
-        `);
-                        }}
-                    />
-                </View>
-            </View>
-
-            <FlatList
-                data={searchResults}
-                keyExtractor={(item, index) => index.toString()}
-                renderItem={({ item, index }) => {
-                    const highlighted = item.excerpt.replace(
-                        new RegExp(searchQuery, 'gi'),
-                        match => `<mark>${match}</mark>`
-                    );
-                    return (
-                        <TouchableOpacity
-                            onPress={() => {
-                                webViewRef.current?.injectJavaScript(`
-                                    window.rendition.display(${JSON.stringify(item.cfi)});
-                                    true;
-                                `);
-                            }}
-                            style={styles.resultContainer}
-                        >
-                            <Text style={styles.resultIndex}>Результат №{index + 1}</Text>
-                            <WebView
-                                originWhitelist={['*']}
-                                source={{ html: `<div style="padding;font-size;">${highlighted}</div>` }}
-                                style={{ height: 60 }}
-                                scrollEnabled={false}
-                            />
-                        </TouchableOpacity>
-                    );
-                }}
+            <ReadingBottomToolbar
+                progress={progressPct}
+                onLeftPress={() => sendCommand('window.rendition.prev()')}
+                onRightPress={() => sendCommand('window.rendition.next()')}
+                onInfoPress={() => {}}
+                onToggleImmersive={() => setImmersive(!immersive)}
+                onAutoScrollPress={() => setAutoScrollVisible(true)}
+                onChaptersPress={() => setChaptersVisible(true)}
+                onSearchPress={() => {}}
             />
-            <Modal visible={showResults} animationType="slide">
-                <View style={{ flex: '#fff' }}>
-                    <View style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '#ccc',
-                    }}>
-                        <Text style={{ fontSize: 'bold' }}>Результати пошуку</Text>
-                        <Button title="Закрити" onPress={() => setShowResults(false)} />
+
+            {selectionVisible && (
+                <ReadingTextSelectionToolbar
+                    style={{ position: 'absolute', top: selectionPosition.y, left: selectionPosition.x }}
+                    onTranslate={() => {}}
+                    onUnderline={() => {}}
+                    onCopy={() => {}}
+                    onComment={() => {}}
+                    onColorPicker={() => setSelectionVisible(false)}
+                />
+            )}
+
+            {/* Settings Modal (minimal inline version) */}
+            {settingsVisible && (
+                <ReadingSettingsModal
+                    visible={settingsVisible}
+                    onClose={() => setSettingsVisible(false)}
+                    state={{
+                        isDarkTheme: false,
+                        brightness,
+                        fontSize: uiFontSize,
+                        readingMode: 'Режим прокручування',
+                        spacing,
+                        lineSpacing,
+                        selectedTheme,
+                        selectedFont,
+                        showFontDropdown,
+                        showSpacingDropdown,
+                        showLineSpacingDropdown,
+                        fonts: ['SF Pro', 'Times New Roman', 'Helvetica'],
+                        spacingOptions: ['Вузькі', 'Середні', 'Широкі'],
+                        lineSpacingOptions: ['Щільний', 'Звичайний', 'Великий'],
+                    }}
+                    setters={{
+                        setIsDarkTheme: () => {},
+                        setFontSize: setUiFontSize,
+                        setReadingMode: () => {},
+                        setSpacing,
+                        setLineSpacing,
+                        setSelectedTheme,
+                        setSelectedFont,
+                        setShowFontDropdown,
+                        setShowSpacingDropdown,
+                        setShowLineSpacingDropdown,
+                    }}
+                    isDraggingBrightness={false}
+                    onBrightnessStart={() => {}}
+                    onBrightnessChange={setBrightness}
+                    onBrightnessEnd={() => {}}
+                />
+            )}
+
+            {/* Chapters Drawer (minimal inline) */}
+            {chaptersVisible && (
+                <ReadingChaptersDrawer
+                    visible={chaptersVisible}
+                    onClose={() => setChaptersVisible(false)}
+                    chapters={[]}
+                    currentId={null}
+                    readIds={[]}
+                    expandedIds={expandedChapterIds}
+                    onToggleExpand={(id) => setExpandedChapterIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))}
+                    onSelectChapter={() => setChaptersVisible(false)}
+                    currentIndex={1}
+                    totalCount={22}
+                    activeTab={drawerTab}
+                    onChangeTab={setDrawerTab}
+                    bookmarks={[]}
+                />
+            )}
+
+            {/* Auto Scroll (minimal inline) */}
+            {autoScrollVisible && (
+                <Modal visible transparent animationType="fade" onRequestClose={() => setAutoScrollVisible(false)}>
+                    <View style={styles.overlayCenter}>
+                        <TouchableOpacity style={styles.overlayFill} activeOpacity={1} onPress={() => setAutoScrollVisible(false)} />
+                        <View style={styles.centerCard}>
+                            <Text style={styles.sheetTitle}>Авто прокрутка</Text>
+                            <Text style={{ color: '#111', marginBottom: 8 }}>Швидкість: {autoScrollSpeed}</Text>
+                            <Slider minimumValue={0} maximumValue={100} step={1} value={autoScrollSpeed} minimumTrackTintColor="#008655" maximumTrackTintColor="#e0e0e0" thumbTintColor="#008655" onValueChange={setAutoScrollSpeed} />
+                            <TouchableOpacity style={{ alignSelf: 'flex-end', marginTop: 10 }} onPress={() => setAutoScrollVisible(false)}>
+                                <Text style={{ color: '#008655', fontWeight: '700' }}>OK</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
+                </Modal>
+            )}
 
-                    <FlatList
-                        data={searchResults}
-                        keyExtractor={(item, index) => index.toString()}
-                        renderItem={({ item, index }) => {
-                            const highlighted = item.excerpt.replace(
-                                new RegExp(searchQuery, 'gi'),
-                                match => `<mark>${match}</mark>`
-                            );
-                            return (
-                                <TouchableOpacity
-                                    onPress={() => {
-                                        webViewRef.current?.injectJavaScript(`
-                                window.rendition.display(${JSON.stringify(item.cfi)});
-                                true;
-                            `);
-                                        setShowResults(false);
-                                    }}
-                                    style={{
-                                        padding: '#eee',
-                                    }}
-                                >
-                                    <Text style={{ fontWeight: 'bold', marginBottom: 4 }}>
-                                        Результат №{index + 1}
-                                    </Text>
-                                    <WebView
-                                        originWhitelist={['*']}
-                                        source={{ html: `<div style="padding;font-size;">${highlighted}</div>` }}
-                                        style={{ height: 60 }}
-                                        scrollEnabled={false}
-                                    />
-                                </TouchableOpacity>
-                            );
-                        }}
-                    />
-
-                </View>
-            </Modal>
+            {/* search results UI removed */}
     {/*        <ReadingSettingsScreen*/}
     {/*            visible={settingsVisible}*/}
     {/*            onClose={() => setSettingsVisible(false)}*/}
@@ -437,21 +592,84 @@ export default function EpubReaderScreen({ route }) {
 }
 
 const styles = StyleSheet.create({
+    headerBar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e0e0e0',
+        backgroundColor: '#fff'
+    },
+    headerBarTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#000',
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e0e0e0',
+        backgroundColor: '#fff'
+    },
+    headerTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#000',
+    },
+    iconButton: {
+        padding: 6,
+    },
     controls: {
         flexDirection: 'row',
         justifyContent: 'space-around',
         padding: 10,
         backgroundColor: '#eee',
     },
-    bottomPanel: {
+    toolbarPanel: {
         position: 'absolute',
-        bottom: 0,
-        width: '100%',
-        backgroundColor: '#eee',
-        paddingBottom: 10,
-        paddingTop: 5,
-        zIndex: 1,
+        bottom: 60,
+        left: 12,
+        right: 12,
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 12,
+        shadowColor: '#000',
+        shadowOpacity: 0.1,
+        shadowOffset: { width: 0, height: -2 },
+        shadowRadius: 6,
+        elevation: 3,
     },
+    toolsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
+    toolButton: { padding: 6 },
+    // bottomPanel removed for full-screen reading
+    progressBar: { height: 4, backgroundColor: '#e0e0e0', borderRadius: 2, overflow: 'hidden' },
+    progressFill: { height: '100%', backgroundColor: '#008655' },
+    progressBarWrap: {
+        paddingHorizontal: 12,
+        paddingBottom: 6,
+    },
+    progressText: {
+        textAlign: 'right',
+        color: '#008655',
+        marginBottom: 4,
+    },
+    overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
+    overlayFill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+    sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: '#fff', borderTopLeftRadius: 16, borderTopRightRadius: 16, paddingBottom: 16 },
+    sheetHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 },
+    sheetTitle: { fontSize: 16, fontWeight: '700', color: '#111' },
+    sectionLabel: { color: '#000', fontWeight: '600', marginBottom: 8 },
+    drawer: { position: 'absolute', top: 0, bottom: 0, left: 0, width: '85%', backgroundColor: '#fff', paddingTop: 12 },
+    drawerHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 8 },
+    drawerTitle: { fontSize: 16, fontWeight: '700', color: '#111' },
+    overlayCenter: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+    centerCard: { width: '86%', backgroundColor: '#fff', borderRadius: 12, padding: 16 },
     searchBar: {
         flexDirection: 'row',
         alignItems: 'center',

@@ -1,6 +1,6 @@
 import {Text, View, StyleSheet, Image, TouchableOpacity, Alert} from "react-native";
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { setLastBook } from "../model/BooksSlice";
 import {downloadPublicBook} from "../api/downloadPublicBook";
@@ -10,6 +10,7 @@ import * as FileSystem from "expo-file-system/legacy"
 export function BookCard({ book }) {
     const dispatch = useDispatch();
     const navigation = useNavigation();
+    const [coverUri, setCoverUri] = useState(book.imageUrl || null);
 
     useEffect(() => {
         console.log(book);
@@ -25,6 +26,7 @@ export function BookCard({ book }) {
         });
         console.log("3");
         const newBook = {
+            id: book.id,
             title: book.title,
             path: filePath,
             format: book.format,
@@ -56,8 +58,9 @@ export function BookCard({ book }) {
             onPress={handlePress}
         >
             <Image
-                source={book.imageUrl ? { uri: book.imageUrl } : require('../../../../assets/placeholder-cover.png')}
+                source={coverUri ? { uri: coverUri } : require('../../../../assets/placeholder-cover.png')}
                 style={styles.bookCover}
+                onError={() => setCoverUri(null)}
             />
             <View style={styles.bookInfo}>
                 <Text style={styles.bookTitle} numberOfLines={2}>{book.title}</Text>

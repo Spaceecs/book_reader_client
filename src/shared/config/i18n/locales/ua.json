@@ -25,7 +25,12 @@
   "drawerMenu" : {
     "Home": "Головна",
     "Settings": "Налаштування",
-    "AddBook": "Додати книгу"
+    "Library": "Бібліотека",
+    "AddBook": "Додати книгу",
+    "Collections": "Колекції",
+    "ReadNext": "Читати далі",
+    "Trash": "Корзина",
+    "Feedback": "Відправити відгук"
   },
   "validation": {
     "username": {
@@ -92,5 +97,13 @@
   "topRated": "Найвище оцінені",
   "more": "більше",
   "readMore": "Читати далі",
-  "continueReading": "Продовжити читати"
+  "continueReading": "Продовжити читати",
+  "tabs": {
+    "Home": "Головна",
+    "Library": "Бібліотека",
+    "Import": "Імпорт",
+    "Profile": "Профіль",
+    "Premium": "Преміум"
+  },
+  "publicBooks": "Публічні книги"
 }

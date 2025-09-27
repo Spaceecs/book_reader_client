@@ -6,6 +6,8 @@ import DrawerContent from "./DrawerContent";
 import EpubReaderScreen from "../../screens/EpubReaderScreen";
 import PdfReaderScreen from "../../screens/PdfReaderScreen";
 import {SearchScreen} from "../../screens/SearchScreen";
+import { MainTabs } from "./TabNavigation";
+import LibraryScreen from "../../screens/LibraryScreen";
 
 const Drawer =  createDrawerNavigator();
 
@@ -15,7 +17,8 @@ export function DrawerNavigator() {
                           drawerContent={(props) => <DrawerContent {...props} />}
         >
 
-            <Drawer.Screen name="Home" component={HomeScreen} />
+            <Drawer.Screen name="Home" component={MainTabs} />
+            <Drawer.Screen name="Library" component={LibraryScreen} />
             <Drawer.Screen name="Settings" component={SettingsScreen} />
             <Drawer.Screen name="EpubReaderScreen" component={EpubReaderScreen} />
             <Drawer.Screen name="PdfReaderScreen" component={PdfReaderScreen} />
