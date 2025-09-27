@@ -8,28 +8,24 @@ import {
   FlatList,
   Modal,
   TextInput,
-  Animated,
-  Dimensions,
-  Image
+  Animated
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StyleSheet } from 'react-native';
 import { useDispatch } from 'react-redux';
-import { getReadingProgress } from '../shared';
-import { getAllBooks } from '../entities';
-import { setLastBook } from '../entities';
-import { downloadPublicBook } from '../entities/book/api/downloadPublicBook';
-import * as FileSystem from 'expo-file-system/legacy';
+import {getOnlineBooks, getReadingProgress} from '../shared';
+import {openBook} from "../entities";
+import {BookCard} from "../entities";
 
 const tabs = ['Книги', 'Аудіокниги'];
 const filters = ['Усі книги', 'Читаю', 'Прочитано', 'Не прочитано'];
 
 export default function LibraryScreen({ navigation }) {
-  const dispatch = useDispatch();
-  const [activeTab, setActiveTab] = useState('Книги');
-  const [activeFilter, setActiveFilter] = useState('Усі книги');
+    useDispatch();
+    const [activeTab, setActiveTab] = useState('Книги');
+    const [activeFilter, setActiveFilter] = useState('Усі книги');
   const [isSortVisible, setIsSortVisible] = useState(false);
   const [isFilterVisible, setIsFilterVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -52,15 +48,13 @@ export default function LibraryScreen({ navigation }) {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const SCREEN_WIDTH = Dimensions.get('window').width;
-  const SCREEN_HEIGHT = Dimensions.get('window').height;
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
     const fetchBooks = async () => {
       try {
-        const response = await getAllBooks();
-        setBooks(response.books || []);
+        const response = await getOnlineBooks();
+        setBooks(response || []);
       } catch (e) {
         console.error('Не вдалося завантажити книги:', e);
       } finally {
@@ -133,53 +127,6 @@ export default function LibraryScreen({ navigation }) {
     return list;
   }, [books, activeTab, searchQuery, readStatusFilter, readingProgressMap]);
 
-  const openBook = async (book) => {
-    try {
-      dispatch(setLastBook(book));
-      const filePath = await downloadPublicBook(book.id, book.title);
-      const base64 = await FileSystem.readAsStringAsync(filePath, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-      const newBook = {
-        id: book.id,
-        title: book.title,
-        author: book.author,
-        path: filePath,
-        format: book.format,
-        base64: base64,
-      };
-      if (newBook.format === 'pdf') {
-        navigation.navigate('PdfReaderScreen', { book: newBook });
-      } else if (newBook.format === 'epub') {
-        navigation.navigate('EpubReaderScreen', { book: newBook });
-      }
-    } catch (e) {
-      console.error('Помилка відкриття книги:', e);
-    }
-  };
-
-  const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <TouchableOpacity
-        activeOpacity={0.85}
-        onPress={() => openBook(item)}
-        delayLongPress={350}
-        onLongPress={() => { setSelectedItem(item); setIsActionsVisible(true); }}
-      >
-        <Image
-          source={item.imageUrl ? { uri: item.imageUrl } : require('../../assets/placeholder-cover.png')}
-          style={styles.cardCover}
-          onError={(e) => { /* fallback to placeholder if server image fails */ }}
-        />
-        <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
-        <View style={styles.cardMetaRow}>
-          <View style={styles.dot} />
-          <Text style={styles.cardMetaText}>{(item.avgRating || 0).toFixed ? (item.avgRating || 0).toFixed(1) : (item.avgRating || 0)}</Text>
-        </View>
-      </TouchableOpacity>
-    </View>
-  );
-
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -250,7 +197,7 @@ export default function LibraryScreen({ navigation }) {
         numColumns={2}
         columnWrapperStyle={styles.gridRow}
         contentContainerStyle={[styles.grid, { paddingBottom: 60 + insets.bottom }]}
-        renderItem={renderItem}
+        renderItem={({ item }) => <BookCard book={item} setSelectedItem={setSelectedItem} setIsActionsVisible={setIsActionsVisible} />}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={!loading ? (
           <View style={{ padding: 24 }}>
@@ -462,9 +409,6 @@ export default function LibraryScreen({ navigation }) {
   );
 }
 
-const { width } = Dimensions.get('window');
-const cardWidth = (width - 16 * 2 - 12) / 2;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -568,46 +512,6 @@ const styles = StyleSheet.create({
   gridRow: {
     justifyContent: 'space-between',
     marginBottom: 12,
-  },
-  card: {
-    width: cardWidth,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#eee',
-    padding: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowOffset: { width: 0, height: 1 },
-    shadowRadius: 2,
-  },
-  cardCover: {
-    width: '100%',
-    height: 250,
-    borderRadius: 8,
-    backgroundColor: '#f2f2f2',
-    marginBottom: 8,
-  },
-  cardTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#000',
-    marginBottom: 6,
-  },
-  cardMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#2E8B57',
-  },
-  cardMetaText: {
-    fontSize: 12,
-    color: '#2E8B57',
-    marginLeft: 6,
   },
   bottomSpacer: {
     height: 1,

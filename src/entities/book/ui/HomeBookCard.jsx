@@ -1,12 +1,9 @@
-import {Text, View, StyleSheet, Image, TouchableOpacity, Alert} from "react-native";
+import {Text, View, StyleSheet, Image, TouchableOpacity} from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
-import { setLastBook } from "../model/BooksSlice";
-import {downloadPublicBook} from "../api/downloadPublicBook";
 import {useNavigation} from "@react-navigation/native";
-import * as FileSystem from "expo-file-system/legacy"
-import {addOnlineBook, getOnlineBooksByOnlineId} from "../../../shared";
+import {openBook} from "../utils/openBook";
 
 export function HomeBookCard({ book }) {
     const dispatch = useDispatch();
@@ -17,37 +14,11 @@ export function HomeBookCard({ book }) {
         console.log(book);
     }, []);
 
-    const handlePress = async () => {
-        const filePath = await downloadPublicBook(book.id, book.title);
-        const base64 = await FileSystem.readAsStringAsync(filePath, {
-            encoding: FileSystem.EncodingType.Base64,
-        });
-        await addOnlineBook(book.id, book.title, filePath, book.format, base64, book.imageUrl);
-        const localOnlineBook = await getOnlineBooksByOnlineId(book.id)
-        dispatch(setLastBook(localOnlineBook));
-        if (localOnlineBook.format === 'pdf') {
-            if (!localOnlineBook.base64) {
-                Alert.alert('⛔ Помилка', 'Цей файл не має збережених даних PDF.');
-                return;
-            }
-
-            navigation.navigate('PdfReaderScreen', { book: localOnlineBook });
-        } else if (localOnlineBook.format === 'epub') {
-            const fileInfo = await FileSystem.getInfoAsync(localOnlineBook.path);
-            if (!fileInfo.exists) {
-                Alert.alert('Файл не знайдено', 'Цей файл більше не існує.');
-                return;
-            }
-
-            navigation.navigate('EpubReaderScreen', { book: localOnlineBook });
-        }
-    };
-
 
     return (
         <TouchableOpacity
             style={styles.bookItem}
-            onPress={handlePress}
+            onPress={() => openBook(book, dispatch, navigation)}
         >
             <Image
                 source={coverUri ? { uri: coverUri } : require('../../../../assets/placeholder-cover.png')}

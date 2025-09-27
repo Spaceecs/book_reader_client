@@ -1,6 +1,6 @@
 import {FlatList, Text, View} from "react-native";
 import {useEffect, useState} from "react";
-import {HomeBookCard, getAllBooks} from "../entities";
+import {getAllBooks, BookCard} from "../entities";
 
 export function SearchScreen({route}) {
     const param = route.params;
@@ -13,6 +13,7 @@ export function SearchScreen({route}) {
         const fetchBooks = async () => {
             try {
                 const response = await getAllBooks(param);
+
                 setBooks(response.books);
                 console.log(response);
             } catch (error) {
@@ -30,7 +31,7 @@ export function SearchScreen({route}) {
                 numColumns={2}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={({ item }) => (
-                    <HomeBookCard book={item} />
+                    <BookCard book={item} />
                 )}
 
             />

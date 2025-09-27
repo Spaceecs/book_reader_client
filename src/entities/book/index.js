@@ -1,6 +1,8 @@
 export { getHomePageBooks } from './api/getHomePageBooks';
 export { HomeBookCard } from './ui/HomeBookCard';
 export { getAllBooks } from './api/getAllBooks';
+export { openBook } from './utils/openBook';
 export { default as booksReducer } from './model/BooksSlice';
 export * from './model/BooksSlice';
-export * from './model/BooksSelector';
+export * from './model/BooksSelector'
+export {BookCard} from './ui/BookCard';

@@ -11,7 +11,7 @@ async function ensureDb() {
 
 export async function initDatabase() {
     db = await SQLite.openDatabaseAsync("books.db");
-    // await db.execAsync(`DROP TABLE IF EXISTS online_books;`);
+    await db.execAsync(`DROP TABLE IF EXISTS online_books;`);
     // Локальні книги
     await db.execAsync(`
         CREATE TABLE IF NOT EXISTS local_books (
@@ -98,7 +98,7 @@ export async function addOnlineBook(
             [onlineId, title, path, format, base64, 0, 0, imageUrl, author]
         );
     } catch (error) {
-        console.error(error);
+        console.error("add error", error);
     }
     console.log("book added");
 }
