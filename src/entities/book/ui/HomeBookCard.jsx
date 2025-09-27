@@ -6,7 +6,7 @@ import { setLastBook } from "../model/BooksSlice";
 import {downloadPublicBook} from "../api/downloadPublicBook";
 import {useNavigation} from "@react-navigation/native";
 import * as FileSystem from "expo-file-system/legacy"
-import {addOnlineBook, getOnlineBookByOnlineId} from "../../../shared";
+import {addOnlineBook, getOnlineBooksByOnlineId} from "../../../shared";
 
 export function HomeBookCard({ book }) {
     const dispatch = useDispatch();
@@ -22,8 +22,8 @@ export function HomeBookCard({ book }) {
         const base64 = await FileSystem.readAsStringAsync(filePath, {
             encoding: FileSystem.EncodingType.Base64,
         });
-        await addOnlineBook(book.id, book.title, filePath, book.format, base64, book.imageUrl);
-        const localOnlineBook = await getOnlineBookByOnlineId(book.id)
+        await addOnlineBook(book.id, book.title, filePath, book.format, base64);
+        const localOnlineBook = await getOnlineBooksByOnlineId(book.id)
         dispatch(setLastBook(localOnlineBook));
         if (localOnlineBook.format === 'pdf') {
             if (!localOnlineBook.base64) {

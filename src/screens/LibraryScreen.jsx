@@ -2,7 +2,6 @@ import React, { useMemo, useRef, useState, useEffect } from 'react';
 import {
   View,
   Text,
-  SafeAreaView,
   StatusBar,
   TouchableOpacity,
   ScrollView,
@@ -20,7 +19,7 @@ import { StyleSheet } from 'react-native';
 import { useDispatch } from 'react-redux';
 import { getReadingProgress } from '../shared';
 import { getAllBooks } from '../entities';
-import { setLastBook } from '../entities/book/model/BooksSlice';
+import { setLastBook } from '../entities';
 import { downloadPublicBook } from '../entities/book/api/downloadPublicBook';
 import * as FileSystem from 'expo-file-system/legacy';
 
@@ -182,7 +181,7 @@ export default function LibraryScreen({ navigation }) {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
       <View style={styles.topBar}>
@@ -459,7 +458,7 @@ export default function LibraryScreen({ navigation }) {
           </View>
         </Modal>
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -584,7 +583,7 @@ const styles = StyleSheet.create({
   },
   cardCover: {
     width: '100%',
-    height: 160,
+    height: 250,
     borderRadius: 8,
     backgroundColor: '#f2f2f2',
     marginBottom: 8,

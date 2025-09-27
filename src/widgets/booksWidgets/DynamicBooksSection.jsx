@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
-import { BookCard, getAllBooks } from '../../entities';
+import { HomeBookCard, getAllBooks } from '../../entities';
 
 export function DynamicBooksSection({ titleKey = 'publicBooks', params = { limit: 10 } }) {
   const { t } = useTranslation();
@@ -32,7 +32,7 @@ export function DynamicBooksSection({ titleKey = 'publicBooks', params = { limit
       </View>
       <FlatList
         data={books}
-        renderItem={({ item }) => <BookCard book={item} />}
+        renderItem={({ item }) => <HomeBookCard book={item} />}
         keyExtractor={(item) => String(item.id)}
         horizontal
         showsHorizontalScrollIndicator={false}

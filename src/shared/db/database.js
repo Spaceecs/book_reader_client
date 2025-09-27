@@ -15,10 +15,10 @@ export async function initDatabase() {
     // Локальні книги
     await db.execAsync(`
         CREATE TABLE IF NOT EXISTS local_books (
-                                                   id TEXT PRIMARY KEY,
-                                                   title TEXT,
-                                                   author TEXT,
-                                                   filePath TEXT
+            id TEXT PRIMARY KEY,
+            title TEXT,
+            author TEXT,
+            filePath TEXT
         );
     `);
 
@@ -28,6 +28,8 @@ export async function initDatabase() {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             onlineId TEXT,
             title TEXT,
+            author TEXT,
+            cover TEXT,
             path TEXT,
             format TEXT,
             base64 TEXT,
@@ -35,6 +37,7 @@ export async function initDatabase() {
             totalPages INTEGER
         );
     `);
+
 
     // Закладки
     await db.execAsync(`
@@ -46,15 +49,6 @@ export async function initDatabase() {
       createdAt TEXT
     );
   `);
-
-    // Try to add missing createdAt column if the table existed without it
-    try {
-        await db.execAsync(`ALTER TABLE bookmarks ADD COLUMN createdAt TEXT;`);
-    } catch (e) {
-        // ignore if column already exists
-    }
-
-    return db;
 }
 
 export async function addLocalBook(book) {
@@ -111,12 +105,17 @@ export async function getOnlineBookById(id) {
 
 export async function getOnlineBooksByOnlineId(id) {
     await ensureDb();
-    const result = await db.execAsync(
-        `SELECT * FROM online_books WHERE onlineId=?;`,
-        [id]
-    );
-    return result[0].rows._array?.[0] || null;
+    try {
+        return await db.getFirstAsync(
+            `SELECT * FROM online_books WHERE onlineId=?;`,
+            [id]
+        );
+    } catch (e) {
+        console.error('getOnlineBooksByOnlineId error:', e);
+        return null;
+    }
 }
+
 
 export async function updateOnlineBook(book) {
     await ensureDb();
