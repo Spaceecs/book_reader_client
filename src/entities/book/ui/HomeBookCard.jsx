@@ -22,7 +22,7 @@ export function HomeBookCard({ book }) {
         const base64 = await FileSystem.readAsStringAsync(filePath, {
             encoding: FileSystem.EncodingType.Base64,
         });
-        await addOnlineBook(book.id, book.title, filePath, book.format, base64);
+        await addOnlineBook(book.id, book.title, filePath, book.format, base64, book.imageUrl);
         const localOnlineBook = await getOnlineBooksByOnlineId(book.id)
         dispatch(setLastBook(localOnlineBook));
         if (localOnlineBook.format === 'pdf') {

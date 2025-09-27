@@ -11,7 +11,7 @@ async function ensureDb() {
 
 export async function initDatabase() {
     db = await SQLite.openDatabaseAsync("books.db");
-
+    // await db.execAsync(`DROP TABLE IF EXISTS online_books;`);
     // Локальні книги
     await db.execAsync(`
         CREATE TABLE IF NOT EXISTS local_books (
@@ -29,7 +29,7 @@ export async function initDatabase() {
             onlineId TEXT,
             title TEXT,
             author TEXT,
-            cover TEXT,
+            imageUrl TEXT,
             path TEXT,
             format TEXT,
             base64 TEXT,
@@ -78,29 +78,50 @@ export async function deleteLocalBook(id) {
     await db.execAsync(`DELETE FROM local_books WHERE id=?;`, [id]);
 }
 
-export async function addOnlineBook(onlineId, title, path, format = 'pdf', base64 = '') {
+export async function addOnlineBook(
+    onlineId,
+    title,
+    path,
+    format = 'pdf',
+    base64 = '',
+    imageUrl = '',
+    author = ''
+) {
     await ensureDb();
-    console.log(onlineId, title, path, format);
-    await db.runAsync(
-        `INSERT INTO online_books (onlineId, title, path, format, base64, currentPage, totalPages) VALUES (?, ?, ?, ?, ?, ?, ?)`, [onlineId, title, path, format, base64, 0, 0]
-    );
+    console.log(onlineId, title, path, format, imageUrl, author);
+    try {
+
+
+        await db.runAsync(
+            `INSERT INTO online_books (onlineId, title, path, format, base64, currentPage, totalPages, imageUrl, author)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [onlineId, title, path, format, base64, 0, 0, imageUrl, author]
+        );
+    } catch (error) {
+        console.error(error);
+    }
     console.log("book added");
 }
 
 
+
 export async function getOnlineBooks() {
     await ensureDb();
-    const result = await db.execAsync(`SELECT * FROM online_books;`);
-    return result[0].rows._array;
+    return await db.getAllAsync(`SELECT * FROM online_books;`);
 }
 
 export async function getOnlineBookById(id) {
     await ensureDb();
-    const result = await db.execAsync(
-        `SELECT * FROM online_books WHERE id=?;`,
-        [id]
-    );
-    return result[0].rows._array[0] || null;
+    try {
+        return await db.getFirstAsync(
+            `SELECT *
+             FROM online_books
+             WHERE id = ?;`,
+            [id]
+        );
+    } catch (error) {
+        console.error(error);
+    }
 }
 
 export async function getOnlineBooksByOnlineId(id) {
@@ -193,15 +214,15 @@ export const isBookmarked = async (bookId, page) => {
 
 export const updateBookProgress = async (id, currentPage, totalPages) => {
     try {
-        await ensureDb();
         if (id == null) return;
-        await db.execAsync(
-            'UPDATE online_books SET currentPage = ?, totalPages = ? WHERE onlineId = ?;',
-            [Number(currentPage) || 0, Number(totalPages) || 0, String(id)]
+        await ensureDb();
+
+        await db.runAsync(
+            'UPDATE online_books SET currentPage = ?, totalPages = ? WHERE id = ?;',
+            [Number(currentPage) || 0, Number(totalPages) || 0, id]
         );
     } catch (e) {
         console.warn('updateBookProgress failed:', e);
-        // swallow to avoid crashing the UI
     }
 };
 

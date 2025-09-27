@@ -8,15 +8,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { ReadingBottomToolbar, ReadingSettingsModal, ReadingChaptersDrawer, ReadingTextSelectionToolbar } from '../widgets';
 import {
     addBookmark,
-    deleteBookmark,
+    deleteBookmark, getOnlineBookById,
     isBookmarked,
     updateBookProgress,
 } from '../shared';
+import {setLastBook} from "../entities";
+import {useDispatch} from "react-redux";
 
 export default function EpubReaderScreen({ route }) {
     const { book } = route.params;
     const insets = useSafeAreaInsets();
     const webViewRef = useRef(null);
+    const dispatch = useDispatch();
 
     const base64 = book.base64.replace(
         /^data:application\/epub\+zip;base64,/,
@@ -374,8 +377,12 @@ export default function EpubReaderScreen({ route }) {
             if (book?.id && (loc ?? 0) >= 0) {
                 if (progressTimerRef.current) clearTimeout(progressTimerRef.current);
                 progressTimerRef.current = setTimeout(async () => {
+
                     try {
+                        console.log(book.id, loc, total)
                         await updateBookProgress(book.id, loc, total);
+                        const newBook = await getOnlineBookById(book.id);
+                        dispatch(setLastBook(newBook));
                     } catch (e) {
                         console.warn('update progress failed:', e);
                     }

@@ -9,12 +9,14 @@ import {
 } from 'react-native';
 import {
     addBookmark,
-    deleteBookmark,
+    deleteBookmark, getOnlineBookById,
     isBookmarked,
     updateBookProgress,
 } from '../shared';
 import { MaterialIcons } from '@expo/vector-icons';
 import {PdfViewer} from "../features";
+import {setLastBook} from "../entities";
+import {useDispatch} from "react-redux";
 
 export default function PdfReaderScreen({ route }) {
     const { book } = route.params;
@@ -22,6 +24,8 @@ export default function PdfReaderScreen({ route }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(book.currentPage ?? 0);
     const [bookmarked, setBookmarked] = useState(false);
+
+    const dispatch = useDispatch();
 
     // ⚙️ стан налаштувань
     const [settingsVisible, setSettingsVisible] = useState(false);
@@ -43,13 +47,15 @@ export default function PdfReaderScreen({ route }) {
         try {
             const data = JSON.parse(event.nativeEvent.data);
             if (data.type === 'progress' || data.type === 'init') {
-                const { currentPage: page = 0, totalPages = 1 } = data; // перейменовуємо currentPage в page
+                const { currentPage: page = 0, totalPages = 1 } = data;
                 setCurrentPage(page);
-
                 if (book?.id) {
+                    console.log(`📖 Прогрес: ${page} з ${totalPages} id: ${book.id}`);
                     await updateBookProgress(book.id, page, totalPages);
+                    const newBook = await getOnlineBookById(book.id);
+                    dispatch(setLastBook(newBook));
                 }
-                console.log(`📖 Прогрес: ${page} з ${totalPages}`);
+
             }
         } catch (e) {
             console.error('❌ WebView message parse error:', e);

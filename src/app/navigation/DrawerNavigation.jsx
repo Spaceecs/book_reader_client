@@ -7,6 +7,7 @@ import PdfReaderScreen from "../../screens/PdfReaderScreen";
 import {SearchScreen} from "../../screens/SearchScreen";
 import { MainTabs } from "./TabNavigation";
 import LibraryScreen from "../../screens/LibraryScreen";
+import {ReadMoreScreen} from "../../screens/ReadMoreScreen";
 
 const Drawer =  createDrawerNavigator();
 
@@ -22,6 +23,7 @@ export function DrawerNavigator() {
             <Drawer.Screen name="EpubReaderScreen" component={EpubReaderScreen} />
             <Drawer.Screen name="PdfReaderScreen" component={PdfReaderScreen} />
             <Drawer.Screen name="SearchScreen" component={SearchScreen} />
+            <Drawer.Screen name="ReadMore" component={ReadMoreScreen} />
         </Drawer.Navigator>
     )
 }
