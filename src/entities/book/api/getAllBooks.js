@@ -2,7 +2,7 @@ import {myApi} from "../../../shared";
 
 export async function getAllBooks(params = {}) {
     try {
-        const response = await myApi.get('/books/public', {
+        const response = await myApi.get('/books/filter', {
             params,
         });
         return response.data;

@@ -1,6 +1,6 @@
 import {Text, View, StyleSheet, Image, TouchableOpacity, Alert} from "react-native";
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { setLastBook } from "../model/BooksSlice";
 import {downloadPublicBook} from "../api/downloadPublicBook";
@@ -11,25 +11,20 @@ import {addOnlineBook, getOnlineBookByOnlineId} from "../../../shared";
 export function HomeBookCard({ book }) {
     const dispatch = useDispatch();
     const navigation = useNavigation();
+    const [coverUri, setCoverUri] = useState(book.imageUrl || null);
 
     useEffect(() => {
         console.log(book);
     }, []);
 
     const handlePress = async () => {
-
-        console.log("1");
         const filePath = await downloadPublicBook(book.id, book.title);
-        console.log("2");
         const base64 = await FileSystem.readAsStringAsync(filePath, {
             encoding: FileSystem.EncodingType.Base64,
         });
-        console.log("3");
         await addOnlineBook(book.id, book.title, filePath, book.format, base64, book.imageUrl);
-        console.log("4");
         const localOnlineBook = await getOnlineBookByOnlineId(book.id)
         dispatch(setLastBook(localOnlineBook));
-        console.log("5");
         if (localOnlineBook.format === 'pdf') {
             if (!localOnlineBook.base64) {
                 Alert.alert('⛔ Помилка', 'Цей файл не має збережених даних PDF.');
@@ -46,7 +41,6 @@ export function HomeBookCard({ book }) {
 
             navigation.navigate('EpubReaderScreen', { book: localOnlineBook });
         }
-        console.log("6");
     };
 
 
@@ -56,8 +50,9 @@ export function HomeBookCard({ book }) {
             onPress={handlePress}
         >
             <Image
-                source={book.imageUrl ? { uri: book.imageUrl } : require('../../../../assets/placeholder-cover.png')}
+                source={coverUri ? { uri: coverUri } : require('../../../../assets/placeholder-cover.png')}
                 style={styles.bookCover}
+                onError={() => setCoverUri(null)}
             />
             <View style={styles.bookInfo}>
                 <Text style={styles.bookTitle} numberOfLines={2}>{book.title}</Text>

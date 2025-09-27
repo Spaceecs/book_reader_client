@@ -25,9 +25,12 @@
   "drawerMenu" : {
     "Home": "Home",
     "Settings": "Settings",
+    "Library": "Library",
     "AddBook": "Add book",
-    "ReadMore": "Read more",
-    "Collections": "Collections"
+    "Collections": "Collections",
+    "ReadNext": "Read next",
+    "Trash": "Trash",
+    "Feedback": "Send feedback"
   },
   "validation": {
     "username": {
@@ -94,5 +97,13 @@
   "topRated": "Top rated",
   "more": "more",
   "readMore": "Read more",
-  "continueReading": "Continue reading"
+  "continueReading": "Continue reading",
+  "tabs": {
+    "Home": "Home",
+    "Library": "Library",
+    "Import": "Import",
+    "Profile": "Profile",
+    "Premium": "Premium"
+  },
+  "publicBooks": "Public books"
 }

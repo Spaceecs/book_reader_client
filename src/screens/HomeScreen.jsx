@@ -1,7 +1,7 @@
 import {ScrollView, View, ActivityIndicator, StyleSheet, Text, Dimensions} from "react-native";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
-import { BookListWidget, LOBookWidget } from "../widgets";
+import { BookListWidget, LOBookWidget, DynamicBooksSection } from "../widgets";
 import { getHomePageBooks, getMe } from "../entities";
 import {MainHeader} from "../shared";
 import {useNavigation} from "@react-navigation/native";
@@ -64,6 +64,7 @@ export function HomeScreen() {
                 <LOBookWidget />
                 <BookListWidget books={books.latest} sectionHeader={'novelty'} />
                 <BookListWidget books={books.topRated} sectionHeader={'topRated'} />
+                <DynamicBooksSection titleKey={'publicBooks'} params={{ limit: 12 }} />
             </ScrollView>
         </View>
     );
