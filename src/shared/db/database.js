@@ -30,7 +30,7 @@ export async function initDatabase() {
             title TEXT,
             author TEXT,
             imageUrl TEXT,
-            path TEXT,
+            filePath TEXT,
             format TEXT,
             base64 TEXT,
             currentPage INTEGER,
@@ -51,9 +51,12 @@ export async function initDatabase() {
   `);
 }
 
+// ======================
+// Local Books
+// ======================
 export async function addLocalBook(book) {
     await ensureDb();
-    await db.execAsync(
+    await db.runAsync(
         `INSERT INTO local_books (id, title, author, filePath) VALUES (?, ?, ?, ?);`,
         [book.id, book.title, book.author, book.filePath]
     );
@@ -61,13 +64,12 @@ export async function addLocalBook(book) {
 
 export async function getLocalBooks() {
     await ensureDb();
-    const result = await db.execAsync(`SELECT * FROM local_books;`);
-    return result[0].rows._array;
+    return await db.getAllAsync(`SELECT * FROM local_books;`);
 }
 
 export async function updateLocalBook(book) {
     await ensureDb();
-    await db.execAsync(
+    await db.runAsync(
         `UPDATE local_books SET title=?, author=?, filePath=? WHERE id=?;`,
         [book.title, book.author, book.filePath, book.id]
     );
@@ -75,35 +77,24 @@ export async function updateLocalBook(book) {
 
 export async function deleteLocalBook(id) {
     await ensureDb();
-    await db.execAsync(`DELETE FROM local_books WHERE id=?;`, [id]);
+    await db.runAsync(`DELETE FROM local_books WHERE id=?;`, [id]);
 }
 
-export async function addOnlineBook(
-    onlineId,
-    title,
-    path,
-    format = 'pdf',
-    base64 = '',
-    imageUrl = '',
-    author = ''
-) {
+// ======================
+// Online Books
+// ======================
+export async function addOnlineBook(onlineId, title, filePath, format = 'pdf', base64 = '', imageUrl = '', author = '') {
     await ensureDb();
-    console.log(onlineId, title, path, format, imageUrl, author);
     try {
-
-
         await db.runAsync(
-            `INSERT INTO online_books (onlineId, title, path, format, base64, currentPage, totalPages, imageUrl, author)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [onlineId, title, path, format, base64, 0, 0, imageUrl, author]
+            `INSERT INTO online_books (onlineId, title, filePath, format, base64, currentPage, totalPages, imageUrl, author)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [onlineId, title, filePath, format, base64, 0, 0, imageUrl, author]
         );
     } catch (error) {
-        console.error("add error", error);
+        console.error("addOnlineBook error:", error);
     }
-    console.log("book added");
 }
-
-
 
 export async function getOnlineBooks() {
     await ensureDb();
@@ -112,80 +103,63 @@ export async function getOnlineBooks() {
 
 export async function getOnlineBookById(id) {
     await ensureDb();
-    try {
-        return await db.getFirstAsync(
-            `SELECT *
-             FROM online_books
-             WHERE id = ?;`,
-            [id]
-        );
-    } catch (error) {
-        console.error(error);
-    }
+    return await db.getFirstAsync(`SELECT * FROM online_books WHERE id=?;`, [id]);
 }
 
-export async function getOnlineBooksByOnlineId(id) {
+export async function getOnlineBooksByOnlineId(onlineId) {
     await ensureDb();
-    try {
-        return await db.getFirstAsync(
-            `SELECT * FROM online_books WHERE onlineId=?;`,
-            [id]
-        );
-    } catch (e) {
-        console.error('getOnlineBooksByOnlineId error:', e);
-        return null;
-    }
+    return await db.getFirstAsync(`SELECT * FROM online_books WHERE onlineId=?;`, [onlineId]);
 }
-
 
 export async function updateOnlineBook(book) {
     await ensureDb();
-    await db.execAsync(
-        `UPDATE online_books SET title=?, author=?, cover=?, filePath=? WHERE id=?;`,
-        [book.title, book.author, book.cover, book.filePath, book.id]
+    await db.runAsync(
+        `UPDATE online_books SET title=?, author=?, imageUrl=?, filePath=? WHERE id=?;`,
+        [book.title, book.author, book.imageUrl, book.filePath, book.id]
     );
 }
 
 export async function deleteOnlineBook(id) {
     await ensureDb();
-    await db.execAsync(`DELETE FROM online_books WHERE id=?;`, [id]);
+    await db.runAsync(`DELETE FROM online_books WHERE id=?;`, [id]);
 }
 
+// ======================
+// Bookmarks
+// ======================
 export async function getBookmarks(bookId) {
     await ensureDb();
-    const result = await db.execAsync(`SELECT * FROM bookmarks WHERE bookId=?;`, [bookId]);
-    return result[0].rows._array;
+    return await db.getAllAsync(`SELECT * FROM bookmarks WHERE bookId=?;`, [bookId]);
 }
 
-export async function updateBookmark(bookmark) {
-    await ensureDb();
-    await db.execAsync(
-        `UPDATE bookmarks SET chapter=?, position=? WHERE id=?;`,
-        [bookmark.chapter, bookmark.position, bookmark.id]
-    );
-}
-
-export const addBookmark = async (bookId, page) => {
+export const addBookmark = async (bookId, page, chapter = null) => {
     await ensureDb();
     const createdAt = new Date().toISOString();
-    await db.execAsync(
+    await db.runAsync(
         'INSERT INTO bookmarks (bookId, chapter, position, createdAt) VALUES (?, ?, ?, ?);',
-        [bookId, null, page, createdAt] // якщо у твоїй таблиці є `chapter`, передаємо null
+        [bookId, chapter, page, createdAt]
     );
 };
 
 export const getBookmarksByBook = async (bookId) => {
     await ensureDb();
-    const result = await db.execAsync(
+    return await db.getAllAsync(
         'SELECT * FROM bookmarks WHERE bookId = ? ORDER BY createdAt DESC;',
         [bookId]
     );
-    return result[0].rows._array;
 };
+
+export async function updateBookmark(bookmark) {
+    await ensureDb();
+    await db.runAsync(
+        `UPDATE bookmarks SET chapter=?, position=? WHERE id=?;`,
+        [bookmark.chapter, bookmark.position, bookmark.id]
+    );
+}
 
 export const deleteBookmark = async (bookId, page) => {
     await ensureDb();
-    await db.execAsync(
+    await db.runAsync(
         'DELETE FROM bookmarks WHERE bookId = ? AND position = ?;',
         [bookId, page]
     );
@@ -194,36 +168,26 @@ export const deleteBookmark = async (bookId, page) => {
 export const isBookmarked = async (bookId, page) => {
     try {
         await ensureDb();
-        if (bookId == null || page == null) return false;
-        const bookIdStr = String(bookId);
-        const pageNum = Number(page);
-        if (!Number.isFinite(pageNum) || pageNum < 0) return false;
-
-        const result = await db.execAsync(
+        if (!bookId || page == null) return false;
+        const row = await db.getFirstAsync(
             'SELECT * FROM bookmarks WHERE bookId = ? AND position = ?;',
-            [bookIdStr, pageNum]
+            [bookId, page]
         );
-        const first = Array.isArray(result) ? result[0] : undefined;
-        const rows = first && first.rows && first.rows._array ? first.rows._array : [];
-        return rows.length > 0;
-    } catch (e) {
-        // fail closed: if anything goes wrong, just report not bookmarked to avoid noisy warnings
+        return !!row;
+    } catch {
         return false;
     }
 };
 
+// ======================
+// Book Progress
+// ======================
 export const updateBookProgress = async (id, currentPage, totalPages) => {
-    try {
-        if (id == null) return;
-        await ensureDb();
-
-        await db.runAsync(
-            'UPDATE online_books SET currentPage = ?, totalPages = ? WHERE id = ?;',
-            [Number(currentPage) || 0, Number(totalPages) || 0, id]
-        );
-    } catch (e) {
-        console.warn('updateBookProgress failed:', e);
-    }
+    await ensureDb();
+    await db.runAsync(
+        'UPDATE online_books SET currentPage = ?, totalPages = ? WHERE id = ?;',
+        [Number(currentPage) || 0, Number(totalPages) || 0, id]
+    );
 };
 
 export { db };

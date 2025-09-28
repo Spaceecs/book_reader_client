@@ -37,7 +37,7 @@ export function LOBookWidget() {
                 }
                 navigation.navigate('PdfReaderScreen', { book: last });
             } else if (last.format === 'epub') {
-                const fileInfo = await FileSystem.getInfoAsync(last.path);
+                const fileInfo = await FileSystem.getInfoAsync(last.filePath);
                 if (!fileInfo.exists) {
                     Alert.alert('Файл не знайдено', 'Цей файл більше не існує.');
                     return;

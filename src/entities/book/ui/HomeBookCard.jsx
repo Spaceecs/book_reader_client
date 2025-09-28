@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import {useNavigation} from "@react-navigation/native";
-import {openBook} from "../utils/openBook";
+import {openOnlineBook} from "../utils/openOnlineBook";
 
 export function HomeBookCard({ book }) {
     const dispatch = useDispatch();
@@ -18,7 +18,7 @@ export function HomeBookCard({ book }) {
     return (
         <TouchableOpacity
             style={styles.bookItem}
-            onPress={() => openBook(book, dispatch, navigation)}
+            onPress={() => openOnlineBook(book.id, book, dispatch, navigation)}
         >
             <Image
                 source={coverUri ? { uri: coverUri } : require('../../../../assets/placeholder-cover.png')}

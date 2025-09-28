@@ -1,5 +1,5 @@
-import {ScrollView, View, ActivityIndicator, StyleSheet, Text, Dimensions} from "react-native";
-import { useEffect, useState } from "react";
+import {ScrollView, View, ActivityIndicator, StyleSheet, Text, Dimensions, StatusBar} from "react-native";
+import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { BookListWidget, LOBookWidget, DynamicBooksSection } from "../widgets";
 import { getHomePageBooks, getMe } from "../entities";
@@ -51,6 +51,7 @@ export function HomeScreen() {
     if (!books) {
         return (
             <View style={styles.loaderContainer}>
+                <StatusBar barStyle="dark-content" />
                 <MainHeader />
                 <Text>Не вдалося завантажити книги 😢</Text>
             </View>
@@ -59,6 +60,7 @@ export function HomeScreen() {
 
     return (
         <View style={{ flex: 1 }}>
+            <StatusBar barStyle="dark-content" backgroundColor="#fff" />
             <MainHeader />
             <ScrollView>
                 <LOBookWidget />

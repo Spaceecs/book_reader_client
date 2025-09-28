@@ -1,5 +1,5 @@
 import {Text, TouchableOpacity, View, Image, StyleSheet, Dimensions} from "react-native";
-import { openBook } from "../utils/openBook";
+import { openOnlineBook } from "../utils/openOnlineBook";
 import {useDispatch} from "react-redux";
 import {useNavigation} from "@react-navigation/native";
 
@@ -17,7 +17,7 @@ export function BookCard({ book, setSelectedItem, setIsActionsVisible }) {
         <View style={styles.card}>
             <TouchableOpacity
                 activeOpacity={0.85}
-                onPress={() => openBook(book ,dispatch, navigation)}
+                onPress={() => openOnlineBook( book.onlineId, book ,dispatch, navigation)}
                 delayLongPress={350}
                 onLongPress={handleLongPress}
             >

@@ -1,18 +1,23 @@
 import * as FileSystem from "expo-file-system/legacy";
 import { Alert } from "react-native";
 import { downloadPublicBook } from "../api/downloadPublicBook";
-import { addOnlineBook, getOnlineBooksByOnlineId } from "../../../shared";
+import {addOnlineBook, getOnlineBookById, getOnlineBooksByOnlineId} from "../../../shared";
 import { setLastBook } from "../model/BooksSlice";
 
-export async function openBook(book, dispatch, navigation) {
+export async function openOnlineBook(id, book, dispatch, navigation) {
     try {
-        const localOnlineBook = await getOnlineBooksByOnlineId(book.id);
 
-        let newLocalOnlineBook = null
+        console.log("book.id", book.id);
+        console.log("book.name", book.title);
+        const localOnlineBook = await getOnlineBooksByOnlineId(id);
+
+        console.log(localOnlineBook);
+
+        let newLocalOnlineBook
 
         if (!localOnlineBook) {
             const filePath = await downloadPublicBook(book.id, book.title);
-
+            console.log("Path: ",filePath);
             const base64 = await FileSystem.readAsStringAsync(filePath, {
                 encoding: FileSystem.EncodingType.Base64,
             });
@@ -32,6 +37,9 @@ export async function openBook(book, dispatch, navigation) {
                 Alert.alert("⛔ Помилка", "Не вдалося зберегти книгу у локальній базі.");
                 return;
             }
+        } else {
+            newLocalOnlineBook = localOnlineBook
+            console.log("newBook", newLocalOnlineBook)
         }
 
         dispatch(setLastBook(newLocalOnlineBook));
@@ -46,7 +54,7 @@ export async function openBook(book, dispatch, navigation) {
 
         // 5️⃣ Відкриття EPUB
         else if (newLocalOnlineBook != null && newLocalOnlineBook.format === "epub") {
-            const fileInfo = await FileSystem.getInfoAsync(newLocalOnlineBook.path);
+            const fileInfo = await FileSystem.getInfoAsync(newLocalOnlineBook.filePath);
             if (!fileInfo.exists) {
                 Alert.alert("Файл не знайдено", "Цей файл більше не існує.");
                 return;

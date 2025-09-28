@@ -16,14 +16,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StyleSheet } from 'react-native';
 import { useDispatch } from 'react-redux';
 import {getOnlineBooks, getReadingProgress} from '../shared';
-import {openBook} from "../entities";
+import {openOnlineBook} from "../entities";
 import {BookCard} from "../entities";
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 const tabs = ['Книги', 'Аудіокниги'];
 const filters = ['Усі книги', 'Читаю', 'Прочитано', 'Не прочитано'];
 
 export default function LibraryScreen({ navigation }) {
-    useDispatch();
+    const dispatch = useDispatch();
     const [activeTab, setActiveTab] = useState('Книги');
     const [activeFilter, setActiveFilter] = useState('Усі книги');
   const [isSortVisible, setIsSortVisible] = useState(false);
@@ -50,19 +52,26 @@ export default function LibraryScreen({ navigation }) {
 
   const insets = useSafeAreaInsets();
 
-  useEffect(() => {
-    const fetchBooks = async () => {
-      try {
-        const response = await getOnlineBooks();
-        setBooks(response || []);
-      } catch (e) {
-        console.error('Не вдалося завантажити книги:', e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchBooks();
-  }, []);
+    useFocusEffect(
+        useCallback(() => {
+            let isActive = true;
+
+            const fetchBooks = async () => {
+                try {
+                    const response = await getOnlineBooks();
+                    if (isActive) setBooks(response || []);
+                } catch (e) {
+                    console.error('Не вдалося завантажити книги:', e);
+                } finally {
+                    if (isActive) setLoading(false);
+                }
+            };
+
+            fetchBooks();
+
+            return () => { isActive = false; }; // cleanup
+        }, [])
+    );
 
   useEffect(() => {
     const fetchProgress = async () => {
@@ -258,7 +267,7 @@ export default function LibraryScreen({ navigation }) {
                 <View style={styles.actionsList}>
                   {[
                     { key: 'info', label: 'Інформація' },
-                    { key: 'read', label: 'Читати', onPress: () => { setIsActionsVisible(false); openBook(selectedItem); } },
+                    { key: 'read', label: 'Читати', onPress: () => { setIsActionsVisible(false); openOnlineBook(selectedItem.onlineId, selectedItem); } },
                     { key: 'mark', label: 'Позначити як прочитане', renderRight: () => (isMarkedRead ? <Ionicons name="checkmark" size={18} color="#2E8B57" /> : <Ionicons name="ellipse-outline" size={18} color="#999" />), onPress: () => setIsMarkedRead(prev => !prev) },
                     { key: 'collections', label: 'Колекції' },
                     { key: 'share', label: 'Поділитись' },

@@ -5,7 +5,6 @@ export async function getHomePageBooks(params = {}) {
         const response = await myApi.get('/books/home', {
             params,
         });
-        console.log(response);
         return response.data;
     } catch (error) {
         console.error('Помилка при отриманні публічних книг:', error);

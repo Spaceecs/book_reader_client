@@ -45,7 +45,7 @@ export const pickBook = async () => {
 
         return {
             title: name,
-            path: newPath,
+            filePath: newPath,
             format,
             base64: `${base64Prefix}${base64}`,
         };
