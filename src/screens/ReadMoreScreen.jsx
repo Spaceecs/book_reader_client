@@ -6,7 +6,7 @@ export function ReadMoreScreen() {
     const {t} = useTranslation();
     return (
         <View style={styles.container}>
-            <SecondHeader title={t("drawerMenu.ReadMore")}/>
+            <SecondHeader title={t("drawerMenu.readMore")}/>
         </View>
     )
 }

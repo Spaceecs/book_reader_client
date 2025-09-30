@@ -6,3 +6,4 @@ export { default as booksReducer } from './model/BooksSlice';
 export * from './model/BooksSlice';
 export * from './model/BooksSelector'
 export {BookCard} from './ui/BookCard';
+export { openLocalBook } from './utils/openLocalBook';

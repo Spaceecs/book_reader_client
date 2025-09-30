@@ -2,6 +2,7 @@ import {Text, TouchableOpacity, View, Image, StyleSheet, Dimensions} from "react
 import { openOnlineBook } from "../utils/openOnlineBook";
 import {useDispatch} from "react-redux";
 import {useNavigation} from "@react-navigation/native";
+import {openLocalBook} from "../utils/openLocalBook";
 
 export function BookCard({ book, setSelectedItem, setIsActionsVisible }) {
     const dispatch = useDispatch();
@@ -13,11 +14,21 @@ export function BookCard({ book, setSelectedItem, setIsActionsVisible }) {
         }
     };
 
+
+    const handlePress = async () => {
+        console.log(book.title, book.filePath, book.format, book.base64);
+        if (book.onlineId) {
+            await openOnlineBook( book.onlineId, book ,dispatch, navigation)
+        } else {
+            await openLocalBook( book.id, book, dispatch, navigation );
+        }
+    }
+
     return (
         <View style={styles.card}>
             <TouchableOpacity
                 activeOpacity={0.85}
-                onPress={() => openOnlineBook( book.id ?? book.onlineId, book ,dispatch, navigation)}
+                onPress={handlePress}
                 delayLongPress={350}
                 onLongPress={handleLongPress}
             >

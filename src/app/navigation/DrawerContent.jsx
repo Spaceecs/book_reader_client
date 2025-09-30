@@ -36,9 +36,9 @@ const DrawerContent = ({ navigation }) => {
         />
         <DrawerItem
           icon={require("../../../assets/Book.png")}
-          label={t('drawerMenu.ReadNext')}
-          isActive={activeItem === 'ReadNext'}
-          onPress={() => handlePress('ReadNext', 'Home')}
+          label={t('drawerMenu.readMore')}
+          isActive={activeItem === 'ReadMore'}
+          onPress={() => handlePress('ReadMore', 'ReadMore')}
         />
         <DrawerItem
           icon={require("../../../assets/basket.png")}

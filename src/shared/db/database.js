@@ -12,13 +12,17 @@ async function ensureDb() {
 export async function initDatabase() {
     db = await SQLite.openDatabaseAsync("books.db");
     // await db.execAsync(`DROP TABLE IF EXISTS online_books;`);
+    // await db.execAsync(`DROP TABLE IF EXISTS local_books`);
     // Локальні книги
     await db.execAsync(`
         CREATE TABLE IF NOT EXISTS local_books (
-            id TEXT PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT,
-            author TEXT,
-            filePath TEXT
+            filePath TEXT,
+            format TEXT,
+            base64 TEXT,
+            currentPage INTEGER,
+            totalPages INTEGER
         );
     `);
 
@@ -77,9 +81,18 @@ export async function initDatabase() {
 // ======================
 export async function addLocalBook(book) {
     await ensureDb();
-    await db.runAsync(
-        `INSERT INTO local_books (id, title, author, filePath) VALUES (?, ?, ?, ?);`,
-        [book.id, book.title, book.author, book.filePath]
+    const result = await db.runAsync(
+        'INSERT INTO local_books (title, filePath, format, base64, currentPage, totalPages) VALUES (?, ?, ?, ?, ?, ?)',
+        [book.title, book.filePath, book.format, book.base64, 0, 0]
+    );
+    return { ...book, id: result.lastInsertRowId };
+}
+
+export async function getLocalBookById(id) {
+    await ensureDb();
+    return await db.getFirstAsync(
+        `SELECT * FROM local_books WHERE id = ?;`,
+        [id]
     );
 }
 

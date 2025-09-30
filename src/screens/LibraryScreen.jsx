@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StyleSheet } from 'react-native';
 import { useDispatch } from 'react-redux';
-import {getOnlineBooks, getReadingProgress} from '../shared';
+import {getLocalBooks, getOnlineBooks, getReadingProgress} from '../shared';
 import { getCollections, addBookToCollection, removeBookFromCollection, createCollection } from '../shared/api';
 import {openOnlineBook} from "../entities";
 import {BookCard} from "../entities";
@@ -61,8 +61,12 @@ export default function LibraryScreen({ navigation }) {
 
             const fetchBooks = async () => {
                 try {
-                    const response = await getOnlineBooks();
-                    if (isActive) setBooks(response || []);
+                    const onlineBooks = await getOnlineBooks();
+                    const localBooks = await getLocalBooks();
+
+                    const combined = [...(onlineBooks || []), ...(localBooks || [])];
+
+                    if (isActive) setBooks(combined);
                 } catch (e) {
                     console.error('Не вдалося завантажити книги:', e);
                 } finally {
@@ -72,7 +76,7 @@ export default function LibraryScreen({ navigation }) {
 
             fetchBooks();
 
-            return () => { isActive = false; }; // cleanup
+            return () => { isActive = false; };
         }, [])
     );
 
