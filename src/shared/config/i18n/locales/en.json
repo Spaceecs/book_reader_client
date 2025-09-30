@@ -105,5 +105,48 @@
     "Profile": "Profile",
     "Premium": "Premium"
   },
+  "libraryScreen": {
+    "tabs": {
+      "books": "Books",
+      "audiobooks": "Audiobooks"
+    },
+    "filters": {
+      "all": "All books",
+      "reading": "Reading",
+      "read": "Read",
+      "unread": "Unread"
+    },
+    "actions": {
+      "info": "Info",
+      "read": "Read",
+      "markRead": "Mark as read",
+      "collections": "Collections",
+      "share": "Share",
+      "delete": "Delete"
+    },
+    "sortOptions": {
+      "title": "Book title (A-Z)",
+      "author": "Author (A-Z)",
+      "date": "By added date",
+      "pages": "By number of pages"
+    },
+    "filterOptions": {
+      "language": "Language",
+      "genre": "Genre",
+      "publisher": "Publisher",
+      "clear": "Clear"
+    },
+    "pickerSearchPlaceholder": "Search",
+    "emptyList": "No books found",
+    "readStatusModal": {
+      "title": "Reading status",
+      "options": {
+        "all": "All",
+        "reading": "Reading",
+        "read": "Read",
+        "unread": "Unread"
+      }
+    }
+  },
   "publicBooks": "Public books"
 }

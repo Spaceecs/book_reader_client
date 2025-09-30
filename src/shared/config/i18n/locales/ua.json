@@ -105,5 +105,48 @@
     "Profile": "Профіль",
     "Premium": "Преміум"
   },
+  "libraryScreen": {
+    "tabs": {
+      "books": "Книги",
+      "audiobooks": "Аудіокниги"
+    },
+    "filters": {
+      "all": "Усі книги",
+      "reading": "Читаю",
+      "read": "Прочитано",
+      "unread": "Не прочитано"
+    },
+    "actions": {
+      "info": "Інформація",
+      "read": "Читати",
+      "markRead": "Позначити як прочитане",
+      "collections": "Колекції",
+      "share": "Поділитись",
+      "delete": "Видалити"
+    },
+    "sortOptions": {
+      "title": "Назва книги (за алфавітом)",
+      "author": "Автор (за алфавітом)",
+      "date": "За датою додавання",
+      "pages": "За кількістю сторінок"
+    },
+    "filterOptions": {
+      "language": "Мова",
+      "genre": "Жанр",
+      "publisher": "Видавництво",
+      "clear": "Очистити"
+    },
+    "pickerSearchPlaceholder": "Пошук",
+    "emptyList": "Список порожній",
+    "readStatusModal": {
+      "title": "Статус читання",
+      "options": {
+        "all": "Усі",
+        "reading": "Читаю",
+        "read": "Прочитано",
+        "unread": "Не прочитано"
+      }
+    }
+  },
   "publicBooks": "Публічні книги"
 }

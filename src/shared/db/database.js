@@ -11,7 +11,7 @@ async function ensureDb() {
 
 export async function initDatabase() {
     db = await SQLite.openDatabaseAsync("books.db");
-    await db.execAsync(`DROP TABLE IF EXISTS online_books;`);
+    // await db.execAsync(`DROP TABLE IF EXISTS online_books;`);
     // Локальні книги
     await db.execAsync(`
         CREATE TABLE IF NOT EXISTS local_books (

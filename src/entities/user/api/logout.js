@@ -7,10 +7,6 @@ export const logout = async (dispatch, navigation) => {
         await SecureStore.deleteItemAsync('refreshToken');
 
         dispatch(clearUser());
-        navigation.reset({
-            index: 0,
-            routes: [{ name: 'WelcomeScreen' }],
-        });
         console.log('Logged out');
     } catch (error) {
         console.error('Logout error:', error);

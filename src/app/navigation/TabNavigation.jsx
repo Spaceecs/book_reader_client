@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 
 import { HomeScreen } from '../../screens/HomeScreen';
 import LibraryScreen from '../../screens/LibraryScreen';
+import {pickBook} from "../../features";
 
 const Tab = createBottomTabNavigator();
 
@@ -51,15 +52,25 @@ export function MainTabs() {
         component={LibraryScreen}
         options={{ tabBarLabel: t('tabs.Library') }}
       />
-      <Tab.Screen
-        name="ImportTab"
-        component={View}
-        options={{ tabBarLabel: t('tabs.Import') }}
-        listeners={{
-          tabPress: (e) => { e.preventDefault(); },
-        }}
-      />
-      <Tab.Screen
+        <Tab.Screen
+            name="ImportTab"
+            component={View} // компонент не буде відкриватися
+            options={{ tabBarLabel: t('tabs.Import') }}
+            listeners={{
+                tabPress: (e) => {
+                    e.preventDefault();
+                    (async () => {
+                        try {
+                            await pickBook();
+                        } catch (err) {
+                            console.error('Помилка при імпорті книги:', err);
+                        }
+                    })();
+                },
+            }}
+        />
+
+        <Tab.Screen
         name="ProfileTab"
         component={View}
         options={{ tabBarLabel: t('tabs.Profile') }}
