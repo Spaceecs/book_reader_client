@@ -1,113 +1,95 @@
-import {Text, View, StyleSheet, Image, TouchableOpacity, Alert} from "react-native";
-import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
-import { setLastBook } from "../model/BooksSlice";
-import {downloadPublicBook} from "../api/downloadPublicBook";
+import {Text, TouchableOpacity, View, Image, StyleSheet, Dimensions} from "react-native";
+import { openOnlineBook } from "../utils/openOnlineBook";
+import {useDispatch} from "react-redux";
 import {useNavigation} from "@react-navigation/native";
-import * as FileSystem from "expo-file-system/legacy"
 
-export function BookCard({ book }) {
+export function BookCard({ book, setSelectedItem, setIsActionsVisible }) {
     const dispatch = useDispatch();
     const navigation = useNavigation();
-    const [coverUri, setCoverUri] = useState(book.imageUrl || null);
-
-    useEffect(() => {
-        console.log(book);
-    }, []);
-
-    const handlePress = async () => {
-        dispatch(setLastBook(book));
-        console.log("1");
-        const filePath = await downloadPublicBook(book.id, book.title);
-        console.log("2");
-        const base64 = await FileSystem.readAsStringAsync(filePath, {
-            encoding: FileSystem.EncodingType.Base64,
-        });
-        console.log("3");
-        const newBook = {
-            id: book.id,
-            title: book.title,
-            path: filePath,
-            format: book.format,
-            base64: base64,
-        }
-        console.log("4");
-        if (newBook.format === 'pdf') {
-            if (!newBook.base64) {
-                Alert.alert('⛔ Помилка', 'Цей файл не має збережених даних PDF.');
-                return;
-            }
-
-            navigation.navigate('PdfReaderScreen', { book: newBook });
-        } else if (newBook.format === 'epub') {
-            const fileInfo = await FileSystem.getInfoAsync(newBook.path);
-            if (!fileInfo.exists) {
-                Alert.alert('Файл не знайдено', 'Цей файл більше не існує.');
-                return;
-            }
-
-            navigation.navigate('EpubReaderScreen', { book: newBook });
+    const handleLongPress = () => {
+        if (setSelectedItem && setIsActionsVisible) {
+            setSelectedItem(book);
+            setIsActionsVisible(true);
         }
     };
 
-
     return (
-        <TouchableOpacity
-            style={styles.bookItem}
-            onPress={handlePress}
-        >
-            <Image
-                source={coverUri ? { uri: coverUri } : require('../../../../assets/placeholder-cover.png')}
-                style={styles.bookCover}
-                onError={() => setCoverUri(null)}
-            />
-            <View style={styles.bookInfo}>
-                <Text style={styles.bookTitle} numberOfLines={2}>{book.title}</Text>
-                <Text style={styles.bookAuthor} numberOfLines={1}>{book.author}</Text>
-                <View style={styles.ratingContainer}>
-                    <Ionicons name="star" size={16} color="#FFD700" />
-                    <Text style={styles.rating}>{book.avgRating}</Text>
+        <View style={styles.card}>
+            <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => openOnlineBook( book.id ?? book.onlineId, book ,dispatch, navigation)}
+                delayLongPress={350}
+                onLongPress={handleLongPress}
+            >
+                <Image
+                    source={
+                        book.imageUrl
+                            ? { uri: book.imageUrl }
+                            : require("../../../../assets/placeholder-cover.png")
+                    }
+                    style={styles.cardCover}
+                    onError={() => {
+                        /* fallback на placeholder */
+                    }}
+                />
+                <Text style={styles.cardTitle} numberOfLines={2}>
+                    {book.title}
+                </Text>
+                <View style={styles.cardMetaRow}>
+                    <View style={styles.dot} />
+                    <Text style={styles.cardMetaText}>
+                        {book.avgRating && book.avgRating.toFixed
+                            ? book.avgRating.toFixed(1)
+                            : book.avgRating || 0}
+                    </Text>
                 </View>
-            </View>
-        </TouchableOpacity>
+            </TouchableOpacity>
+        </View>
     );
 }
 
+const { width } = Dimensions.get('window');
+const cardWidth = (width - 16 * 2 - 12) / 2;
+
 const styles = StyleSheet.create({
-    bookCover: {
-        width: '100%',
-        height: 200,
+    card: {
+        width: cardWidth,
+        backgroundColor: '#fff',
         borderRadius: 12,
-        backgroundColor: '#f5f5f5',
+        borderWidth: 1,
+        borderColor: '#eee',
+        padding: 8,
+        shadowColor: '#000',
+        shadowOpacity: 0.04,
+        shadowOffset: { width: 0, height: 1 },
+        shadowRadius: 2,
+    },
+    cardCover: {
+        width: '100%',
+        height: 250,
+        borderRadius: 8,
+        backgroundColor: '#f2f2f2',
         marginBottom: 8,
     },
-    bookItem: {
-        width: 160,
-        marginRight: 16,
-    },
-    bookInfo: {
-        paddingHorizontal: 4,
-    },
-    bookTitle: {
-        fontSize: 14,
+    cardTitle: {
+        fontSize: 13,
         fontWeight: '600',
         color: '#000',
-        marginBottom: 4,
-        lineHeight: 18,
+        marginBottom: 6,
     },
-    bookAuthor: {
-        fontSize: 12,
-        color: '#666',
-        marginBottom: 4,
-    },
-    ratingContainer: {
+    cardMetaRow: {
         flexDirection: 'row',
         alignItems: 'center',
     },
-    rating: {
-        fontSize: 12,
-        color: '#666',
-        marginLeft: 4,
+    dot: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        backgroundColor: '#2E8B57',
     },
-});
+    cardMetaText: {
+        fontSize: 12,
+        color: '#2E8B57',
+        marginLeft: 6,
+    },
+})

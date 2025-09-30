@@ -2,35 +2,33 @@ import React, { useMemo, useRef, useState, useEffect } from 'react';
 import {
   View,
   Text,
-  SafeAreaView,
   StatusBar,
   TouchableOpacity,
   ScrollView,
   FlatList,
   Modal,
   TextInput,
-  Animated,
-  Dimensions,
-  Image
+  Animated
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StyleSheet } from 'react-native';
 import { useDispatch } from 'react-redux';
-import { getReadingProgress } from '../shared';
-import { getAllBooks } from '../entities';
-import { setLastBook } from '../entities/book/model/BooksSlice';
-import { downloadPublicBook } from '../entities/book/api/downloadPublicBook';
-import * as FileSystem from 'expo-file-system/legacy';
+import {getOnlineBooks, getReadingProgress} from '../shared';
+import { getCollections, addBookToCollection, removeBookFromCollection, createCollection } from '../shared/api';
+import {openOnlineBook} from "../entities";
+import {BookCard} from "../entities";
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 const tabs = ['Книги', 'Аудіокниги'];
 const filters = ['Усі книги', 'Читаю', 'Прочитано', 'Не прочитано'];
 
 export default function LibraryScreen({ navigation }) {
-  const dispatch = useDispatch();
-  const [activeTab, setActiveTab] = useState('Книги');
-  const [activeFilter, setActiveFilter] = useState('Усі книги');
+    const dispatch = useDispatch();
+    const [activeTab, setActiveTab] = useState('Книги');
+    const [activeFilter, setActiveFilter] = useState('Усі книги');
   const [isSortVisible, setIsSortVisible] = useState(false);
   const [isFilterVisible, setIsFilterVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -48,28 +46,35 @@ export default function LibraryScreen({ navigation }) {
   const [isActionsVisible, setIsActionsVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isMarkedRead, setIsMarkedRead] = useState(false);
+  const [isCollectionsModalVisible, setIsCollectionsModalVisible] = useState(false);
+  const [collections, setCollections] = useState([]);
   const coverScale = useRef(new Animated.Value(1)).current;
   const sheetOpacity = useRef(new Animated.Value(0)).current;
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const SCREEN_WIDTH = Dimensions.get('window').width;
-  const SCREEN_HEIGHT = Dimensions.get('window').height;
   const insets = useSafeAreaInsets();
 
-  useEffect(() => {
-    const fetchBooks = async () => {
-      try {
-        const response = await getAllBooks();
-        setBooks(response.books || []);
-      } catch (e) {
-        console.error('Не вдалося завантажити книги:', e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchBooks();
-  }, []);
+    useFocusEffect(
+        useCallback(() => {
+            let isActive = true;
+
+            const fetchBooks = async () => {
+                try {
+                    const response = await getOnlineBooks();
+                    if (isActive) setBooks(response || []);
+                } catch (e) {
+                    console.error('Не вдалося завантажити книги:', e);
+                } finally {
+                    if (isActive) setLoading(false);
+                }
+            };
+
+            fetchBooks();
+
+            return () => { isActive = false; }; // cleanup
+        }, [])
+    );
 
   useEffect(() => {
     const fetchProgress = async () => {
@@ -134,55 +139,8 @@ export default function LibraryScreen({ navigation }) {
     return list;
   }, [books, activeTab, searchQuery, readStatusFilter, readingProgressMap]);
 
-  const openBook = async (book) => {
-    try {
-      dispatch(setLastBook(book));
-      const filePath = await downloadPublicBook(book.id, book.title);
-      const base64 = await FileSystem.readAsStringAsync(filePath, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-      const newBook = {
-        id: book.id,
-        title: book.title,
-        author: book.author,
-        path: filePath,
-        format: book.format,
-        base64: base64,
-      };
-      if (newBook.format === 'pdf') {
-        navigation.navigate('PdfReaderScreen', { book: newBook });
-      } else if (newBook.format === 'epub') {
-        navigation.navigate('EpubReaderScreen', { book: newBook });
-      }
-    } catch (e) {
-      console.error('Помилка відкриття книги:', e);
-    }
-  };
-
-  const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <TouchableOpacity
-        activeOpacity={0.85}
-        onPress={() => openBook(item)}
-        delayLongPress={350}
-        onLongPress={() => { setSelectedItem(item); setIsActionsVisible(true); }}
-      >
-        <Image
-          source={item.imageUrl ? { uri: item.imageUrl } : require('../../assets/placeholder-cover.png')}
-          style={styles.cardCover}
-          onError={(e) => { /* fallback to placeholder if server image fails */ }}
-        />
-        <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
-        <View style={styles.cardMetaRow}>
-          <View style={styles.dot} />
-          <Text style={styles.cardMetaText}>{(item.avgRating || 0).toFixed ? (item.avgRating || 0).toFixed(1) : (item.avgRating || 0)}</Text>
-        </View>
-      </TouchableOpacity>
-    </View>
-  );
-
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
       <View style={styles.topBar}>
@@ -251,7 +209,7 @@ export default function LibraryScreen({ navigation }) {
         numColumns={2}
         columnWrapperStyle={styles.gridRow}
         contentContainerStyle={[styles.grid, { paddingBottom: 60 + insets.bottom }]}
-        renderItem={renderItem}
+        renderItem={({ item }) => <BookCard book={item} setSelectedItem={setSelectedItem} setIsActionsVisible={setIsActionsVisible} />}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={!loading ? (
           <View style={{ padding: 24 }}>
@@ -312,9 +270,21 @@ export default function LibraryScreen({ navigation }) {
                 <View style={styles.actionsList}>
                   {[
                     { key: 'info', label: 'Інформація' },
-                    { key: 'read', label: 'Читати', onPress: () => { setIsActionsVisible(false); openBook(selectedItem); } },
+                    { key: 'read', label: 'Читати', onPress: () => { setIsActionsVisible(false); openOnlineBook(selectedItem.onlineId, selectedItem); } },
                     { key: 'mark', label: 'Позначити як прочитане', renderRight: () => (isMarkedRead ? <Ionicons name="checkmark" size={18} color="#2E8B57" /> : <Ionicons name="ellipse-outline" size={18} color="#999" />), onPress: () => setIsMarkedRead(prev => !prev) },
-                    { key: 'collections', label: 'Колекції' },
+                    { key: 'collections', label: 'Колекції', onPress: async () => {
+                        try {
+                          setIsActionsVisible(false);
+                          const list = await getCollections();
+                          let arr = Array.isArray(list) ? list : [];
+                          const hasSaved = arr.some(c => (c.name || c.title) === 'Збережені');
+                          const hasPostponed = arr.some(c => (c.name || c.title) === 'Відкладені');
+                          if (!hasSaved) { try { const created = await createCollection('Збережені'); arr = [created, ...arr]; } catch(_) {} }
+                          if (!hasPostponed) { try { const created = await createCollection('Відкладені'); arr = [created, ...arr]; } catch(_) {} }
+                          setCollections(arr);
+                          setIsCollectionsModalVisible(true);
+                        } catch(_) { setIsCollectionsModalVisible(true); }
+                      } },
                     { key: 'share', label: 'Поділитись' },
                     { key: 'delete', label: 'Видалити', destructive: true },
                   ].map((row, index, arr) => {
@@ -459,12 +429,71 @@ export default function LibraryScreen({ navigation }) {
           </View>
         </Modal>
       )}
-    </SafeAreaView>
+
+      {/* Collections choose modal */}
+      {isCollectionsModalVisible && (
+        <Modal visible transparent animationType="slide" onRequestClose={() => setIsCollectionsModalVisible(false)}>
+          <View style={styles.sheetOverlay}>
+            <TouchableOpacity style={{ flex: 1 }} onPress={() => setIsCollectionsModalVisible(false)} />
+            <View style={[styles.sheetContainer, { paddingBottom: 20 + (insets?.bottom || 0) }] }>
+              <View style={styles.sheetHandle} />
+              <View style={styles.sheetHeaderRow}>
+                <TouchableOpacity onPress={() => setIsCollectionsModalVisible(false)}>
+                  <Ionicons name="chevron-back" size={22} color="#222" />
+                </TouchableOpacity>
+                <Text style={styles.sheetTitle}>Додати до колекції</Text>
+                <View style={{ width: 24 }} />
+              </View>
+              <View style={{ paddingHorizontal: 16, paddingBottom: 24, maxHeight: '60%' }}>
+                {[{ key: 'audio', label: 'Аудіо книги' }, { key: 'downloaded', label: 'Завантажені на пристрій' }].map(row => (
+                  <View key={row.key} style={{ flexDirection:'row', justifyContent:'space-between', alignItems:'center', paddingVertical:14, borderBottomWidth:1, borderBottomColor:'#eee', opacity:0.6 }}>
+                    <Text style={{ fontSize:14, color:'#666' }}>{row.label}</Text>
+                    <Ionicons name="information-circle-outline" size={20} color="#999" />
+                  </View>
+                ))}
+                {(collections || []).map(c => {
+                  const targetBookIdRaw = selectedItem?.onlineId ?? selectedItem?.id;
+                  const targetBookId = Number(targetBookIdRaw);
+                  const isIn = Array.isArray(c.books) ? c.books.some(b => Number(b?.id) === targetBookId) : false;
+                  return (
+                    <TouchableOpacity
+                      key={String(c.id)}
+                      style={[styles.selectRow, isIn && { backgroundColor: '#e6f5ef' }]}
+                      onPress={async () => {
+                        try {
+                          if (!targetBookId) return;
+                          // optimistic update
+                          setCollections(prev => prev.map(col => col.id === c.id
+                            ? {
+                                ...col,
+                                books: isIn
+                                  ? (Array.isArray(col.books) ? col.books.filter(b => Number(b?.id) !== targetBookId) : [])
+                                  : [ ...(Array.isArray(col.books) ? col.books : []), { id: targetBookId } ],
+                              }
+                            : col
+                          ));
+                          if (isIn) { await removeBookFromCollection(c.id, targetBookId); }
+                          else { await addBookToCollection(c.id, targetBookId); }
+                          // refresh from server
+                          const list = await getCollections();
+                          setCollections(Array.isArray(list) ? list : []);
+                        } catch(_) { /* ignore */ }
+                      }}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={[styles.selectText, isIn && { color: '#0E7A4A', fontWeight: '700' }]}>{c.name || c.title || 'Без назви'}</Text>
+                      <Ionicons name={isIn ? 'checkbox' : 'square-outline'} size={20} color={isIn ? '#2E8B57' : '#666'} />
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+    </View>
   );
 }
-
-const { width } = Dimensions.get('window');
-const cardWidth = (width - 16 * 2 - 12) / 2;
 
 const styles = StyleSheet.create({
   container: {
@@ -569,46 +598,6 @@ const styles = StyleSheet.create({
   gridRow: {
     justifyContent: 'space-between',
     marginBottom: 12,
-  },
-  card: {
-    width: cardWidth,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#eee',
-    padding: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowOffset: { width: 0, height: 1 },
-    shadowRadius: 2,
-  },
-  cardCover: {
-    width: '100%',
-    height: 160,
-    borderRadius: 8,
-    backgroundColor: '#f2f2f2',
-    marginBottom: 8,
-  },
-  cardTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#000',
-    marginBottom: 6,
-  },
-  cardMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#2E8B57',
-  },
-  cardMetaText: {
-    fontSize: 12,
-    color: '#2E8B57',
-    marginLeft: 6,
   },
   bottomSpacer: {
     height: 1,

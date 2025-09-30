@@ -1,6 +1,6 @@
 import {FlatList, Text, View} from "react-native";
 import {useEffect, useState} from "react";
-import {BookCard, getAllBooks} from "../entities";
+import {getAllBooks, BookCard} from "../entities";
 
 export function SearchScreen({route}) {
     const param = route.params;
@@ -13,6 +13,7 @@ export function SearchScreen({route}) {
         const fetchBooks = async () => {
             try {
                 const response = await getAllBooks(param);
+
                 setBooks(response.books);
                 console.log(response);
             } catch (error) {

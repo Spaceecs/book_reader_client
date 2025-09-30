@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Button, StyleSheet, Alert, Text, TouchableOpacity, Modal } from 'react-native';
+import { View, Button, StyleSheet, Alert, Text, TouchableOpacity, Modal, TextInput, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
 import { WebView } from 'react-native-webview';
@@ -8,19 +8,21 @@ import { Ionicons } from '@expo/vector-icons';
 import { ReadingBottomToolbar, ReadingSettingsModal, ReadingChaptersDrawer, ReadingTextSelectionToolbar } from '../widgets';
 import {
     addBookmark,
-    deleteBookmark,
+    deleteBookmark, getOnlineBookById,
     isBookmarked,
     updateBookProgress,
-} from '../shared/db/database';
-
-// import ReadingSettingsScreen from './ReadingSettingsScreen';
-
+    getBookmarksByBook,
+    addComment,
+} from '../shared';
+import { getCommentsByBook } from '../shared';
+import {setLastBook} from "../entities";
+import {useDispatch} from "react-redux";
 
 export default function EpubReaderScreen({ route }) {
+    const { book } = route.params;
     const insets = useSafeAreaInsets();
-    const {book} = route.params;
-    console.log(book);
     const webViewRef = useRef(null);
+    const dispatch = useDispatch();
 
     const base64 = book.base64.replace(
         /^data:application\/epub\+zip;base64,/,
@@ -30,7 +32,7 @@ export default function EpubReaderScreen({ route }) {
 
     const [currentPage, setCurrentPage] = useState(savedPage);
     const [bookmarked, setBookmarked] = useState(false);
-    
+
     const [settingsVisible, setSettingsVisible] = useState(false);
     const [immersive, setImmersive] = useState(false);
     const [showToolbar, setShowToolbar] = useState(false);
@@ -54,6 +56,25 @@ export default function EpubReaderScreen({ route }) {
     const [showSpacingDropdown, setShowSpacingDropdown] = useState(false);
     const [showLineSpacingDropdown, setShowLineSpacingDropdown] = useState(false);
     const [brightness, setBrightness] = useState(50);
+    const [readingMode, setReadingMode] = useState('Одна сторінка');
+
+    // Preview resolver for bookmark snippet
+    const previewResolverRef = useRef(null);
+
+    // Comments state
+    const [lastSelectedText, setLastSelectedText] = useState('');
+    const [commentModalVisible, setCommentModalVisible] = useState(false);
+    const [commentText, setCommentText] = useState('');
+
+    // Reader UI state (search, toc, bookmarks)
+    const [searchVisible, setSearchVisible] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showResults, setShowResults] = useState(false);
+    const [searchResults, setSearchResults] = useState([]);
+    const [chapters, setChapters] = useState([]);
+    const [currentChapterIndex, setCurrentChapterIndex] = useState(null);
+    const [bookmarksList, setBookmarksList] = useState([]);
+    const [commentsList, setCommentsList] = useState([]);
 
     const TOOLBAR_SAFE_PADDING_PX = 120;
 
@@ -66,11 +87,9 @@ export default function EpubReaderScreen({ route }) {
     <script src="https://unpkg.com/epubjs/dist/epub.min.js"></script>
     <style>
         html, body {
-            margin; padding; height: 100%; background;
+            margin: 0; padding: 0; height: 100%; width: 100%; background: #fff !important;
         }
-        #viewer {
-            height: 100%;
-        }
+        #viewer { height: 100%; overflow-y: auto; }
     </style>
 </head>
 <body>
@@ -122,6 +141,14 @@ export default function EpubReaderScreen({ route }) {
     let currentLocation = 0;
     const savedLocation = ${savedPage};
 
+    // Selection bridge
+    window.lastSelectedText = '';
+    window.postSelectedText = function(){
+        try {
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'selection', text: String(window.lastSelectedText || '') }));
+        } catch(_) {}
+    };
+
     // Helper to force font-size across typical text tags inside spine documents
     window.applyFontSize = function(percent) {
         try {
@@ -160,6 +187,92 @@ export default function EpubReaderScreen({ route }) {
                         } else {
                             rendition.display();
                         }
+                        // Send simplified TOC to React Native
+                        try {
+                            function mapToc(items) {
+                                return (items || []).map((i, idx) => ({
+                                    id: i.id || i.href || String(idx),
+                                    title: (i.label && (i.label.trim ? i.label.trim() : i.label)) || i.title || 'Розділ',
+                                    href: i.href || null,
+                                    children: (i.subitems && i.subitems.length ? mapToc(i.subitems) : (i.children && i.children.length ? mapToc(i.children) : []))
+                                }));
+                            }
+                            function normalize(h){
+                                if (!h) return '';
+                                return String(h).split('#')[0].split('?')[0].toLowerCase().replace(/\\\\/g, '/');
+                            }
+                            const simpleToc = mapToc(nav.toc || []);
+                            window._topTocRaw = (simpleToc || []).map(function(x){ return { title: x.title || 'Розділ', href: x.href || '' }; });
+                            window._topTocTitles = window._topTocRaw.map(function(x){ return x.title; });
+                            window._topChapterLocations = new Array(window._topTocRaw.length).fill(null);
+
+                            (async function(){
+                                try {
+                                    var spineItems = book.spine.spineItems || [];
+                                    function findSpineItemIndexByHref(rawHref){
+                                        var hrefNoHash = String(rawHref||'').split('#')[0];
+                                        var normTarget = normalize(hrefNoHash);
+                                        for (var i=0;i<spineItems.length;i++){
+                                            var sh = normalize(spineItems[i] && spineItems[i].href);
+                                            if (!sh) continue;
+                                            if (sh === normTarget || sh.endsWith('/'+normTarget) || normTarget.endsWith('/'+sh)) return i;
+                                        }
+                                        return -1;
+                                    }
+                                    for (var ti=0; ti<window._topTocRaw.length; ti++){
+                                        var rawHref = String(window._topTocRaw[ti].href || '');
+                                        var anchor = null;
+                                        var hashIdx = rawHref.indexOf('#');
+                                        if (hashIdx >= 0) anchor = rawHref.slice(hashIdx + 1);
+                                        var spineIdx = findSpineItemIndexByHref(rawHref);
+                                        if (spineIdx >= 0){
+                                            var item = spineItems[spineIdx];
+                                            try {
+                                                await item.load(book.load.bind(book));
+                                                var cfi = null;
+                                                try {
+                                                    var doc = item.document;
+                                                    if (anchor && doc){
+                                                        var el = doc.getElementById(anchor);
+                                                        if (el){
+                                                            try {
+                                                                var r = doc.createRange();
+                                                                r.setStart(el, 0); r.setEnd(el, 0);
+                                                                if (item.cfiFromRange) cfi = item.cfiFromRange(r);
+                                                                if (!cfi && item.cfiFromElement) cfi = item.cfiFromElement(el);
+                                                            } catch(_) {}
+                                                        }
+                                                    }
+                                                    if (!cfi && doc){
+                                                        try {
+                                                            var r2 = doc.createRange();
+                                                            var body = doc.body;
+                                                            r2.setStart(body, 0); r2.setEnd(body, 0);
+                                                            if (item.cfiFromRange) cfi = item.cfiFromRange(r2);
+                                                        } catch(_) {}
+                                                    }
+                                                } catch(_) {}
+                                                try { await item.unload(); } catch(_) {}
+                                                if (cfi){
+                                                    try {
+                                                        var loc = book.locations.locationFromCfi(cfi);
+                                                        if (typeof loc === 'number') window._topChapterLocations[ti] = loc;
+                                                    } catch(_) {}
+                                                }
+                                            } catch(_) {}
+                                        }
+                                    }
+                                    // Ensure chapter 1 fallback at book start
+                                    try {
+                                        if (Array.isArray(window._topChapterLocations) && typeof window._topChapterLocations[0] !== 'number') {
+                                            window._topChapterLocations[0] = 0;
+                                        }
+                                    } catch(_) {}
+                                } catch(_) {}
+                            })();
+
+                            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'toc', toc: simpleToc }));
+                        } catch (e) {}
                     } catch (e) {
                         rendition.display();
                     }
@@ -183,11 +296,43 @@ export default function EpubReaderScreen({ route }) {
                 var percent = book.locations.percentageFromCfi(cfi) || 0; // 0..1
                 window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'toggleToolbar', visible: percent >= 0.85 }));
             } catch(e) {}
+
+            // Determine current chapter based on book.locations numeric mapping of top-level TOC CFIs
+            try {
+                var currLoc = 0;
+                try { currLoc = book.locations.locationFromCfi(location.start.cfi) || 0; } catch(_) {}
+                var idx = null; var title = '';
+                if (Array.isArray(window._topChapterLocations) && Array.isArray(window._topTocTitles)){
+                    var bestIdx = -1; var bestVal = -1;
+                    for (var i=0;i<window._topChapterLocations.length;i++){
+                        var val = window._topChapterLocations[i];
+                        if (typeof val === 'number' && val >= 0 && val <= currLoc && val >= bestVal){
+                            bestVal = val; bestIdx = i;
+                        }
+                    }
+                    if (bestIdx >= 0){
+                        idx = bestIdx + 1;
+                        title = window._topTocTitles[bestIdx] || '';
+                    } else {
+                        // At very beginning of the book before first mapped CFI
+                        idx = 1;
+                        title = window._topTocTitles[0] || '';
+                    }
+                }
+                var prevIdx = (typeof window._currentChapterIndex === 'number') ? window._currentChapterIndex : null;
+                if (typeof idx === 'number' && idx > 0) {
+                    window._currentChapterIndex = idx;
+                    window._currentChapterTitle = title;
+                    if (prevIdx !== idx) {
+                        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'chapter', index: idx, title: title }));
+                    }
+                }
+            } catch(e) {}
         });
 
         window.ReactNativeWebView.postMessage(JSON.stringify({
             type: 'init',
-            currentLocation
+            totalLocations
         }));
 
         // Ensure initial font size and bottom padding applied
@@ -198,62 +343,166 @@ export default function EpubReaderScreen({ route }) {
     window.book = book;
     window.rendition = rendition;
     window.currentFontSize = 120;
+    // Detect if EPUB is fixed-layout (pre-paginated) → scrolling may not be supported
+    window.supportsScrolledFlow = async function(){
+        try {
+            var meta = (book && book.packaging && book.packaging.metadata) ? book.packaging.metadata : {};
+            var layout = String((meta.layout || meta["rendition:layout"] || '')).toLowerCase();
+            if (layout === 'pre-paginated') return false;
+            if ((meta['fixed-layout'] === true) || (meta.fixedLayout === true)) return false;
+            return true;
+        } catch(_) { return true; }
+    };
+
+    // Helper to re-send TOC to React Native on demand
+    window.postToc = function() {
+        try {
+            if (book && book.loaded && book.loaded.navigation) {
+                book.loaded.navigation.then(function(navigation){
+                    try {
+                        function mapToc(items){
+                            return (items || []).map(function(i, idx){
+                                return {
+                                    id: i.id || i.href || String(idx),
+                                    title: (i.label && (i.label.trim ? i.label.trim() : i.label)) || i.title || 'Розділ',
+                                    href: i.href || null,
+                                    children: (i.subitems && i.subitems.length ? mapToc(i.subitems) : (i.children && i.children.length ? mapToc(i.children) : []))
+                                };
+                            });
+                        }
+                        function normalize(h){ if (!h) return ''; return String(h).split('#')[0].split('?')[0].toLowerCase().replace(/\\\\/g, '/'); }
+                        var toc = mapToc(navigation && navigation.toc ? navigation.toc : []);
+                        window._topTocRaw = (toc||[]).map(function(x){ return { title: x.title || 'Розділ', href: x.href || '' }; });
+                        window._topTocTitles = window._topTocRaw.map(function(x){ return x.title; });
+                        window._topChapterLocations = new Array(window._topTocRaw.length).fill(null);
+                        (async function(){
+                            try {
+                                var spineItems = book.spine.spineItems || [];
+                                function findSpineItemIndexByHref(rawHref){
+                                    var hrefNoHash = String(rawHref||'').split('#')[0];
+                                    var normTarget = normalize(hrefNoHash);
+                                    for (var i=0;i<spineItems.length;i++){
+                                        var sh = normalize(spineItems[i] && spineItems[i].href);
+                                        if (!sh) continue;
+                                        if (sh === normTarget || sh.endsWith('/'+normTarget) || normTarget.endsWith('/'+sh)) return i;
+                                    }
+                                    return -1;
+                                }
+                                for (var ti=0; ti<window._topTocRaw.length; ti++){
+                                    var rawHref = String(window._topTocRaw[ti].href || '');
+                                    var anchor = null;
+                                    var hashIdx = rawHref.indexOf('#');
+                                    if (hashIdx >= 0) anchor = rawHref.slice(hashIdx + 1);
+                                    var spineIdx = findSpineItemIndexByHref(rawHref);
+                                    if (spineIdx >= 0){
+                                        var item = spineItems[spineIdx];
+                                        try {
+                                            await item.load(book.load.bind(book));
+                                            var cfi = null;
+                                            try {
+                                                var doc = item.document;
+                                                if (anchor && doc){
+                                                    var el = doc.getElementById(anchor);
+                                                    if (el){
+                                                        try {
+                                                            var r = doc.createRange();
+                                                            r.setStart(el, 0); r.setEnd(el, 0);
+                                                            if (item.cfiFromRange) cfi = item.cfiFromRange(r);
+                                                            if (!cfi && item.cfiFromElement) cfi = item.cfiFromElement(el);
+                                                        } catch(_) {}
+                                                    }
+                                                }
+                                                if (!cfi && doc){
+                                                    try {
+                                                        var r2 = doc.createRange();
+                                                        var body = doc.body;
+                                                        r2.setStart(body, 0); r2.setEnd(body, 0);
+                                                        if (item.cfiFromRange) cfi = item.cfiFromRange(r2);
+                                                    } catch(_) {}
+                                                }
+                                            } catch(_) {}
+                                            try { await item.unload(); } catch(_) {}
+                                            if (cfi){
+                                                try {
+                                                    var loc = book.locations.locationFromCfi(cfi);
+                                                    if (typeof loc === 'number') window._topChapterLocations[ti] = loc;
+                                                } catch(_) {}
+                                            }
+                                        } catch(_) {}
+                                    }
+                                }
+                            } catch(_) {}
+                        })();
+                        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'toc', toc: toc }));
+                    } catch(_) {}
+                }).catch(function(){});
+            }
+        } catch(_) {}
+    };
+
+    // Return first sentence of current section as preview
+    window.getPreview = function() {
+        try {
+            var iframe = document.querySelector('iframe');
+            var doc = iframe && iframe.contentDocument;
+            var body = doc && doc.body;
+            var text = body ? (body.innerText || body.textContent || '') : '';
+            text = String(text || '').replace(/\s+/g, ' ').trim();
+            if (!text) return '';
+            var m = text.match(/[^.!?\\n\\r]{20,}?[.!?]/);
+            var first = (m ? m[0] : text).slice(0, 160);
+            return first;
+        } catch(e) { return ''; }
+    };
 
     window.searchInBook = async function(query) {
-    window.ReactNativeWebView.postMessage(JSON.stringify({
-        type: 'debug',
-        message: '[CALL] searchInBook called with: ' + query
-    }));
+        const results = [];
+        const spineItems = book.spine.spineItems;
 
-    const results = [];
-    const spineItems = book.spine.spineItems;
+        for (let i = 0; i < spineItems.length; i++) {
+            const item = spineItems[i];
+            try {
+                await item.load(book.load.bind(book));
+                const doc = item.document;
+                const body = doc && doc.body;
+                if (!body) continue;
 
-    for (let i = 0; i < spineItems.length; i++) {
-        const item = spineItems[i];
+                const walker = doc.createTreeWalker(body, NodeFilter.SHOW_TEXT, null, false);
+                while (walker.nextNode()) {
+                    const node = walker.currentNode;
+                    const text = node.textContent;
+                    const index = text.toLowerCase().indexOf(query.toLowerCase());
+                    if (index !== -1) {
+                        const range = doc.createRange();
+                        range.setStart(node, index);
+                        range.setEnd(node, index + query.length);
 
-        try {
-            await item.load(book.load.bind(book));
-            const doc = item.document;
-            const body = doc && doc.body;
-            if (!body) continue;
-
-            const walker = doc.createTreeWalker(body, NodeFilter.SHOW_TEXT, null, false);
-            while (walker.nextNode()) {
-                const node = walker.currentNode;
-                const text = node.textContent;
-                const index = text.toLowerCase().indexOf(query.toLowerCase());
-                if (index !== -1) {
-                    const range = doc.createRange();
-                    range.setStart(node, index);
-                    range.setEnd(node, index + query.length);
-
-                    const cfi = item.cfiFromRange(range);
-                    results.push({
-                        cfi,
-                        excerpt: node.textContent.slice(Math.max(0, index - 30), index + query.length + 30)
-                    });
+                        const cfi = item.cfiFromRange(range);
+                        results.push({
+                            cfi,
+                            excerpt: node.textContent.slice(Math.max(0, index - 30), index + query.length + 30)
+                        });
+                    }
                 }
+                await item.unload();
+            } catch (e) {
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                    type: 'debug',
+                    message: '[ERROR] Failed in spineItem: ' + e.message
+                }));
             }
-
-            await item.unload();
-        } catch (e) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({
-                type: 'debug',
-                message: '[ERROR] Failed in spineItem: ' + e.message
-            }));
         }
-    }
 
-    if (results.length > 0) {
-        await rendition.display(results[0].cfi);
-        window.highlightSearchResults(results);
-    }
+        if (results.length > 0) {
+            await rendition.display(results[0].cfi);
+            window.highlightSearchResults(results);
+        }
 
-    window.ReactNativeWebView.postMessage(JSON.stringify({
-        type: 'searchResults',
-        results
-    }));
-};
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'searchResults',
+            results
+        }));
+    };
 
    window.highlightSearchResults = function(results) {
     let count = 0;
@@ -329,6 +578,20 @@ export default function EpubReaderScreen({ route }) {
             }
             doc.addEventListener('click', onTap, { passive: true });
             doc.addEventListener('touchend', onTap, { passive: true });
+
+            // Selection listeners per content document
+            function updateSelection() {
+                try {
+                    var sel = (win.getSelection && win.getSelection()) || (doc.getSelection && doc.getSelection());
+                    var txt = sel && sel.toString ? sel.toString() : '';
+                    if (typeof txt === 'string') {
+                        window.lastSelectedText = txt.trim();
+                    }
+                } catch(_) {}
+            }
+            doc.addEventListener('selectionchange', updateSelection, { passive: true });
+            doc.addEventListener('mouseup', updateSelection, { passive: true });
+            doc.addEventListener('touchend', updateSelection, { passive: true });
         } catch(e) {}
     });
 
@@ -347,6 +610,8 @@ export default function EpubReaderScreen({ route }) {
     };
 
     const progressTimerRef = useRef(null);
+    const bookmarkGuardRef = useRef({ until: 0, page: null, value: null });
+    const skipBookmarkCheckRef = useRef(0);
 
     const handleMessage = async (event) => {
         const data = event.nativeEvent.data;
@@ -368,15 +633,20 @@ export default function EpubReaderScreen({ route }) {
             const { currentLocation: loc, totalLocations: total } = parsed;
             setCurrentPage(loc);
             if (total && total > 0) {
-                const percentNum = Math.max(0, Math.min(100, Math.round((loc / total) * 100)));
+                const percentNum = Math.max(0, Math.min(100, Math.round(((Number(loc)||0) / (Number(total)||1)) * 100)));
                 setProgressPct(percentNum);
                 setShowToolbar(percentNum >= 85);
             }
 
             try {
-                if (book?.id != null && Number.isFinite(loc)) {
-                    const exists = await isBookmarked(String(book.id), Number(loc));
-                    setBookmarked(!!exists);
+                const guard = bookmarkGuardRef.current;
+                if (guard && Date.now() < (guard.until || 0) && Math.abs(Number(loc) - Number(guard.page)) <= 1) {
+                    setBookmarked(!!guard.value);
+                } else if (Date.now() > (skipBookmarkCheckRef.current || 0)) {
+                    if (book?.id != null && Number.isFinite(loc)) {
+                        const exists = await isBookmarked(String(book.id), Number(loc));
+                        setBookmarked(!!exists);
+                    }
                 }
             } catch (e) {
                 console.warn('isBookmarked failed:', e);
@@ -385,8 +655,21 @@ export default function EpubReaderScreen({ route }) {
             if (book?.id && (loc ?? 0) >= 0) {
                 if (progressTimerRef.current) clearTimeout(progressTimerRef.current);
                 progressTimerRef.current = setTimeout(async () => {
+
                     try {
+                        console.log(book.id, loc, total)
                         await updateBookProgress(book.id, loc, total);
+                        const newBook = await getOnlineBookById(book.id);
+                        dispatch(setLastBook(newBook));
+                        // refresh bookmarks list and comments for drawer
+                        try {
+                            const list = await getBookmarksByBook(String(book.id));
+                            setBookmarksList(Array.isArray(list) ? list : []);
+                        } catch (e) { console.warn('bookmarks refresh failed:', e); }
+                        try {
+                            const clist = await getCommentsByBook(String(book.id));
+                            setCommentsList(Array.isArray(clist) ? clist : []);
+                        } catch (_) {}
                     } catch (e) {
                         console.warn('update progress failed:', e);
                     }
@@ -410,13 +693,79 @@ export default function EpubReaderScreen({ route }) {
         if (parsed.type === 'toggleToolbar') {
             setShowToolbar(!!parsed.visible);
         }
+
+        if (parsed.type === 'chapter') {
+            try {
+                if (typeof parsed.index === 'number' && parsed.index > 0) {
+                    setCurrentChapterIndex(parsed.index);
+                }
+            } catch (_) {}
+        }
+
+        if (parsed.type === 'previewEcho') {
+            try {
+                const txt = (parsed && parsed.text) || '';
+                if (previewResolverRef.current) {
+                    previewResolverRef.current(String(txt || ''));
+                    previewResolverRef.current = null;
+                }
+            } catch (_) {}
+            return;
+        }
+
+        if (parsed.type === 'cfiEcho') {
+            // No direct set here; CFI is saved alongside bookmark as available
+            return;
+        }
+
+        if (parsed.type === 'selection') {
+            const text = (parsed && parsed.text) || '';
+            setLastSelectedText(text);
+            if (text && text.trim().length > 0) {
+                setSelectionVisible(true);
+                // Position is approximated; for simplicity, keep toolbar at saved position
+            }
+        }
+
+        if (parsed.type === 'toc') {
+            try {
+                setChapters(Array.isArray(parsed.toc) ? parsed.toc : []);
+            } catch (_) {}
+        }
     };
 
     useEffect(() => () => {
         if (progressTimerRef.current) clearTimeout(progressTimerRef.current);
     }, []);
 
-    // Apply font size changes from Settings modal to the EPUB rendition
+    // Refresh lists when opening drawer or book changes
+    useEffect(() => {
+        if (chaptersVisible) {
+            refreshLists();
+            // Ask WebView to re-post TOC in case it was missed earlier
+            try { webViewRef.current?.injectJavaScript('window.postToc && window.postToc(); true;'); } catch(_) {}
+        }
+    }, [chaptersVisible, book?.id]);
+
+    const getPreviewText = async () => {
+        try {
+            return await new Promise((resolve) => {
+                previewResolverRef.current = resolve;
+                // Fallback timeout
+                setTimeout(() => {
+                    if (previewResolverRef.current) {
+                        previewResolverRef.current('');
+                        previewResolverRef.current = null;
+                    }
+                }, 400);
+                webViewRef.current?.injectJavaScript(`(function(){try{var t=String(window.getPreview?window.getPreview():''); window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'previewEcho', text: t }));}catch(_){}})(); true;`);
+            });
+        } catch (_) {
+            return '';
+        }
+    };
+
+    // Apply font size changes
     useEffect(() => {
         try {
             const percent = Math.max(80, Math.min(300, Math.round((uiFontSize / 16) * 100)));
@@ -427,21 +776,137 @@ export default function EpubReaderScreen({ route }) {
                 }
                 true;
             `);
-        } catch (e) {
-            // no-op
-        }
+        } catch (e) {}
     }, [uiFontSize]);
 
+    // Apply theme background and text color
+    useEffect(() => {
+        try {
+            const bg = selectedTheme;
+            const fg = (bg || '').toLowerCase() === '#2a2d3a' ? '#ffffff' : '#000000';
+            webViewRef.current?.injectJavaScript(`
+                try {
+                    window.rendition && window.rendition.themes && window.rendition.themes.default({
+                        body: {
+                            'background': '${bg}',
+                            'color': '${fg}',
+                        }
+                    });
+                } catch(_) {}
+                true;
+            `);
+        } catch (e) {}
+    }, [selectedTheme]);
+
+    // Apply reading mode changes (paginate vs scroll). Keep current location when switching.
+    useEffect(() => {
+        try {
+            if (!webViewRef.current) return;
+            const flow = readingMode === 'Режим прокручування' ? 'scrolled-continuous' : 'paginated';
+            webViewRef.current.injectJavaScript(`(function(){
+                try {
+                    var cfi = null;
+                    if (window.rendition && window.rendition.location && window.rendition.location.start) {
+                        cfi = window.rendition.location.start.cfi || null;
+                    }
+                    if (window.rendition && window.rendition.flow) {
+                        // If book is fixed-layout, keep paginated despite user choice
+                        var desired = '${flow}';
+                        try { if (typeof window.supportsScrolledFlow==='function') { var ok = window.supportsScrolledFlow(); if (ok && ok.then) { ok.then(function(res){ if(!res) desired='paginated'; window.rendition.flow(desired); }); } else { if(!ok) desired='paginated'; window.rendition.flow(desired); } } else { window.rendition.flow(desired); } } catch(_) { window.rendition.flow(desired); }
+                        // ensure content documents are scrollable in scrolled modes
+                        if (desired.indexOf('scrolled')===0) {
+                          try {
+                            window.rendition.hooks.content.register(function(contents){
+                              try{
+                                var d = contents.document; var de = d.documentElement; var b = d.body;
+                                de.style.overflowY = 'auto'; b.style.overflowY = 'auto';
+                                de.style.overflowX = 'hidden'; b.style.overflowX = 'hidden';
+                                de.style.height = 'auto'; b.style.height = 'auto';
+                                de.style.minHeight = '100vh'; b.style.minHeight = '100vh';
+                                de.style.margin = '0'; b.style.margin = '0';
+                                de.style.webkitOverflowScrolling = 'touch'; b.style.webkitOverflowScrolling = 'touch';
+                                // force block flow for common elements to avoid page-sized containers
+                                var tags = ['section','article','div'];
+                                for (var i=0;i<tags.length;i++) {
+                                  try { contents.window.document.querySelectorAll(tags[i]).forEach(function(el){ el.style.display='block'; el.style.height='auto'; }); } catch(_) {}
+                                }
+                              }catch(_){}}
+                            );
+                          }catch(_){}
+                        }
+                    }
+                    if (cfi) {
+                        setTimeout(function(){
+                            try {
+                                window.rendition.display(cfi);
+                                // Re-apply reading CSS after flow change
+                                if (typeof window.applyFontSize==='function') window.applyFontSize(${fontSizePercent});
+                                if (typeof window.applyReadingSafePadding==='function') window.applyReadingSafePadding(${TOOLBAR_SAFE_PADDING_PX});
+                                // fallback to scrolled-doc if still not scrollable
+                                if (desired.indexOf('scrolled')===0) {
+                                  try{
+                                    var ifr = document.querySelector('iframe');
+                                    var doc = ifr && ifr.contentDocument; var win = ifr && ifr.contentWindow;
+                                    if (doc && win){
+                                      var el = doc.scrollingElement || doc.documentElement || doc.body;
+                                      var canScroll = el && (el.scrollHeight - win.innerHeight) > 8;
+                                      if (!canScroll && window.rendition && window.rendition.flow){
+                                        window.rendition.flow('scrolled-doc');
+                                      }
+                                    }
+                                  }catch(_){}
+                                }
+                            } catch(_){ }
+                        }, 0);
+                    }
+                } catch(_) {}
+            })(); true;`);
+        } catch (e) {}
+    }, [readingMode]);
+
+    const refreshLists = async () => {
+        try {
+            if (book?.id != null) {
+                const list = await getBookmarksByBook(String(book.id));
+                setBookmarksList(Array.isArray(list) ? list : []);
+            }
+        } catch (_) {}
+        try {
+            if (book?.id != null) {
+                const clist = await getCommentsByBook(String(book.id));
+                setCommentsList(Array.isArray(clist) ? clist : []);
+            }
+        } catch (_) {}
+    };
+
     const toggleBookmark = async () => {
-        if (bookmarked) {
-            await deleteBookmark(book.id, currentPage);
-            setBookmarked(false);
-            Alert.alert('Закладка', `Видалено сторінку ${currentPage}`);
-        } else {
-            await addBookmark(book.id, currentPage);
-            setBookmarked(true);
-            Alert.alert('Закладка', `Збережено сторінку ${currentPage}`);
-        }
+        try {
+            if (bookmarked) {
+                const pageNum = Number(currentPage) || 0;
+                await deleteBookmark(String(book.id), pageNum);
+                setBookmarked(false);
+                // локально видаляємо з відображення
+                setBookmarksList((prev) => Array.isArray(prev) ? prev.filter((b) => Number(b.position) !== pageNum) : []);
+                Alert.alert('Закладка', `Видалено сторінку ${currentPage}`);
+                bookmarkGuardRef.current = { until: Date.now() + 3000, page: pageNum, value: false };
+            } else {
+                const pageNum = Number(currentPage) || 0;
+                const preview = await getPreviewText();
+                // try capture CFI
+                let currentCfi = null;
+                try {
+                    webViewRef.current?.injectJavaScript(`(function(){try{var c=null; if(window.rendition && window.rendition.location && window.rendition.location.start){ c=window.rendition.location.start.cfi||null;} window.ReactNativeWebView.postMessage(JSON.stringify({type:'cfiEcho', cfi:c}));}catch(_){}})(); true;`);
+                } catch(_) {}
+                await addBookmark(String(book.id), pageNum, preview || null, currentCfi, 'local');
+                setBookmarked(true);
+                // локально додаємо для миттєвого відображення у Drawer
+                setBookmarksList((prev) => [{ id: `tmp_${Date.now()}`, bookId: String(book.id), chapter: (preview || '').trim(), position: pageNum, cfi: currentCfi, userId: 'local', createdAt: new Date().toISOString() }, ...(Array.isArray(prev) ? prev : [])]);
+                Alert.alert('Закладка', `Збережено сторінку ${currentPage}`);
+                bookmarkGuardRef.current = { until: Date.now() + 3000, page: pageNum, value: true };
+            }
+            skipBookmarkCheckRef.current = Date.now() + 1000;
+        } catch (_) {}
+        await refreshLists();
     };
 
     return (
@@ -451,7 +916,7 @@ export default function EpubReaderScreen({ route }) {
                     <TouchableOpacity onPress={() => setSettingsVisible(true)} style={styles.iconButton}>
                         <Ionicons name="settings-outline" size={22} color="#000" />
                     </TouchableOpacity>
-                    <Text style={styles.headerBarTitle}>Розділ {book?.chapter ?? ''}</Text>
+                    <Text style={styles.headerBarTitle}>Розділ {currentChapterIndex != null ? String(currentChapterIndex) : ''}</Text>
                     <TouchableOpacity onPress={toggleBookmark} style={styles.iconButton}>
                         <Ionicons name={bookmarked ? 'bookmark' : 'bookmark-outline'} size={22} color={bookmarked ? '#008655' : '#000'} />
                     </TouchableOpacity>
@@ -476,16 +941,20 @@ export default function EpubReaderScreen({ route }) {
                 onToggleImmersive={() => setImmersive(!immersive)}
                 onAutoScrollPress={() => setAutoScrollVisible(true)}
                 onChaptersPress={() => setChaptersVisible(true)}
-                onSearchPress={() => {}}
+                onSearchPress={() => setSearchVisible(true)}
             />
 
             {selectionVisible && (
                 <ReadingTextSelectionToolbar
                     style={{ position: 'absolute', top: selectionPosition.y, left: selectionPosition.x }}
-                    onTranslate={() => {}}
-                    onUnderline={() => {}}
-                    onCopy={() => {}}
-                    onComment={() => {}}
+                    onTranslate={() => { setSelectionVisible(false); }}
+                    onUnderline={() => { setSelectionVisible(false); }}
+                    onCopy={() => { setSelectionVisible(false); }}
+                    onComment={() => {
+                        setSelectionVisible(false);
+                        setCommentText('');
+                        setCommentModalVisible(true);
+                    }}
                     onColorPicker={() => setSelectionVisible(false)}
                 />
             )}
@@ -499,7 +968,7 @@ export default function EpubReaderScreen({ route }) {
                         isDarkTheme: false,
                         brightness,
                         fontSize: uiFontSize,
-                        readingMode: 'Режим прокручування',
+                        readingMode,
                         spacing,
                         lineSpacing,
                         selectedTheme,
@@ -514,7 +983,7 @@ export default function EpubReaderScreen({ route }) {
                     setters={{
                         setIsDarkTheme: () => {},
                         setFontSize: setUiFontSize,
-                        setReadingMode: () => {},
+                        setReadingMode,
                         setSpacing,
                         setLineSpacing,
                         setSelectedTheme,
@@ -535,18 +1004,151 @@ export default function EpubReaderScreen({ route }) {
                 <ReadingChaptersDrawer
                     visible={chaptersVisible}
                     onClose={() => setChaptersVisible(false)}
-                    chapters={[]}
+                    chapters={chapters}
                     currentId={null}
                     readIds={[]}
                     expandedIds={expandedChapterIds}
                     onToggleExpand={(id) => setExpandedChapterIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))}
-                    onSelectChapter={() => setChaptersVisible(false)}
-                    currentIndex={1}
-                    totalCount={22}
+                    onSelectChapter={(ch) => {
+                        try {
+                            if (ch && ch.href) {
+                                const href = String(ch.href).replace(/"/g, '\\"');
+                                sendCommand(`window.rendition.display("${href}")`);
+                            }
+                        } catch (_) {}
+                        setChaptersVisible(false);
+                    }}
+                    currentIndex={currentChapterIndex || 1}
+                    totalCount={chapters.length || 0}
                     activeTab={drawerTab}
                     onChangeTab={setDrawerTab}
-                    bookmarks={[]}
+                    bookmarks={(() => {
+                        try {
+                            const bm = Array.isArray(bookmarksList) ? bookmarksList : [];
+                            const cm = Array.isArray(commentsList) ? commentsList : [];
+                            const mapped = [
+                                ...bm.map((b) => ({ id: `bm_${b.id}`, type: 'Закладка', meta: `Ст ${b.position}`, text: String(b.chapter || '').trim(), page: b.position, kind: 'bookmark' })),
+                                ...cm.map((c) => ({ id: `cm_${c.id}`, type: 'Коментар', meta: `Сторінка ${c.page}`, text: c.selectedText || c.comment || '', page: c.page, kind: 'comment' })),
+                            ];
+                            return mapped.length ? mapped : [];
+                        } catch(_) { return []; }
+                    })()}
+                    onSelectBookmark={(item) => {
+                        try {
+                            const page = Number(item && item.page);
+                            if (Number.isFinite(page)) {
+                                // For EPUB, page is a location index; use locations.cfiFromLocation if needed.
+                                // Here we display by percentage of locations if possible. As a simple approach, try display by location index.
+                                sendCommand(`(function(){
+                                    try{
+                                        var loc = Number(${page});
+                                        var cfi = (window.book && window.book.locations && window.book.locations.cfiFromLocation) ? window.book.locations.cfiFromLocation(loc) : null;
+                                        if (cfi) { window.rendition.display(cfi); } else { window.rendition.display(); }
+                                    }catch(e){ window.rendition.display(); }
+                                })()`);
+                            }
+                        } catch(_) {}
+                        setChaptersVisible(false);
+                    }}
+                    onDeleteBookmark={async (bm) => {
+                        try {
+                            const page = Number(bm && bm.page);
+                            if (book?.id != null && Number.isFinite(page)) {
+                                await deleteBookmark(String(book.id), page);
+                                await refreshLists();
+                            }
+                        } catch(_) {}
+                    }}
                 />
+            )}
+
+            {/* Search Modal */}
+            {searchVisible && (
+                <Modal visible transparent animationType="fade" onRequestClose={() => setSearchVisible(false)}>
+                    <View style={styles.overlayCenter}>
+                        <TouchableOpacity style={styles.overlayFill} activeOpacity={1} onPress={() => setSearchVisible(false)} />
+                        <View style={styles.centerCard}>
+                            <Text style={styles.sheetTitle}>Пошук у книзі</Text>
+                            <View style={styles.searchBar}>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Введіть слово або фразу"
+                                    placeholderTextColor="#999"
+                                    value={searchQuery}
+                                    onChangeText={setSearchQuery}
+                                    returnKeyType="search"
+                                    onSubmitEditing={() => {
+                                        if (searchQuery && searchQuery.trim().length > 0) {
+                                            const q = JSON.stringify(searchQuery.trim());
+                                            sendCommand(`window.searchInBook(${q})`);
+                                        }
+                                    }}
+                                />
+                                <TouchableOpacity onPress={() => {
+                                    if (searchQuery && searchQuery.trim().length > 0) {
+                                        const q = JSON.stringify(searchQuery.trim());
+                                        sendCommand(`window.searchInBook(${q})`);
+                                    }
+                                }}>
+                                    <Text style={{ color: '#008655', fontWeight: '700' }}>Пошук</Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            {showResults && Array.isArray(searchResults) && searchResults.length > 0 && (
+                                <ScrollView style={{ maxHeight: 280, marginTop: 8 }}>
+                                    {searchResults.map((r, idx) => (
+                                        <TouchableOpacity key={r.cfi || String(idx)} style={styles.resultContainer} onPress={() => {
+                                            if (r.cfi) {
+                                                const cfi = String(r.cfi).replace(/"/g, '\\"');
+                                                sendCommand(`window.rendition.display("${cfi}")`);
+                                                setSearchVisible(false);
+                                            }
+                                        }}>
+                                            <Text style={styles.resultIndex}>Збіг {idx + 1}</Text>
+                                            <Text style={{ color: '#111' }}>{r.excerpt || ''}</Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            )}
+                        </View>
+                    </View>
+                </Modal>
+            )}
+
+            {/* Comment Input Modal */}
+            {commentModalVisible && (
+                <Modal visible transparent animationType="slide" onRequestClose={() => setCommentModalVisible(false)}>
+                    <View style={styles.overlayCenter}>
+                        <TouchableOpacity style={styles.overlayFill} activeOpacity={1} onPress={() => setCommentModalVisible(false)} />
+                        <View style={styles.centerCard}>
+                            <Text style={styles.sheetTitle}>Коментар</Text>
+                            <Text style={{ color: '#666', marginBottom: 8 }}>{(lastSelectedText || '').slice(0, 180)}</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Введіть коментар"
+                                placeholderTextColor="#999"
+                                value={commentText}
+                                onChangeText={setCommentText}
+                                multiline
+                            />
+                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 12 }}>
+                                <TouchableOpacity onPress={() => setCommentModalVisible(false)} style={{ marginRight: 12 }}>
+                                    <Text style={{ color: '#444' }}>Скасувати</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={async () => {
+                                    try {
+                                        if (book?.id != null) {
+                                            await addComment(String(book.id), Number(currentPage) || 0, lastSelectedText || '', commentText || '');
+                                        }
+                                    } catch (_) {}
+                                    setCommentModalVisible(false);
+                                }}>
+                                    <Text style={{ color: '#008655', fontWeight: '700' }}>Зберегти</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+                </Modal>
             )}
 
             {/* Auto Scroll (minimal inline) */}
@@ -706,4 +1308,3 @@ const styles = StyleSheet.create({
         elevation: 4,
     },
 });
-
