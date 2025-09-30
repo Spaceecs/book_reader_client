@@ -5,7 +5,7 @@ import { useDispatch } from "react-redux";
 import {useNavigation} from "@react-navigation/native";
 import {openOnlineBook} from "../utils/openOnlineBook";
 
-export function HomeBookCard({ book }) {
+export function HomeBookCard({ book, setSelectedItem, setIsActionsVisible }) {
     const dispatch = useDispatch();
     const navigation = useNavigation();
     const [coverUri, setCoverUri] = useState(book.imageUrl || null);
@@ -15,10 +15,19 @@ export function HomeBookCard({ book }) {
     }, []);
 
 
+    const handleLongPress = () => {
+        if (setSelectedItem && setIsActionsVisible) {
+            setSelectedItem(book);
+            setIsActionsVisible(true);
+        }
+    };
+
     return (
         <TouchableOpacity
             style={styles.bookItem}
             onPress={() => openOnlineBook(book.id, book, dispatch, navigation)}
+            delayLongPress={350}
+            onLongPress={handleLongPress}
         >
             <Image
                 source={coverUri ? { uri: coverUri } : require('../../../../assets/placeholder-cover.png')}

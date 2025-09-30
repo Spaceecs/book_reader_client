@@ -6,7 +6,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { HomeBookCard, getMe, selectId } from "../../entities";
 import {useNavigation} from "@react-navigation/native";
 
-export function BookListWidget({sectionHeader, books}) {
+export function BookListWidget({sectionHeader, books, setSelectedItem, setIsActionsVisible}) {
     useAuthRefresh();
     const { t } = useTranslation();
     const dispatch = useDispatch();
@@ -32,7 +32,7 @@ export function BookListWidget({sectionHeader, books}) {
             <FlatList
                 data={books}
                 renderItem={({ item }) => (
-                    <HomeBookCard book={item} />
+                    <HomeBookCard book={item} setSelectedItem={setSelectedItem} setIsActionsVisible={setIsActionsVisible} />
                 )}
                 keyExtractor={(item) => item.id.toString()}
                 horizontal

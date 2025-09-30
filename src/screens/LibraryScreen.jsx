@@ -1,67 +1,64 @@
-import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import {
-    View,
-    Text,
-    StatusBar,
-    TouchableOpacity,
-    ScrollView,
-    FlatList,
-    Modal,
-    TextInput,
-    Animated
+  View,
+  Text,
+  StatusBar,
+  TouchableOpacity,
+  ScrollView,
+  FlatList,
+  Modal,
+  TextInput,
+  Animated
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StyleSheet } from 'react-native';
+import { useDispatch } from 'react-redux';
+import {getOnlineBooks, getReadingProgress} from '../shared';
+import { getCollections, addBookToCollection, removeBookFromCollection, createCollection } from '../shared/api';
+import {openOnlineBook} from "../entities";
+import {BookCard} from "../entities";
 import { useFocusEffect } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
-import { getOnlineBooks, getReadingProgress } from '../shared';
-import { BookCard } from "../entities";
+import { useCallback } from 'react';
+
+const tabs = ['Книги', 'Аудіокниги'];
+const filters = ['Усі книги', 'Читаю', 'Прочитано', 'Не прочитано'];
 
 export default function LibraryScreen({ navigation }) {
-    const { t } = useTranslation();
-    const insets = useSafeAreaInsets();
+    const dispatch = useDispatch();
+    const [activeTab, setActiveTab] = useState('Книги');
+    const [activeFilter, setActiveFilter] = useState('Усі книги');
+  const [isSortVisible, setIsSortVisible] = useState(false);
+  const [isFilterVisible, setIsFilterVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('Назва книги (за алфавітом)');
+  const [isLangPickerVisible, setIsLangPickerVisible] = useState(false);
+  const [isPublisherPickerVisible, setIsPublisherPickerVisible] = useState(false);
+  const [isGenrePickerVisible, setIsGenrePickerVisible] = useState(false);
+  const [selectedLanguages, setSelectedLanguages] = useState([]);
+  const [selectedPublishers, setSelectedPublishers] = useState([]);
+  const [selectedGenres, setSelectedGenres] = useState([]);
+  const [showFilterReadModal, setShowFilterReadModal] = useState(false);
+  const [readStatusFilter, setReadStatusFilter] = useState('all'); // all|reading|read|unread
+  const [readingProgressMap, setReadingProgressMap] = useState({}); // bookId -> progress 0..1
+  const [pickerQuery, setPickerQuery] = useState('');
+  const [isActionsVisible, setIsActionsVisible] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isMarkedRead, setIsMarkedRead] = useState(false);
+  const [isCollectionsModalVisible, setIsCollectionsModalVisible] = useState(false);
+  const [collections, setCollections] = useState([]);
+  const coverScale = useRef(new Animated.Value(1)).current;
+  const sheetOpacity = useRef(new Animated.Value(0)).current;
+  const [books, setBooks] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-    const tabs = [t('libraryScreen.tabs.books'), t('libraryScreen.tabs.audiobooks')];
-    const filters = [
-        t('libraryScreen.filters.all'),
-        t('libraryScreen.filters.reading'),
-        t('libraryScreen.filters.read'),
-        t('libraryScreen.filters.unread')
-    ];
-
-    const [activeTab, setActiveTab] = useState(tabs[0]);
-    const [activeFilter, setActiveFilter] = useState(filters[0]);
-    const [isSortVisible, setIsSortVisible] = useState(false);
-    const [isFilterVisible, setIsFilterVisible] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [sortBy, setSortBy] = useState(t('libraryScreen.sortOptions.title'));
-    const [isLangPickerVisible, setIsLangPickerVisible] = useState(false);
-    const [isPublisherPickerVisible, setIsPublisherPickerVisible] = useState(false);
-    const [isGenrePickerVisible, setIsGenrePickerVisible] = useState(false);
-    const [selectedLanguages, setSelectedLanguages] = useState([]);
-    const [selectedPublishers, setSelectedPublishers] = useState([]);
-    const [selectedGenres, setSelectedGenres] = useState([]);
-    const [showFilterReadModal, setShowFilterReadModal] = useState(false);
-    const [readStatusFilter, setReadStatusFilter] = useState('all');
-    const [readingProgressMap, setReadingProgressMap] = useState({});
-    const [pickerQuery, setPickerQuery] = useState('');
-    const [isActionsVisible, setIsActionsVisible] = useState(false);
-    const [selectedItem, setSelectedItem] = useState(null);
-    const [isMarkedRead, setIsMarkedRead] = useState(false);
-    const coverScale = useRef(new Animated.Value(1)).current;
-    const sheetOpacity = useRef(new Animated.Value(0)).current;
-    const [books, setBooks] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    const ALL_LANGUAGES = ['Українська', 'English', 'Deutsch', 'Polski', 'Español', 'Français', 'Italiano', '中文', '日本語'];
-    const ALL_PUBLISHERS = ['Віхола', 'Vivat', 'Yakaboo', 'КСД', 'Nebo BookLab', 'ArtHuss', 'Project Gutenberg', 'READBERRY'];
-    const ALL_GENRES = ['Детектив', 'Фантастика', 'Фентезі', 'Романтика', 'Трилер', 'Нон-фікшн', 'Мемуари', 'Пригоди', 'Історія'];
+  const insets = useSafeAreaInsets();
 
     useFocusEffect(
         useCallback(() => {
             let isActive = true;
+
             const fetchBooks = async () => {
                 try {
                     const response = await getOnlineBooks();
@@ -72,219 +69,430 @@ export default function LibraryScreen({ navigation }) {
                     if (isActive) setLoading(false);
                 }
             };
+
             fetchBooks();
-            return () => { isActive = false; };
+
+            return () => { isActive = false; }; // cleanup
         }, [])
     );
 
-    useEffect(() => {
-        const fetchProgress = async () => {
-            try {
-                const data = await getReadingProgress();
-                const map = {};
-                (data || []).forEach(p => {
-                    if (p.book?.id != null && typeof p.progress === 'number') {
-                        map[p.book.id] = p.progress;
-                    }
-                });
-                setReadingProgressMap(map);
-            } catch (e) {}
-        };
-        fetchProgress();
-    }, []);
+  useEffect(() => {
+    const fetchProgress = async () => {
+      try {
+        const data = await getReadingProgress();
+        const map = {};
+        (data || []).forEach(p => {
+          if (p.book?.id != null && typeof p.progress === 'number') {
+            map[p.book.id] = p.progress;
+          }
+        });
+        setReadingProgressMap(map);
+      } catch (e) {
+        // ignore
+      }
+    };
+    fetchProgress();
+  }, []);
 
-    useEffect(() => {
-        if (isActionsVisible) {
-            Animated.parallel([
-                Animated.timing(coverScale, { toValue: 1.5, duration: 200, useNativeDriver: true }),
-                Animated.timing(sheetOpacity, { toValue: 1, duration: 180, useNativeDriver: true }),
-            ]).start();
-        } else {
-            coverScale.setValue(1);
-            sheetOpacity.setValue(0);
-        }
-    }, [isActionsVisible]);
+  useEffect(() => {
+    if (isActionsVisible) {
+      Animated.parallel([
+        Animated.timing(coverScale, { toValue: 1.5, duration: 200, useNativeDriver: true }),
+        Animated.timing(sheetOpacity, { toValue: 1, duration: 180, useNativeDriver: true }),
+      ]).start();
+    } else {
+      coverScale.setValue(1);
+      sheetOpacity.setValue(0);
+    }
+  }, [isActionsVisible]);
 
-    const filteredPickerData = useMemo(() => {
-        const q = pickerQuery.trim().toLowerCase();
-        const list = isLangPickerVisible ? ALL_LANGUAGES : isPublisherPickerVisible ? ALL_PUBLISHERS : ALL_GENRES;
-        if (!q) return list;
-        return list.filter(x => x.toLowerCase().includes(q));
-    }, [pickerQuery, isLangPickerVisible, isPublisherPickerVisible, isGenrePickerVisible]);
+  const ALL_LANGUAGES = ['Українська', 'English', 'Deutsch', 'Polski', 'Español', 'Français', 'Italiano', '中文', '日本語'];
+  const ALL_PUBLISHERS = ['Віхола', 'Vivat', 'Yakaboo', 'КСД', 'Nebo BookLab', 'ArtHuss', 'Project Gutenberg', 'READBERRY'];
+  const ALL_GENRES = ['Детектив', 'Фантастика', 'Фентезі', 'Романтика', 'Трилер', 'Нон-фікшн', 'Мемуари', 'Пригоди', 'Історія'];
 
-    const visibleBooks = useMemo(() => {
-        let list = books;
-        if (activeTab === t('libraryScreen.tabs.audiobooks')) {
-            list = list.filter(b => b.format === 'audio');
-        } else {
-            list = list.filter(b => b.format !== 'audio');
-        }
-        if (searchQuery.trim()) {
-            const q = searchQuery.trim().toLowerCase();
-            list = list.filter(b => (b.title || '').toLowerCase().includes(q) || (b.author || '').toLowerCase().includes(q));
-        }
-        if (readStatusFilter === 'reading') {
-            list = list.filter(b => (readingProgressMap[b.id] || 0) > 0 && (readingProgressMap[b.id] || 0) < 1);
-        } else if (readStatusFilter === 'read') {
-            list = list.filter(b => (readingProgressMap[b.id] || 0) >= 1);
-        } else if (readStatusFilter === 'unread') {
-            list = list.filter(b => !readingProgressMap[b.id] || readingProgressMap[b.id] === 0);
-        }
-        return list;
-    }, [books, activeTab, searchQuery, readStatusFilter, readingProgressMap, t]);
+  const filteredPickerData = useMemo(() => {
+    const q = pickerQuery.trim().toLowerCase();
+    const list = isLangPickerVisible ? ALL_LANGUAGES : isPublisherPickerVisible ? ALL_PUBLISHERS : ALL_GENRES;
+    if (!q) return list;
+    return list.filter(x => x.toLowerCase().includes(q));
+  }, [pickerQuery, isLangPickerVisible, isPublisherPickerVisible, isGenrePickerVisible]);
 
-    return (
-        <View style={styles.container}>
-            <StatusBar barStyle="dark-content" />
+  const visibleBooks = useMemo(() => {
+    let list = books;
+    if (activeTab === 'Аудіокниги') {
+      list = list.filter(b => b.format === 'audio');
+    } else {
+      list = list.filter(b => b.format !== 'audio');
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter(b => (b.title || '').toLowerCase().includes(q) || (b.author || '').toLowerCase().includes(q));
+    }
+    // apply read status filter
+    if (readStatusFilter === 'reading') {
+      list = list.filter(b => (readingProgressMap[b.id] || 0) > 0 && (readingProgressMap[b.id] || 0) < 1);
+    } else if (readStatusFilter === 'read') {
+      list = list.filter(b => (readingProgressMap[b.id] || 0) >= 1);
+    } else if (readStatusFilter === 'unread') {
+      list = list.filter(b => !readingProgressMap[b.id] || readingProgressMap[b.id] === 0);
+    }
+    return list;
+  }, [books, activeTab, searchQuery, readStatusFilter, readingProgressMap]);
 
-            {/* Top Bar */}
-            <View style={styles.topBar}>
-                <TouchableOpacity onPress={() => navigation.openDrawer()}>
-                    <Ionicons name="menu" size={26} color="#222" />
-                </TouchableOpacity>
-                <View style={styles.searchStub}>
-                    <Ionicons name="search" size={18} color="#666" />
-                    <TextInput
-                        style={styles.searchInput}
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                        placeholder={t('header')}
-                        placeholderTextColor="#9e9e9e"
-                        returnKeyType="search"
-                    />
-                </View>
-                <View style={styles.topIcons}>
-                    <TouchableOpacity onPress={() => setIsSortVisible(true)}>
-                        <Ionicons name="swap-vertical-outline" size={20} color="#222" style={styles.topIcon} />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => setIsFilterVisible(true)}>
-                        <Ionicons name="funnel-outline" size={20} color="#222" />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => setShowFilterReadModal(true)}>
-                        <Ionicons name="checkmark-done-outline" size={20} color="#222" style={{ marginLeft: 10 }} />
-                    </TouchableOpacity>
-                </View>
-            </View>
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
 
-            {/* Segment Tabs */}
-            <View style={styles.segmentTrack}>
-                {tabs.map((tName, idx) => (
-                    <TouchableOpacity
-                        key={tName}
-                        style={[styles.segmentPill, activeTab === tName && styles.segmentPillActive]}
-                        onPress={() => setActiveTab(tName)}
-                        activeOpacity={0.9}
-                    >
-                        <Text style={[styles.segmentLabel, activeTab === tName && styles.segmentLabelActive]}>{tName}</Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
-
-            {/* Filters Row */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersRow}>
-                {filters.map(f => (
-                    <TouchableOpacity key={f} style={[styles.filterChip, activeFilter === f && styles.filterChipActive]} onPress={() => setActiveFilter(f)}>
-                        <Text style={[styles.filterText, activeFilter === f && styles.filterTextActive]}>{f}</Text>
-                    </TouchableOpacity>
-                ))}
-            </ScrollView>
-
-            {/* List Header */}
-            <View style={styles.listHeaderRow}>
-                <Text style={styles.listHeaderTitle}>{activeFilter}</Text>
-            </View>
-
-            {/* Book Grid */}
-            <FlatList
-                data={visibleBooks}
-                keyExtractor={item => String(item.id)}
-                numColumns={2}
-                columnWrapperStyle={styles.gridRow}
-                contentContainerStyle={[styles.grid, { paddingBottom: 60 + insets.bottom }]}
-                renderItem={({ item }) => <BookCard book={item} setSelectedItem={setSelectedItem} setIsActionsVisible={setIsActionsVisible} />}
-                showsVerticalScrollIndicator={false}
-                ListEmptyComponent={!loading ? (
-                    <View style={{ padding: 24 }}>
-                        <Text>{t('libraryScreen.emptyList')}</Text>
-                    </View>
-                ) : null}
-            />
-
-            {/* Sort Modal */}
-            <Modal visible={isSortVisible} transparent animationType="fade">
-                <BlurView intensity={80} style={styles.modalBackground}>
-                    <View style={styles.modalContainer}>
-                        <Text style={styles.modalTitle}>{t('libraryScreen.sortTitle')}</Text>
-                        {[t('libraryScreen.sortOptions.title'), t('libraryScreen.sortOptions.author'), t('libraryScreen.sortOptions.newest')].map(option => (
-                            <TouchableOpacity key={option} onPress={() => { setSortBy(option); setIsSortVisible(false); }}>
-                                <Text style={styles.modalOption}>{option}</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                </BlurView>
-            </Modal>
-
-            {/* Filter Modal */}
-            <Modal visible={isFilterVisible} transparent animationType="fade">
-                <BlurView intensity={80} style={styles.modalBackground}>
-                    <View style={styles.modalContainer}>
-                        <Text style={styles.modalTitle}>{t('libraryScreen.filterOptions.title')}</Text>
-                        <TouchableOpacity onPress={() => { setIsLangPickerVisible(true); setIsFilterVisible(false); }}>
-                            <Text style={styles.modalOption}>{t('libraryScreen.filterOptions.language')}</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => { setIsPublisherPickerVisible(true); setIsFilterVisible(false); }}>
-                            <Text style={styles.modalOption}>{t('libraryScreen.filterOptions.publisher')}</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => { setIsGenrePickerVisible(true); setIsFilterVisible(false); }}>
-                            <Text style={styles.modalOption}>{t('libraryScreen.filterOptions.genre')}</Text>
-                        </TouchableOpacity>
-                    </View>
-                </BlurView>
-            </Modal>
-
-            {/* Read Status Modal */}
-            <Modal visible={showFilterReadModal} transparent animationType="fade">
-                <BlurView intensity={80} style={styles.modalBackground}>
-                    <View style={styles.modalContainer}>
-                        <Text style={styles.modalTitle}>{t('libraryScreen.filters.readStatus')}</Text>
-                        {['all', 'reading', 'read', 'unread'].map(status => (
-                            <TouchableOpacity key={status} onPress={() => { setReadStatusFilter(status); setShowFilterReadModal(false); }}>
-                                <Text style={styles.modalOption}>{t(`libraryScreen.filters.${status}`)}</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                </BlurView>
-            </Modal>
-
-            {/* Picker Modal (Language/Publisher/Genre) */}
-            <Modal visible={isLangPickerVisible || isPublisherPickerVisible || isGenrePickerVisible} transparent animationType="fade">
-                <BlurView intensity={80} style={styles.modalBackground}>
-                    <View style={styles.modalContainer}>
-                        <TextInput
-                            style={styles.pickerSearchInput}
-                            value={pickerQuery}
-                            onChangeText={setPickerQuery}
-                            placeholder={t('libraryScreen.filterOptions.search')}
-                        />
-                        <ScrollView>
-                            {filteredPickerData.map(item => (
-                                <TouchableOpacity key={item} onPress={() => {
-                                    if (isLangPickerVisible) setSelectedLanguages([...selectedLanguages, item]);
-                                    else if (isPublisherPickerVisible) setSelectedPublishers([...selectedPublishers, item]);
-                                    else setSelectedGenres([...selectedGenres, item]);
-                                }}>
-                                    <Text style={styles.modalOption}>{item}</Text>
-                                </TouchableOpacity>
-                            ))}
-                        </ScrollView>
-                        <TouchableOpacity onPress={() => { setIsLangPickerVisible(false); setIsPublisherPickerVisible(false); setIsGenrePickerVisible(false); }}>
-                            <Text style={[styles.modalOption, { color: 'red' }]}>{t('libraryScreen.actions.close')}</Text>
-                        </TouchableOpacity>
-                    </View>
-                </BlurView>
-            </Modal>
+      <View style={styles.topBar}>
+        <TouchableOpacity onPress={() => navigation.openDrawer()}>
+          <Ionicons name="menu" size={26} color="#222" />
+        </TouchableOpacity>
+        <View style={styles.searchStub}>
+          <Ionicons name="search" size={18} color="#666" />
+          <TextInput
+            style={styles.searchInput}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Пошук"
+            placeholderTextColor="#9e9e9e"
+            returnKeyType="search"
+          />
         </View>
-    );
+        <View style={styles.topIcons}>
+          <TouchableOpacity onPress={() => setIsSortVisible(true)}>
+            <Ionicons name="swap-vertical-outline" size={20} color="#222" style={styles.topIcon} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setIsFilterVisible(true)}>
+            <Ionicons name="funnel-outline" size={20} color="#222" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setShowFilterReadModal(true)}>
+            <Ionicons name="checkmark-done-outline" size={20} color="#222" style={{ marginLeft: 10 }} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={styles.segmentTrack}>
+        {tabs.map((t, idx) => (
+          <TouchableOpacity
+            key={t}
+            style={[
+              styles.segmentPill,
+              activeTab === t && styles.segmentPillActive,
+              idx === 0 && styles.segmentPillFirst,
+              idx === tabs.length - 1 && styles.segmentPillLast,
+            ]}
+            onPress={() => setActiveTab(t)}
+            activeOpacity={0.9}
+          >
+            <Text style={[styles.segmentLabel, activeTab === t && styles.segmentLabelActive]}>{t}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersRow}>
+        {filters.map(f => (
+          <TouchableOpacity key={f} style={[styles.filterChip, activeFilter === f && styles.filterChipActive]} onPress={() => setActiveFilter(f)}>
+            <Text style={[styles.filterText, activeFilter === f && styles.filterTextActive]}>{f}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      <View style={styles.listHeaderRow}>
+        <Text style={styles.listHeaderTitle}>
+          {activeFilter === 'Усі книги' ? 'Усі' : activeFilter}
+        </Text>
+      </View>
+
+      <FlatList
+        data={visibleBooks}
+        keyExtractor={item => String(item.id)}
+        numColumns={2}
+        columnWrapperStyle={styles.gridRow}
+        contentContainerStyle={[styles.grid, { paddingBottom: 60 + insets.bottom }]}
+        renderItem={({ item }) => <BookCard book={item} setSelectedItem={setSelectedItem} setIsActionsVisible={setIsActionsVisible} />}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={!loading ? (
+          <View style={{ padding: 24 }}>
+            <Text>Список порожній</Text>
+          </View>
+        ) : null}
+      />
+
+      <View style={styles.bottomSpacer} />
+
+      {/* Read status filter modal */}
+      <Modal visible={showFilterReadModal} transparent animationType="slide" onRequestClose={() => setShowFilterReadModal(false)}>
+        <View style={styles.sheetOverlay}>
+          <TouchableOpacity style={{ flex: 1 }} onPress={() => setShowFilterReadModal(false)} />
+          <View style={[styles.sheetContainer, { paddingBottom: 20 + (insets?.bottom || 0) }]}>
+            <View style={styles.sheetHandle} />
+            <View style={styles.sheetHeaderRow}>
+              <TouchableOpacity onPress={() => setShowFilterReadModal(false)}>
+                <Ionicons name="chevron-back" size={22} color="#222" />
+              </TouchableOpacity>
+              <Text style={styles.sheetTitle}>Статус читання</Text>
+              <View style={{ width: 24 }} />
+            </View>
+            {[
+              { key: 'all', label: 'Усі' },
+              { key: 'reading', label: 'Читаю' },
+              { key: 'read', label: 'Прочитано' },
+              { key: 'unread', label: 'Не прочитано' },
+            ].map(opt => {
+              const active = readStatusFilter === opt.key;
+              return (
+                <View key={opt.key} style={styles.rowBlock}>
+                  <TouchableOpacity style={styles.optionRow} onPress={() => setReadStatusFilter(opt.key)}>
+                    <Text style={styles.optionText}>{opt.label}</Text>
+                    <View style={[styles.radioOuter, active && { borderColor: '#2E8B57' }]}>
+                      {active && <View style={styles.radioInner} />}
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Actions modal (long-press card) */}
+      <Modal visible={isActionsVisible} transparent animationType="fade" onRequestClose={() => setIsActionsVisible(false)}>
+        <View style={styles.actionsOverlay}>
+          <BlurView style={styles.blurFill} intensity={40} tint="dark" />
+          <TouchableOpacity style={styles.blurFill} activeOpacity={1} onPress={() => setIsActionsVisible(false)} />
+          {selectedItem && (
+            <View style={styles.actionsStack}>
+              <Animated.View style={[styles.actionsContainer, { opacity: sheetOpacity }] }>
+                <View style={styles.actionsHeaderTitle}>
+                  <Text style={styles.actionsTitle} numberOfLines={1}>{selectedItem.title}</Text>
+                  <Text style={styles.actionsSubtitle}>{(selectedItem.format || '').toUpperCase()}</Text>
+                </View>
+                <View style={styles.actionsList}>
+                  {[
+                    { key: 'info', label: 'Інформація' },
+                    { key: 'read', label: 'Читати', onPress: () => { setIsActionsVisible(false); openOnlineBook(selectedItem.onlineId, selectedItem); } },
+                    { key: 'mark', label: 'Позначити як прочитане', renderRight: () => (isMarkedRead ? <Ionicons name="checkmark" size={18} color="#2E8B57" /> : <Ionicons name="ellipse-outline" size={18} color="#999" />), onPress: () => setIsMarkedRead(prev => !prev) },
+                    { key: 'collections', label: 'Колекції', onPress: async () => {
+                        try {
+                          setIsActionsVisible(false);
+                          const list = await getCollections();
+                          let arr = Array.isArray(list) ? list : [];
+                          const hasSaved = arr.some(c => (c.name || c.title) === 'Збережені');
+                          const hasPostponed = arr.some(c => (c.name || c.title) === 'Відкладені');
+                          if (!hasSaved) { try { const created = await createCollection('Збережені'); arr = [created, ...arr]; } catch(_) {} }
+                          if (!hasPostponed) { try { const created = await createCollection('Відкладені'); arr = [created, ...arr]; } catch(_) {} }
+                          setCollections(arr);
+                          setIsCollectionsModalVisible(true);
+                        } catch(_) { setIsCollectionsModalVisible(true); }
+                      } },
+                    { key: 'share', label: 'Поділитись' },
+                    { key: 'delete', label: 'Видалити', destructive: true },
+                  ].map((row, index, arr) => {
+                    const isLast = index === arr.length - 1;
+                    return (
+                      <TouchableOpacity
+                        key={row.key}
+                        style={[styles.actionRow, isLast && styles.actionRowLast]}
+                        onPress={row.onPress}
+                        activeOpacity={0.85}
+                      >
+                        <Text style={[styles.actionText, row.destructive && styles.actionTextDestructive]}>{row.label}</Text>
+                        {row.renderRight ? row.renderRight() : <Ionicons name="chevron-forward" size={18} color="#222" />}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </Animated.View>
+            </View>
+          )}
+        </View>
+      </Modal>
+
+      {/* Sort bottom sheet */}
+      <Modal visible={isSortVisible} transparent animationType="slide" onRequestClose={() => setIsSortVisible(false)}>
+        <View style={styles.sheetOverlay}>
+          <TouchableOpacity style={{ flex: 1 }} onPress={() => setIsSortVisible(false)} />
+          <View style={[styles.sheetContainer, { paddingBottom: 20 + (insets?.bottom || 0) }]}>
+            <View style={styles.sheetHandle} />
+            <View style={styles.sheetHeaderRow}>
+              <TouchableOpacity onPress={() => setIsSortVisible(false)}>
+                <Ionicons name="chevron-back" size={22} color="#222" />
+              </TouchableOpacity>
+              <Text style={styles.sheetTitle}>Сортування</Text>
+              <Ionicons name="swap-vertical-outline" size={18} color="#2E8B57" />
+            </View>
+            {['Назва книги (за алфавітом)', 'Автор (за алфавітом)', 'За датою додавання', 'За кількістю сторінок'].map(option => {
+              const active = sortBy === option;
+              return (
+                <View key={option} style={styles.rowBlock}>
+                  <TouchableOpacity style={styles.optionRow} onPress={() => setSortBy(option)}>
+                    <Text style={styles.optionText}>{option}</Text>
+                    <View style={[styles.radioOuter, active && { borderColor: '#2E8B57' }]}>
+                      {active && <View style={styles.radioInner} />}
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Filter bottom sheet */}
+      <Modal visible={isFilterVisible} transparent animationType="slide" onRequestClose={() => setIsFilterVisible(false)}>
+        <View style={styles.sheetOverlay}>
+          <TouchableOpacity style={{ flex: 1 }} onPress={() => setIsFilterVisible(false)} />
+          <View style={[styles.sheetContainer, { paddingBottom: 20 + (insets?.bottom || 0) }]}>
+            <View style={styles.sheetHandle} />
+            <View style={styles.sheetHeaderRow}>
+              <TouchableOpacity onPress={() => setIsFilterVisible(false)}>
+                <Ionicons name="chevron-back" size={22} color="#222" />
+              </TouchableOpacity>
+              <Text style={styles.sheetTitle}>Фільтр</Text>
+              <TouchableOpacity onPress={() => { setSelectedLanguages([]); setSelectedGenres([]); setSelectedPublishers([]); }}>
+                <Text style={styles.clearText}>Очистити</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.rowBlock}>
+              <TouchableOpacity style={styles.optionRow} onPress={() => { setIsLangPickerVisible(true); setPickerQuery(''); }}>
+                <Text style={styles.optionText}>Мова</Text>
+                <View style={styles.optionRight}>
+                  <Text numberOfLines={1} style={styles.optionValue}>
+                    {selectedLanguages.length ? `${selectedLanguages.slice(0, 2).join(', ')}${selectedLanguages.length > 2 ? '…' : ''}` : '—'}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={18} color="#888" />
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.rowBlock}>
+              <TouchableOpacity style={styles.optionRow} onPress={() => { setIsGenrePickerVisible(true); setPickerQuery(''); }}>
+                <Text style={styles.optionText}>Жанр</Text>
+                <View style={styles.optionRight}>
+                  <Text numberOfLines={1} style={styles.optionValue}>
+                    {selectedGenres.length ? `${selectedGenres.slice(0, 2).join(', ')}${selectedGenres.length > 2 ? '…' : ''}` : '—'}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={18} color="#888" />
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.rowBlock}>
+              <TouchableOpacity style={styles.optionRow} onPress={() => { setIsPublisherPickerVisible(true); setPickerQuery(''); }}>
+                <Text style={styles.optionText}>Видавництво</Text>
+                <View style={styles.optionRight}>
+                  <Text numberOfLines={1} style={styles.optionValue}>
+                    {selectedPublishers.length ? `${selectedPublishers.slice(0, 2).join(', ')}${selectedPublishers.length > 2 ? '…' : ''}` : '—'}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={18} color="#888" />
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {(isLangPickerVisible || isGenrePickerVisible || isPublisherPickerVisible) && (
+        <Modal visible transparent animationType="slide" onRequestClose={() => { setIsLangPickerVisible(false); setIsPublisherPickerVisible(false); setIsGenrePickerVisible(false); }}>
+          <View style={styles.sheetOverlay}>
+            <TouchableOpacity style={{ flex: 1 }} onPress={() => { setIsLangPickerVisible(false); setIsPublisherPickerVisible(false); setIsGenrePickerVisible(false); }} />
+            <View style={[styles.sheetContainer, { paddingBottom: 20 + (insets?.bottom || 0) }]}>
+              <View style={styles.sheetHandle} />
+              <View style={styles.sheetHeaderRow}>
+                <TouchableOpacity onPress={() => { setIsLangPickerVisible(false); setIsPublisherPickerVisible(false); setIsGenrePickerVisible(false); }}>
+                  <Ionicons name="chevron-back" size={22} color="#222" />
+                </TouchableOpacity>
+                <Text style={styles.sheetTitle}>{isLangPickerVisible ? 'Мова' : isPublisherPickerVisible ? 'Видавництво' : 'Жанр'}</Text>
+                <View style={{ width: 24 }} />
+              </View>
+              <View style={styles.searchBar}>
+                <Ionicons name="search" size={18} color="#666" />
+                <TextInput style={styles.searchInputPicker} placeholder="Пошук" value={pickerQuery} onChangeText={setPickerQuery} />
+              </View>
+              <View style={styles.pickerList}>
+                {filteredPickerData.map(item => {
+                  const array = isLangPickerVisible ? selectedLanguages : isPublisherPickerVisible ? selectedPublishers : selectedGenres;
+                  const setArray = isLangPickerVisible ? setSelectedLanguages : isPublisherPickerVisible ? setSelectedPublishers : setSelectedGenres;
+                  const checked = array.includes(item);
+                  return (
+                    <TouchableOpacity key={item} style={styles.selectRow} onPress={() => {
+                      setArray(prev => checked ? prev.filter(x => x !== item) : [...prev, item]);
+                    }}>
+                      <Text style={styles.selectText}>{item}</Text>
+                      <Ionicons name={checked ? 'checkbox' : 'square-outline'} size={20} color={checked ? '#2E8B57' : '#666'} />
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {/* Collections choose modal */}
+      {isCollectionsModalVisible && (
+        <Modal visible transparent animationType="slide" onRequestClose={() => setIsCollectionsModalVisible(false)}>
+          <View style={styles.sheetOverlay}>
+            <TouchableOpacity style={{ flex: 1 }} onPress={() => setIsCollectionsModalVisible(false)} />
+            <View style={[styles.sheetContainer, { paddingBottom: 20 + (insets?.bottom || 0) }] }>
+              <View style={styles.sheetHandle} />
+              <View style={styles.sheetHeaderRow}>
+                <TouchableOpacity onPress={() => setIsCollectionsModalVisible(false)}>
+                  <Ionicons name="chevron-back" size={22} color="#222" />
+                </TouchableOpacity>
+                <Text style={styles.sheetTitle}>Додати до колекції</Text>
+                <View style={{ width: 24 }} />
+              </View>
+              <View style={{ paddingHorizontal: 16, paddingBottom: 24, maxHeight: '60%' }}>
+                {[{ key: 'audio', label: 'Аудіо книги' }, { key: 'downloaded', label: 'Завантажені на пристрій' }].map(row => (
+                  <View key={row.key} style={{ flexDirection:'row', justifyContent:'space-between', alignItems:'center', paddingVertical:14, borderBottomWidth:1, borderBottomColor:'#eee', opacity:0.6 }}>
+                    <Text style={{ fontSize:14, color:'#666' }}>{row.label}</Text>
+                    <Ionicons name="information-circle-outline" size={20} color="#999" />
+                  </View>
+                ))}
+                {(collections || []).map(c => {
+                  const targetBookIdRaw = selectedItem?.onlineId ?? selectedItem?.id;
+                  const targetBookId = Number(targetBookIdRaw);
+                  const isIn = Array.isArray(c.books) ? c.books.some(b => Number(b?.id) === targetBookId) : false;
+                  return (
+                    <TouchableOpacity
+                      key={String(c.id)}
+                      style={[styles.selectRow, isIn && { backgroundColor: '#e6f5ef' }]}
+                      onPress={async () => {
+                        try {
+                          if (!targetBookId) return;
+                          // optimistic update
+                          setCollections(prev => prev.map(col => col.id === c.id
+                            ? {
+                                ...col,
+                                books: isIn
+                                  ? (Array.isArray(col.books) ? col.books.filter(b => Number(b?.id) !== targetBookId) : [])
+                                  : [ ...(Array.isArray(col.books) ? col.books : []), { id: targetBookId } ],
+                              }
+                            : col
+                          ));
+                          if (isIn) { await removeBookFromCollection(c.id, targetBookId); }
+                          else { await addBookToCollection(c.id, targetBookId); }
+                          // refresh from server
+                          const list = await getCollections();
+                          setCollections(Array.isArray(list) ? list : []);
+                        } catch(_) { /* ignore */ }
+                      }}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={[styles.selectText, isIn && { color: '#0E7A4A', fontWeight: '700' }]}>{c.name || c.title || 'Без назви'}</Text>
+                      <Ionicons name={isIn ? 'checkbox' : 'square-outline'} size={20} color={isIn ? '#2E8B57' : '#666'} />
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({

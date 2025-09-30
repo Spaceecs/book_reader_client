@@ -46,9 +46,30 @@ export async function initDatabase() {
       bookId TEXT,
       chapter TEXT,
       position INTEGER,
+      page INTEGER,
+      cfi TEXT,
+      userId TEXT,
       createdAt TEXT
     );
   `);
+
+    // Try to ensure required bookmark columns exist even if table was created earlier
+    const safeAlter = async (table, column, type) => {
+        try {
+            await db.execAsync(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
+        } catch (e) {
+            const msg = String(e?.message || e);
+            if (/duplicate column|already exists/i.test(msg)) {
+                // ok
+            }
+        }
+    };
+    await safeAlter('bookmarks', 'chapter', 'TEXT');
+    await safeAlter('bookmarks', 'position', 'INTEGER');
+    await safeAlter('bookmarks', 'page', 'INTEGER');
+    await safeAlter('bookmarks', 'cfi', 'TEXT');
+    await safeAlter('bookmarks', 'userId', 'TEXT');
+    await safeAlter('bookmarks', 'createdAt', 'TEXT');
 }
 
 // ======================
@@ -132,20 +153,28 @@ export async function getBookmarks(bookId) {
     return await db.getAllAsync(`SELECT * FROM bookmarks WHERE bookId=?;`, [bookId]);
 }
 
-export const addBookmark = async (bookId, page, chapter = null) => {
+export const addBookmark = async (bookId, page, chapter = null, cfi = null, userId = 'local') => {
     await ensureDb();
     const createdAt = new Date().toISOString();
-    await db.runAsync(
-        'INSERT INTO bookmarks (bookId, chapter, position, createdAt) VALUES (?, ?, ?, ?);',
-        [bookId, chapter, page, createdAt]
-    );
+    try {
+        await db.runAsync(
+            'INSERT INTO bookmarks (bookId, chapter, position, cfi, userId, createdAt) VALUES (?, ?, ?, ?, ?, ?);',
+            [String(bookId), chapter, Number(page) || 0, cfi, userId, createdAt]
+        );
+    } catch (e) {
+        // Fallback for legacy schema with `page` column
+        await db.runAsync(
+            'INSERT INTO bookmarks (bookId, chapter, page, cfi, userId, createdAt) VALUES (?, ?, ?, ?, ?, ?);',
+            [String(bookId), chapter, Number(page) || 0, cfi, userId, createdAt]
+        );
+    }
 };
 
 export const getBookmarksByBook = async (bookId) => {
     await ensureDb();
     return await db.getAllAsync(
-        'SELECT * FROM bookmarks WHERE bookId = ? ORDER BY createdAt DESC;',
-        [bookId]
+        'SELECT id, bookId, chapter, COALESCE(position, page) AS position, cfi, userId, createdAt FROM bookmarks WHERE CAST(bookId AS TEXT) = CAST(? AS TEXT) ORDER BY datetime(createdAt) DESC;',
+        [String(bookId)]
     );
 };
 
@@ -160,8 +189,8 @@ export async function updateBookmark(bookmark) {
 export const deleteBookmark = async (bookId, page) => {
     await ensureDb();
     await db.runAsync(
-        'DELETE FROM bookmarks WHERE bookId = ? AND position = ?;',
-        [bookId, page]
+        'DELETE FROM bookmarks WHERE CAST(bookId AS TEXT) = CAST(? AS TEXT) AND COALESCE(position, page) BETWEEN ? AND ?;',
+        [String(bookId), Math.max(0, (Number(page) || 0) - 1), (Number(page) || 0) + 1]
     );
 };
 
@@ -170,14 +199,55 @@ export const isBookmarked = async (bookId, page) => {
         await ensureDb();
         if (!bookId || page == null) return false;
         const row = await db.getFirstAsync(
-            'SELECT * FROM bookmarks WHERE bookId = ? AND position = ?;',
-            [bookId, page]
+            'SELECT * FROM bookmarks WHERE CAST(bookId AS TEXT) = CAST(? AS TEXT) AND COALESCE(position, page) BETWEEN ? AND ? LIMIT 1;',
+            [String(bookId), Math.max(0, (Number(page) || 0) - 1), (Number(page) || 0) + 1]
         );
         return !!row;
     } catch {
         return false;
     }
 };
+
+// ======================
+// Comments (Bookzy parity)
+// ======================
+// Ensure table exists (id, bookId, page, selectedText, comment)
+// We create the table lazily here in case an older DB was initialized before this code landed
+async function ensureCommentsTable() {
+    await ensureDb();
+    await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS comments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            bookId TEXT,
+            page INTEGER,
+            selectedText TEXT,
+            comment TEXT,
+            createdAt TEXT
+        );
+    `);
+}
+
+export async function addComment(bookId, page, selectedText = '', comment = '') {
+    await ensureCommentsTable();
+    const createdAt = new Date().toISOString();
+    await db.runAsync(
+        'INSERT INTO comments (bookId, page, selectedText, comment, createdAt) VALUES (?, ?, ?, ?, ?);',
+        [bookId, Number(page) || 0, String(selectedText || ''), String(comment || ''), createdAt]
+    );
+}
+
+export async function getCommentsByBook(bookId) {
+    await ensureCommentsTable();
+    return await db.getAllAsync(
+        'SELECT * FROM comments WHERE bookId = ? ORDER BY createdAt DESC;',
+        [bookId]
+    );
+}
+
+export async function deleteComment(id) {
+    await ensureCommentsTable();
+    await db.runAsync('DELETE FROM comments WHERE id = ?;', [id]);
+}
 
 // ======================
 // Book Progress

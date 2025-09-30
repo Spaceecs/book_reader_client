@@ -1,8 +1,10 @@
 import React from 'react';
-import { View, Text, Modal, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, Modal, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function ChaptersDrawer({ visible, onClose, chapters = [], currentId, readIds = [], onSelectChapter, expandedIds = [], onToggleExpand, currentIndex = 0, totalCount = 0, activeTab = 'chapters', onChangeTab, bookmarks = [] }) {
+const bookmarkIcon = require('../../../assets/Ecran_Libery.png');
+
+export default function ChaptersDrawer({ visible, onClose, chapters = [], currentId, readIds = [], onSelectChapter, expandedIds = [], onToggleExpand, currentIndex = 0, totalCount = 0, activeTab = 'chapters', onChangeTab, bookmarks = [], onSelectBookmark, onDeleteBookmark }) {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }}>
@@ -58,18 +60,21 @@ export default function ChaptersDrawer({ visible, onClose, chapters = [], curren
             <View style={{ flex: 1, marginTop: 12 }}>
               {(!bookmarks || bookmarks.length === 0) ? (
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                  <Image source={bookmarkIcon} style={{ width: 110, height: 110, opacity: 0.5, marginBottom: 12 }} />
                   <Text style={{ color: '#000' }}>Закладок поки що немає</Text>
                 </View>
               ) : (
                 <ScrollView>
                   {bookmarks.map((bm) => (
-                    <View key={bm.id} style={{ borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 8, padding: 12, backgroundColor: '#fff', marginBottom: 10 }}>
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                        <Text style={{ fontWeight: '700', color: '#000' }}>{bm.type}</Text>
-                        <Text style={{ color: '#666' }}>{bm.meta}</Text>
+                    <TouchableOpacity key={bm.id} onPress={() => onSelectBookmark && onSelectBookmark(bm)} onLongPress={() => onDeleteBookmark && onDeleteBookmark(bm)}>
+                      <View style={{ borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 8, padding: 12, backgroundColor: '#fff', marginBottom: 10 }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                          <Text style={{ fontWeight: '700', color: '#000', marginBottom: 6 }}>{bm.type}</Text>
+                          <Text style={{ color: '#666' }}>{bm.meta}</Text>
+                        </View>
+                        <Text numberOfLines={2} style={{ color: bm.kind === 'highlight' ? '#0a8f5b' : '#444' }}>{bm.text}</Text>
                       </View>
-                      <Text style={{ color: '#0a8f5b' }}>{bm.text}</Text>
-                    </View>
+                    </TouchableOpacity>
                   ))}
                 </ScrollView>
               )}

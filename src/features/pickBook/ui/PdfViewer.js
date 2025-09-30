@@ -24,9 +24,12 @@ export const PdfViewer = forwardRef(({ base64, currentPage = 1, searchTerm = '',
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.min.css" />
 <style>
+  :root { --page-bg:#fff; --text-color:#000; --canvas-filter:none; --canvas-blend:normal; }
   html, body { margin:0; padding:0; height:100%; background:#fff; }
   #viewer { height:100%; overflow-y: auto; }
-  canvas { display:block; margin:0 auto 16px auto; }
+  .pageWrapper { position: relative; background: var(--page-bg); }
+  canvas { display:block; margin:0 auto 16px auto; filter: var(--canvas-filter); mix-blend-mode: var(--canvas-blend); }
+  .textLayer { color: var(--text-color); }
   .textLayer span.highlight { background: yellow; }
 </style>
 </head>
@@ -42,6 +45,22 @@ export const PdfViewer = forwardRef(({ base64, currentPage = 1, searchTerm = '',
   let totalPages = 0;
   let renderedCount = 0;
   let scale = 1;
+  let currentVisiblePage = startPage;
+  let renderMode = 'scrolled'; // 'scrolled' | 'single'
+  let initialTargetPage = startPage;
+  function applyRenderMode(){
+    try {
+      const wrappers = Array.from(viewer.children);
+      if (renderMode === 'single') {
+        wrappers.forEach((w, i) => { w.style.display = (i === (currentVisiblePage-1)) ? 'block' : 'none'; });
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type:'progress', currentPage: currentVisiblePage, totalPages }));
+      } else {
+        wrappers.forEach((w) => { w.style.display = 'block'; });
+        viewer.scrollTop = pageOffsets[currentVisiblePage-1] || 0;
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type:'progress', currentPage: currentVisiblePage, totalPages }));
+      }
+    } catch(_) {}
+  }
 
   function highlightText(textLayerDiv, term) {
     const spans = textLayerDiv.querySelectorAll('span');
@@ -60,7 +79,10 @@ export const PdfViewer = forwardRef(({ base64, currentPage = 1, searchTerm = '',
       canvas.height = viewport.height;
       const ctx = canvas.getContext('2d');
       const wrapper = document.createElement('div');
-      wrapper.style.position = 'relative';
+      wrapper.className = 'pageWrapper';
+      if (renderMode === 'single') {
+        wrapper.style.display = 'none'; // only currently visible page is shown
+      }
       wrapper.appendChild(canvas);
       viewer.appendChild(wrapper);
 
@@ -70,6 +92,7 @@ export const PdfViewer = forwardRef(({ base64, currentPage = 1, searchTerm = '',
           textLayerDiv.className = 'textLayer';
           textLayerDiv.style.height = canvas.height + 'px';
           textLayerDiv.style.width = canvas.width + 'px';
+          textLayerDiv.style.fontSize = (16) + 'px';
           wrapper.appendChild(textLayerDiv);
           pdfjsLib.renderTextLayer({ textContent, container: textLayerDiv, viewport }).promise.then(() => {
             if(searchTerm) highlightText(textLayerDiv, searchTerm);
@@ -80,7 +103,14 @@ export const PdfViewer = forwardRef(({ base64, currentPage = 1, searchTerm = '',
         renderedCount++;
         if(renderedCount === totalPages) {
           setTimeout(() => {
-            viewer.scrollTop = pageOffsets[startPage-1] || 0;
+            const target = initialTargetPage || startPage;
+            if (renderMode === 'scrolled') {
+              viewer.scrollTop = pageOffsets[target-1] || 0;
+            } else {
+              currentVisiblePage = target;
+              applyRenderMode();
+              window.ReactNativeWebView.postMessage(JSON.stringify({ type:'progress', currentPage: target, totalPages }));
+            }
           }, 200);
         }
 
@@ -94,29 +124,141 @@ export const PdfViewer = forwardRef(({ base64, currentPage = 1, searchTerm = '',
   pdfjsLib.getDocument({ data: pdfData }).promise.then(doc => {
     pdfDoc = doc;
     totalPages = pdfDoc.numPages;
+    try { window._totalPages = totalPages; } catch(_) {}
     for(let i=1;i<=totalPages;i++) renderPage(i);
 
     viewer.addEventListener('scroll', () => {
       const scrollTop = viewer.scrollTop;
-      for(let i=0;i<totalPages;i++){
-        if(scrollTop < pageOffsets[i]+20){
-          const page = i+1;
-          window.ReactNativeWebView.postMessage(JSON.stringify({ type:'progress', currentPage: page, totalPages }));
-          break;
+      if (renderMode === 'scrolled') {
+        for(let i=0;i<totalPages;i++){
+          if(scrollTop < pageOffsets[i]+20){
+            const page = i+1;
+            currentVisiblePage = page;
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type:'progress', currentPage: page, totalPages }));
+            break;
+          }
         }
       }
     });
+
+    // Build TOC (outline) and send to RN
+    (async function(){
+      try {
+        const outline = await pdfDoc.getOutline();
+        async function toSimple(items){
+          const out = [];
+          for (let i=0;i<(items||[]).length;i++){
+            const it = items[i];
+            const node = { id: String(i) + '_' + (it.title||'').slice(0,16), title: it.title || 'Розділ', page: null, children: [] };
+            try {
+              let destArr = null;
+              if (typeof it.dest === 'string') {
+                destArr = await pdfDoc.getDestination(it.dest);
+              } else if (Array.isArray(it.dest)) {
+                destArr = it.dest;
+              }
+              if (Array.isArray(destArr) && destArr[0]){
+                const pageIndex = await pdfDoc.getPageIndex(destArr[0]);
+                node.page = Number(pageIndex) + 1;
+              }
+            } catch(_) {}
+            if (Array.isArray(it.items) && it.items.length){
+              node.children = await toSimple(it.items);
+            }
+            out.push(node);
+          }
+          return out;
+        }
+        let toc = await toSimple(outline || []);
+        if (!toc || toc.length === 0) {
+          // Fallback: synthetic TOC per page (uses page labels if provided)
+          let labels = null;
+          try { labels = await pdfDoc.getPageLabels(); } catch(_) {}
+          toc = Array.from({ length: totalPages }, (_, i) => ({
+            id: 'p' + (i + 1),
+            title: (labels && labels[i]) ? String(labels[i]) : ('Сторінка ' + (i + 1)),
+            page: i + 1,
+            children: []
+          }));
+        }
+        window._lastToc = toc;
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type:'toc', toc }));
+      } catch(_) {}
+    })();
   });
 
+  // Allow RN to re-request TOC at any time
+  window.postOutline = function(){
+    try {
+      var toc = Array.isArray(window._lastToc) ? window._lastToc : [];
+      if (!toc.length && typeof window._totalPages === 'number' && window._totalPages > 0) {
+        toc = Array.from({ length: window._totalPages }, (_, i) => ({ id: 'p'+(i+1), title: 'Сторінка ' + (i + 1), page: i + 1, children: [] }));
+        window._lastToc = toc;
+      }
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type:'toc', toc }));
+    } catch(_) {}
+  };
+
   window.changeTheme = function(theme){
-    if(theme==='dark'){ viewer.style.background='#1c1c1c'; document.body.style.filter='invert(1) hue-rotate(180deg)'; }
-    else if(theme==='sepia'){ viewer.style.background='#f5ecd9'; document.body.style.filter='none'; }
-    else { viewer.style.background='#fff'; document.body.style.filter='none'; }
+    try {
+      if(theme==='dark'){
+        document.documentElement.style.setProperty('--page-bg', '#1c1c1c');
+        document.documentElement.style.setProperty('--text-color', '#ffffff');
+        document.documentElement.style.setProperty('--canvas-filter', 'invert(1) hue-rotate(180deg)');
+        document.documentElement.style.setProperty('--canvas-blend', 'normal');
+        viewer.style.background = '#1c1c1c';
+      } else if(theme==='sepia'){
+        document.documentElement.style.setProperty('--page-bg', '#f5ecd9');
+        document.documentElement.style.setProperty('--text-color', '#3b2f24');
+        // Tint page content towards paper-like color
+        document.documentElement.style.setProperty('--canvas-filter', 'sepia(0.35) saturate(1.1) hue-rotate(-10deg) brightness(0.98)');
+        // Multiply with background to colorize white areas
+        document.documentElement.style.setProperty('--canvas-blend', 'multiply');
+        viewer.style.background = '#f5ecd9';
+      } else {
+        document.documentElement.style.setProperty('--page-bg', '#ffffff');
+        document.documentElement.style.setProperty('--text-color', '#000000');
+        document.documentElement.style.setProperty('--canvas-filter', 'none');
+        document.documentElement.style.setProperty('--canvas-blend', 'normal');
+        viewer.style.background = '#ffffff';
+      }
+    } catch(_) {}
   };
   window.changeZoom = function(newScale){
     scale = newScale;
-    viewer.innerHTML=''; renderedCount=0;
+    initialTargetPage = currentVisiblePage || 1;
+    viewer.innerHTML=''; renderedCount=0; pageOffsets=[];
     for(let i=1;i<=totalPages;i++) renderPage(i);
+  };
+  window.changeTextSize = function(mult){
+    // For PDFs коректне виділення можливе лише при однаковому масштабі canvas і textLayer → використовуємо загальний zoom
+    var m = Math.max(0.75, Math.min(2.5, Number(mult)||1));
+    window.changeZoom(m);
+  };
+  window.goToPage = function(p){
+    const n = Math.max(1, Math.min(totalPages, Number(p)||1));
+    if (renderMode === 'scrolled') {
+      viewer.scrollTop = pageOffsets[n-1] || 0;
+    } else {
+      const wrappers = Array.from(viewer.children);
+      wrappers.forEach((w, i) => { w.style.display = (i === (n-1)) ? 'block' : 'none'; });
+      currentVisiblePage = n;
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type:'progress', currentPage: n, totalPages }));
+    }
+  };
+  window.goNextPage = function(){ window.goToPage(currentVisiblePage + 1); };
+  window.goPrevPage = function(){ window.goToPage(currentVisiblePage - 1); };
+  window.getCurrentPage = function(){ return currentVisiblePage; };
+  window.setRenderMode = function(mode){ renderMode = (mode === 'single') ? 'single' : 'scrolled'; applyRenderMode(); };
+  window.getPagePreview = function(p){
+    const n = Math.max(1, Math.min(totalPages, Number(p)||1));
+    pdfDoc.getPage(n).then(page => page.getTextContent()).then(tc => {
+      const txt = (tc.items||[]).map(it=>it.str).join(' ').replace(/\s+/g,' ').trim();
+      const snippet = txt ? txt.slice(0,160) : '';
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type:'pdfPreviewEcho', page:n, text: snippet }));
+    }).catch(()=>{
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type:'pdfPreviewEcho', page:n, text: '' }));
+    });
   };
   window.searchInDocument = function(term){
     const spans = document.querySelectorAll('.textLayer span');
@@ -127,6 +269,20 @@ export const PdfViewer = forwardRef(({ base64, currentPage = 1, searchTerm = '',
       }
     });
   };
+
+  // Selection bridge for comments
+  function postSelection(){
+    try{
+      const sel = window.getSelection && window.getSelection();
+      const txt = sel && sel.toString ? sel.toString() : '';
+      const value = String(txt || '').trim();
+      if (value) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'selection', text: value }));
+      }
+    }catch(e){}
+  }
+  document.addEventListener('mouseup', postSelection, { passive: true });
+  document.addEventListener('touchend', postSelection, { passive: true });
 </script>
 </body>
 </html>

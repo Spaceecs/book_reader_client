@@ -17,7 +17,7 @@ export function BookCard({ book, setSelectedItem, setIsActionsVisible }) {
         <View style={styles.card}>
             <TouchableOpacity
                 activeOpacity={0.85}
-                onPress={() => openOnlineBook( book.onlineId, book ,dispatch, navigation)}
+                onPress={() => openOnlineBook( book.id ?? book.onlineId, book ,dispatch, navigation)}
                 delayLongPress={350}
                 onLongPress={handleLongPress}
             >

@@ -32,7 +32,7 @@ const DrawerContent = ({ navigation }) => {
           icon={require("../../../assets/collections.png")}
           label={t('drawerMenu.Collections')}
           isActive={activeItem === 'Collections'}
-          onPress={() => handlePress('Collections', 'Home')}
+          onPress={() => handlePress('Collections', 'Collections')}
         />
         <DrawerItem
           icon={require("../../../assets/Book.png")}
@@ -44,7 +44,7 @@ const DrawerContent = ({ navigation }) => {
           icon={require("../../../assets/basket.png")}
           label={t('drawerMenu.Trash')}
           isActive={activeItem === 'Trash'}
-          onPress={() => handlePress('Trash', 'Home')}
+          onPress={() => handlePress('Trash', 'Trash')}
         />
       </View>
 

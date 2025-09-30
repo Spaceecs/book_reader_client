@@ -6,13 +6,11 @@ import * as SecureStore from "expo-secure-store";
 import { useSelector } from "react-redux";
 import NetInfo from "@react-native-community/netinfo";
 import i18n from "i18next";
-
 import { LoginScreen } from "../../screens/LoginScreen";
 import { RegisterScreen } from "../../screens/RegisterScreen";
 import WelcomeScreen from "../../screens/WelcomeScreen";
 import { ForgotPasswordScreen } from "../../screens/ForgotPasswordScreen";
 import { ResetPasswordScreen } from "../../screens/ResetPasswordScreen";
-
 import { selectLanguage } from "../../entities";
 import { DrawerNavigator } from "./DrawerNavigation";
 import { OfflineDrawer } from "./OfflineNavigation";
@@ -30,7 +28,7 @@ export function MainNavigator() {
     }, [language]);
 
     useEffect(() => {
-        const init = async () => {
+        const checkToken = async () => {
             try {
                 const token = await SecureStore.getItemAsync("token");
                 setIsAuthenticated(!!token);
@@ -38,7 +36,7 @@ export function MainNavigator() {
                 const netState = await NetInfo.fetch();
                 setIsOnline(netState.isConnected && netState.isInternetReachable);
             } catch (error) {
-                console.error("Init error:", error);
+                console.error("Error reading token:", error);
                 setIsAuthenticated(false);
                 setIsOnline(false);
             } finally {
@@ -46,7 +44,7 @@ export function MainNavigator() {
             }
         };
 
-        init();
+        checkToken();
     }, []);
 
     if (loading) {
