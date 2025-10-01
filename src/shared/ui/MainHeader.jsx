@@ -20,9 +20,9 @@ export function MainHeader() {
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                     returnKeyType="search"
-                    onSubmitEditing={() => navigation.navigate("SearchScreen", { title: searchQuery })}
+                    onSubmitEditing={() => navigation.navigate("SearchScreen", { searchQuery })}
                 />
-                <TouchableOpacity onPress={() => navigation.navigate("SearchScreen", {title: searchQuery} )}>
+                <TouchableOpacity onPress={() => navigation.navigate("SearchScreen", { searchQuery })}>
                     <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
                 </TouchableOpacity>
             </View>
