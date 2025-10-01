@@ -209,7 +209,7 @@ export default function LibraryScreen({ navigation }) {
 
       <FlatList
         data={visibleBooks}
-        keyExtractor={item => String(item.id)}
+        keyExtractor={(item, index) => `${item.id ?? item.onlineId}-${index}`}
         numColumns={2}
         columnWrapperStyle={styles.gridRow}
         contentContainerStyle={[styles.grid, { paddingBottom: 60 + insets.bottom }]}

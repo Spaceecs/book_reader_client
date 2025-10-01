@@ -5,7 +5,7 @@ import {getAllBooks, BookCard} from "../entities";
 export function SearchScreen({route}) {
     const param = route.params;
 
-    const [books, setBooks] = useState(null);
+    const [books, setBooks] = useState([]);
 
     console.log(param)
 

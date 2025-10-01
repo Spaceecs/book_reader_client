@@ -9,9 +9,8 @@ export async function openOnlineBook(id, book, dispatch, navigation) {
 
         console.log("book.id", book.id);
         console.log("book.name", book.title);
+        console.log("book.author", book.author);
         const localOnlineBook = await getOnlineBooksByOnlineId(id);
-
-        console.log(localOnlineBook);
 
         let newLocalOnlineBook
 
@@ -28,7 +27,8 @@ export async function openOnlineBook(id, book, dispatch, navigation) {
                 filePath,
                 book.format,
                 base64,
-                book.imageUrl
+                book.imageUrl,
+                book.author,
             );
 
             newLocalOnlineBook = await getOnlineBooksByOnlineId(book.id);
@@ -39,7 +39,6 @@ export async function openOnlineBook(id, book, dispatch, navigation) {
             }
         } else {
             newLocalOnlineBook = localOnlineBook
-            console.log("newBook", newLocalOnlineBook)
         }
 
         dispatch(setLastBook(newLocalOnlineBook));
