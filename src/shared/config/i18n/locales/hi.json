@@ -1,0 +1,210 @@
+{
+  "welcomeScreen": {
+    "welcomeTitle": "स्वागत है!",
+    "welcomeText": "सचेत पाठक समुदाय में आपका स्वागत है!\nसाथ मिलकर हम पढ़ना एक सुखद आदत बनाएंगे, आपकी मदद करेंगे \nनए संसारों को खोजने में और आपके पसंदीदा किताबें हमेशा आपके पास रहेंगी।",
+    "login": "लॉग इन करें",
+    "register": "रजिस्टर करें"
+  },
+  "login": {
+    "title": "लॉग इन करें",
+    "username": "यूज़रनेम",
+    "enterUsername": "यूज़रनेम दर्ज करें",
+    "password": "पासवर्ड",
+    "enterPassword": "पासवर्ड दर्ज करें",
+    "signIn": "लॉग इन करें",
+    "noAccount": "अभी तक खाता नहीं है?",
+    "register": "रजिस्टर करें",
+    "error": "गलत यूज़रनेम या पासवर्ड",
+    "enterEmail": "ईमेल दर्ज करें",
+    "forgotPassword": "पासवर्ड भूल गए?",
+    "or": "या"
+  },
+  "settings": {
+    "settings": "सेटिंग्स",
+    "language": "भाषा",
+    "brightnessGesture": "जेस्चर से ब्राइटनेस",
+    "brightnessDescription": "स्क्रीन के बाएं किनारे पर ऊपर या नीचे स्वाइप करके ब्राइटनेस बदलें",
+    "screenOff": "स्क्रीन बंद करें",
+    "screenOffDescription": "स्क्रीन को चालू रखें",
+    "scanFiles": "फ़ाइलें स्कैन करें",
+    "changePassword": "पासवर्ड बदलें",
+    "deviceList": "डिवाइस सूची",
+    "onlyWIFIDownload": "केवल वाई-फाई से डाउनलोड करें",
+    "support": "सपोर्ट से संपर्क करें",
+    "rateApp": "एप्लिकेशन रेट करें",
+    "aboutApp": "एप्लिकेशन के बारे में",
+    "logout": "लॉग आउट"
+  },
+  "drawerMenu": {
+    "Home": "होम",
+    "Settings": "सेटिंग्स",
+    "Library": "पुस्तकालय",
+    "AddBook": "किताब जोड़ें",
+    "Collections": "कलेक्शन",
+    "readMore": "और पढ़ें",
+    "Trash": "ट्रैश",
+    "Feedback": "फ़ीडबैक भेजें"
+  },
+  "validation": {
+    "username": {
+      "min": "नाम में कम से कम {{count}} अक्षर होने चाहिए",
+      "required": "नाम अनिवार्य है"
+    },
+    "email": {
+      "format": "अमान्य ईमेल प्रारूप",
+      "min": "ईमेल में कम से कम {{count}} अक्षर होने चाहिए",
+      "required": "ईमेल अनिवार्य है"
+    },
+    "password": {
+      "min": "पासवर्ड में कम से कम {{count}} अक्षर होने चाहिए",
+      "pattern": "पासवर्ड में केवल लैटिन अक्षर और अंक होने चाहिए, कोई विशेष अक्षर नहीं",
+      "required": "पासवर्ड अनिवार्य है"
+    },
+    "confirmPassword": {
+      "oneOf": "पासवर्ड मेल नहीं खाते",
+      "required": "पासवर्ड की पुष्टि अनिवार्य है"
+    }
+  },
+  "register": {
+    "title": "रजिस्टर करें",
+    "name": "नाम",
+    "namePlaceholder": "आपका पूरा नाम",
+    "email": "ईमेल",
+    "emailPlaceholder": "आपका ईमेल",
+    "password": "पासवर्ड",
+    "passwordPlaceholder": "आपका पासवर्ड",
+    "confirmPassword": "पासवर्ड पुष्टि",
+    "confirmPasswordPlaceholder": "पासवर्ड दोहराएँ",
+    "submit": "रजिस्टर करें",
+    "submitting": "कृपया प्रतीक्षा करें...",
+    "divider": "या",
+    "social": {
+      "google": "गूगल",
+      "apple": "एप्पल",
+      "facebook": "फेसबुक"
+    },
+    "redirectText": "पहले से खाता है?",
+    "redirectLink": "लॉग इन करें",
+    "errorRegister": "रजिस्ट्रेशन में त्रुटि"
+  },
+  "forgotPassword": {
+    "title": "पासवर्ड भूल गए?",
+    "emailLabel": "ईमेल",
+    "emailPlaceholder": "अपना ईमेल दर्ज करें",
+    "sendBtn": "लिंक भेजें",
+    "rememberText": "पासवर्ड याद है?",
+    "loginLink": "लॉग इन करें"
+  },
+  "resetPassword": {
+    "backBtn": "वापस",
+    "title": "नया पासवर्ड बनाएं",
+    "subtitle": "आपका नया पासवर्ड पहले उपयोग किए गए पासवर्ड से अलग होना चाहिए।",
+    "passwordLabel": "पासवर्ड",
+    "passwordPlaceholder": "आपका पासवर्ड",
+    "confirmPasswordLabel": "पासवर्ड पुष्टि",
+    "confirmPasswordPlaceholder": "अपना पासवर्ड पुष्टि करें",
+    "submitBtn": "पासवर्ड रीसेट करें"
+  },
+  "header": "किताब खोजें...",
+  "novelty": "नवीनतम",
+  "topRated": "उच्च रेटेड",
+  "more": "अधिक",
+  "readMore": "और पढ़ें",
+  "continueReading": "पढ़ना जारी रखें",
+  "tabs": {
+    "Home": "होम",
+    "Library": "पुस्तकालय",
+    "Import": "आयात",
+    "Profile": "प्रोफ़ाइल",
+    "Premium": "प्रीमियम"
+  },
+  "libraryScreen": {
+    "tabs": {
+      "books": "किताबें",
+      "audiobooks": "ऑडियोबुक"
+    },
+    "filters": {
+      "all": "सभी किताबें",
+      "reading": "पढ़ रहा हूँ",
+      "read": "पढ़ी हुई",
+      "unread": "अपढ़ी"
+    },
+    "actions": {
+      "info": "जानकारी",
+      "read": "पढ़ें",
+      "markRead": "पढ़ी हुई के रूप में चिह्नित करें",
+      "collections": "कलेक्शन",
+      "share": "साझा करें",
+      "delete": "हटाएँ"
+    },
+    "sortOptions": {
+      "title": "किताब का नाम (A-Z)",
+      "author": "लेखक (A-Z)",
+      "date": "जोड़ने की तिथि के अनुसार",
+      "pages": "पृष्ठों की संख्या के अनुसार"
+    },
+    "filterOptions": {
+      "language": "भाषा",
+      "genre": "शैली",
+      "publisher": "प्रकाशक",
+      "clear": "साफ़ करें"
+    },
+    "pickerSearchPlaceholder": "खोजें",
+    "emptyList": "सूची खाली है",
+    "readStatusModal": {
+      "title": "पढ़ाई की स्थिति",
+      "options": {
+        "all": "सभी",
+        "reading": "पढ़ रहा हूँ",
+        "read": "पढ़ी हुई",
+        "unread": "अपढ़ी"
+      }
+    }
+  },
+  "collections": {
+    "title": "कलेक्शन",
+    "searchPlaceholder": "खोजें",
+    "system": {
+      "audio": "ऑडियोबुक",
+      "saved": "सहेजे गए",
+      "downloaded": "डिवाइस पर डाउनलोड किए गए",
+      "postponed": "स्थगित"
+    },
+    "sort": {
+      "title": "सॉर्ट करें",
+      "nameAsc": "नाम (A-Z)",
+      "updated": "अपडेट की तिथि के अनुसार",
+      "created": "निर्माण की तिथि के अनुसार",
+      "count": "किताबों की संख्या के अनुसार",
+      "asc": "आरोही",
+      "desc": "अवरोही"
+    },
+    "modal": {
+      "newTitle": "नया कलेक्शन",
+      "cancel": "रद्द करें",
+      "save": "सहेजें",
+      "placeholder": "कलेक्शन का नाम",
+      "chooseIcon": "आइकन चुनें",
+      "chooseColor": "थीम का रंग चुनें",
+      "pin": "पिन करें"
+    },
+    "unnamed": "नामहीन"
+  },
+  "trash": {
+    "title": "ट्रैश",
+    "autoClean": "30 दिनों में स्वचालित सफाई",
+    "restored": "किताब पुनर्स्थापित की गई\n«{{title}}» आपकी लाइब्रेरी में पुनर्स्थापित की गई",
+    "deletedForever": "किताब स्थायी रूप से हटा दी गई\n«{{title}}» स्थायी रूप से हटा दी गई",
+    "emptyTitle": "ट्रैश खाली है",
+    "emptySubtitle": "आपकी हटाई गई किताबें यहां दिखाई देंगी",
+    "fetchError": "किताबें लोड करने में विफल",
+    "clearAllError": "सभी किताबें हटाने में त्रुटि"
+  },
+  "trashBookCard": {
+    "restore": "पुनर्स्थापित करें",
+    "deleteForever": "हटाएँ",
+    "pageInfo": "पृष्ठ {{currentPage}} में {{totalPages}}",
+    "removedAgo": "हटाई गई {{deletedAt}}"
+  },
+  "publicBooks": "सार्वजनिक किताबें"
+}

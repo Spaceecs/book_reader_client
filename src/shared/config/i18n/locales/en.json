@@ -1,16 +1,16 @@
 {
   "welcomeScreen": {
     "welcomeTitle": "Welcome!",
-    "welcomeText": "Welcome to the community of conscious book lovers!\nTogether we will make reading a pleasant habit, help you discover \nnew worlds and always have your favorite books at hand.",
-    "login": "Login",
-    "register": "Registration"
+    "welcomeText": "Welcome to the community of conscious book lovers!\nTogether we will make reading a pleasant habit, help you discover \nnew worlds, and always have your favorite books at hand.",
+    "login": "Sign In",
+    "register": "Register"
   },
   "login": {
     "title": "Sign In",
     "username": "Username",
-    "enterUsername": "Enter your username",
+    "enterUsername": "Enter username",
     "password": "Password",
-    "enterPassword": "Enter your password",
+    "enterPassword": "Enter password",
     "signIn": "Sign In",
     "noAccount": "Don't have an account?",
     "register": "Register",
@@ -20,31 +20,44 @@
     "or": "or"
   },
   "settings": {
-    "logout": "Logout"
+    "settings": "Settings",
+    "language": "Language",
+    "brightnessGesture": "Brightness by gesture",
+    "brightnessDescription": "Adjust brightness by swiping up or down on the left edge of the screen",
+    "screenOff": "Screen Off",
+    "screenOffDescription": "Keep the screen on",
+    "scanFiles": "Scan Files",
+    "changePassword": "Change Password",
+    "deviceList": "Device List",
+    "onlyWIFIDownload": "Download only via Wi-Fi",
+    "support": "Contact Support",
+    "rateApp": "Rate App",
+    "aboutApp": "About App",
+    "logout": "Log Out"
   },
-  "drawerMenu" : {
+  "drawerMenu": {
     "Home": "Home",
     "Settings": "Settings",
     "Library": "Library",
-    "AddBook": "Add book",
+    "AddBook": "Add Book",
     "Collections": "Collections",
-    "readMore": "Read more",
+    "readMore": "Read More",
     "Trash": "Trash",
-    "Feedback": "Send feedback"
+    "Feedback": "Send Feedback"
   },
   "validation": {
     "username": {
-      "min": "Username must be at least {{count}} characters long",
+      "min": "Username must be at least {{count}} characters",
       "required": "Username is required"
     },
     "email": {
       "format": "Invalid email format",
-      "min": "Email must be at least {{count}} characters long",
+      "min": "Email must be at least {{count}} characters",
       "required": "Email is required"
     },
     "password": {
-      "min": "Password must be at least {{count}} characters long",
-      "pattern": "Password must contain only Latin letters and numbers, no special characters",
+      "min": "Password must be at least {{count}} characters",
+      "pattern": "Password can contain only letters and numbers, no special symbols",
       "required": "Password is required"
     },
     "confirmPassword": {
@@ -57,7 +70,7 @@
     "name": "Name",
     "namePlaceholder": "Your full name",
     "email": "Email",
-    "emailPlaceholder": "Your email address",
+    "emailPlaceholder": "Your email",
     "password": "Password",
     "passwordPlaceholder": "Your password",
     "confirmPassword": "Confirm Password",
@@ -71,33 +84,33 @@
       "facebook": "Facebook"
     },
     "redirectText": "Already have an account?",
-    "redirectLink": "Login",
+    "redirectLink": "Sign In",
     "errorRegister": "Registration error"
   },
   "forgotPassword": {
     "title": "Forgot Password?",
     "emailLabel": "Email",
     "emailPlaceholder": "Enter your email",
-    "sendBtn": "Send reset link",
+    "sendBtn": "Send Link",
     "rememberText": "Remember your password?",
-    "loginLink": "Login"
+    "loginLink": "Sign In"
   },
   "resetPassword": {
     "backBtn": "Back",
-    "title": "Create a new password",
+    "title": "Create a New Password",
     "subtitle": "Your new password must be different from previously used passwords.",
     "passwordLabel": "Password",
     "passwordPlaceholder": "Your password",
-    "confirmPasswordLabel": "Confirm password",
+    "confirmPasswordLabel": "Confirm Password",
     "confirmPasswordPlaceholder": "Confirm your password",
-    "submitBtn": "Reset password"
+    "submitBtn": "Reset Password"
   },
-  "header": "Searching for a book...",
-  "novelty": "Novelty",
-  "topRated": "Top rated",
+  "header": "Search for a book...",
+  "novelty": "New Releases",
+  "topRated": "Top Rated",
   "more": "more",
-  "readMore": "Read more",
-  "continueReading": "Continue reading",
+  "readMore": "Read More",
+  "continueReading": "Continue Reading",
   "tabs": {
     "Home": "Home",
     "Library": "Library",
@@ -111,7 +124,7 @@
       "audiobooks": "Audiobooks"
     },
     "filters": {
-      "all": "All books",
+      "all": "All Books",
       "reading": "Reading",
       "read": "Read",
       "unread": "Unread"
@@ -119,16 +132,16 @@
     "actions": {
       "info": "Info",
       "read": "Read",
-      "markRead": "Mark as read",
+      "markRead": "Mark as Read",
       "collections": "Collections",
       "share": "Share",
       "delete": "Delete"
     },
     "sortOptions": {
-      "title": "Book title (A-Z)",
+      "title": "Title (A-Z)",
       "author": "Author (A-Z)",
-      "date": "By added date",
-      "pages": "By number of pages"
+      "date": "By Date Added",
+      "pages": "By Number of Pages"
     },
     "filterOptions": {
       "language": "Language",
@@ -137,9 +150,9 @@
       "clear": "Clear"
     },
     "pickerSearchPlaceholder": "Search",
-    "emptyList": "No books found",
+    "emptyList": "List is empty",
     "readStatusModal": {
-      "title": "Reading status",
+      "title": "Reading Status",
       "options": {
         "all": "All",
         "reading": "Reading",
@@ -148,5 +161,50 @@
       }
     }
   },
-  "publicBooks": "Public books"
+  "collections": {
+    "title": "Collections",
+    "searchPlaceholder": "Search",
+    "system": {
+      "audio": "Audio Books",
+      "saved": "Saved",
+      "downloaded": "Downloaded to device",
+      "postponed": "Postponed"
+    },
+    "sort": {
+      "title": "Sort",
+      "nameAsc": "Name (A-Z)",
+      "updated": "By Update Date",
+      "created": "By Creation Date",
+      "count": "By Number of Books",
+      "asc": "Ascending",
+      "desc": "Descending"
+    },
+    "modal": {
+      "newTitle": "New Collection",
+      "cancel": "Cancel",
+      "save": "Save",
+      "placeholder": "Collection Name",
+      "chooseIcon": "Choose Icon",
+      "chooseColor": "Choose Theme Color",
+      "pin": "Pin"
+    },
+    "unnamed": "Unnamed"
+  },
+  "trash": {
+    "title": "Trash",
+    "autoClean": "Auto-clean after 30 days",
+    "restored": "Book restored\n\"{{title}}\" restored to your library",
+    "deletedForever": "Book deleted permanently\n\"{{title}}\" deleted permanently",
+    "emptyTitle": "Trash is empty",
+    "emptySubtitle": "Your deleted books will appear here",
+    "fetchError": "Failed to load books",
+    "clearAllError": "Error deleting all books"
+  },
+  "trashBookCard": {
+    "restore": "Restore",
+    "deleteForever": "Delete",
+    "pageInfo": "Page {{currentPage}} of {{totalPages}}",
+    "removedAgo": "Deleted {{deletedAt}}"
+  },
+  "publicBooks": "Public Books"
 }

@@ -1,12 +1,13 @@
 import React from 'react';
-import {View, Text, Image, TouchableOpacity, StyleSheet, Animated} from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Swipeable } from 'react-native-gesture-handler';
-import {deleteLocalBook, deleteOnlineBook} from "../../../shared";
+import { useTranslation } from 'react-i18next';
 
 const deletePng = require('../../../../assets/Delete_Colection.png');
 
 export function TrashBookCard({ item, onRestore, onDeleteForever }) {
+    const { t } = useTranslation();
 
     const progressPercent = item.totalPages > 0
         ? (item.currentPage / item.totalPages) * 100
@@ -46,7 +47,7 @@ export function TrashBookCard({ item, onRestore, onDeleteForever }) {
                     activeOpacity={0.9}
                 >
                     <Image source={deletePng} style={{ width: 24, height: 24, tintColor: '#fff', resizeMode: 'contain', marginBottom: 8 }} />
-                    <Text style={styles.deleteActionText}>Видалити</Text>
+                    <Text style={styles.deleteActionText}>{t('trashBookCard.deleteForever')}</Text>
                 </AnimatedTouchable>
             </Animated.View>
         );
@@ -70,18 +71,22 @@ export function TrashBookCard({ item, onRestore, onDeleteForever }) {
                         <Text style={styles.title} numberOfLines={1}>{item.title}</Text>
                         <TouchableOpacity style={styles.restoreBtn} onPress={() => onRestore(item)}>
                             <Ionicons name="refresh" size={14} color="#2E8B57" />
-                            <Text style={styles.restoreBtnText}>Відновити</Text>
+                            <Text style={styles.restoreBtnText}>{t('trashBookCard.restore')}</Text>
                         </TouchableOpacity>
                     </View>
                     <Text style={styles.author}>{item.author}</Text>
-                    <Text style={styles.pageInfo}>Сторінка {item.currentPage} з {item.totalPages}</Text>
+                    <Text style={styles.pageInfo}>
+                        {t('trashBookCard.pageInfo', { currentPage: item.currentPage, totalPages: item.totalPages })}
+                    </Text>
                     <View style={styles.progressBarWrapper}>
                         <View style={styles.progressBarBg}>
                             <View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
                         </View>
                         <Text style={styles.progressText}>{Math.round(progressPercent * 10) / 10}%</Text>
                     </View>
-                    <Text style={styles.removedAgo}>Видалено {item.deletedAt}</Text>
+                    <Text style={styles.removedAgo}>
+                        {t('trashBookCard.removedAgo', { deletedAt: item.deletedAt })}
+                    </Text>
                 </View>
             </View>
         </Swipeable>

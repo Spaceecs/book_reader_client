@@ -1,0 +1,210 @@
+{
+  "welcomeScreen": {
+    "welcomeTitle": "¡Bienvenido!",
+    "welcomeText": "¡Bienvenido a la comunidad de amantes conscientes de los libros!\nJuntos haremos de la lectura un hábito agradable, te ayudaremos a descubrir \nnuevos mundos y siempre tendrás tus libros favoritos a mano.",
+    "login": "Iniciar sesión",
+    "register": "Registrarse"
+  },
+  "login": {
+    "title": "Iniciar sesión",
+    "username": "Usuario",
+    "enterUsername": "Introduce el usuario",
+    "password": "Contraseña",
+    "enterPassword": "Introduce la contraseña",
+    "signIn": "Iniciar sesión",
+    "noAccount": "¿No tienes una cuenta?",
+    "register": "Registrarse",
+    "error": "Usuario o contraseña inválidos",
+    "enterEmail": "Introduce el correo electrónico",
+    "forgotPassword": "¿Olvidaste la contraseña?",
+    "or": "o"
+  },
+  "settings": {
+    "settings": "Ajustes",
+    "language": "Idioma",
+    "brightnessGesture": "Brillo por gesto",
+    "brightnessDescription": "Ajusta el brillo deslizando hacia arriba o abajo en el borde izquierdo de la pantalla",
+    "screenOff": "Apagar pantalla",
+    "screenOffDescription": "Mantener la pantalla encendida",
+    "scanFiles": "Escanear archivos",
+    "changePassword": "Cambiar contraseña",
+    "deviceList": "Lista de dispositivos",
+    "onlyWIFIDownload": "Descargar solo por Wi-Fi",
+    "support": "Contactar soporte",
+    "rateApp": "Calificar aplicación",
+    "aboutApp": "Acerca de la aplicación",
+    "logout": "Cerrar sesión"
+  },
+  "drawerMenu": {
+    "Home": "Inicio",
+    "Settings": "Ajustes",
+    "Library": "Biblioteca",
+    "AddBook": "Añadir libro",
+    "Collections": "Colecciones",
+    "readMore": "Leer más",
+    "Trash": "Papelera",
+    "Feedback": "Enviar comentarios"
+  },
+  "validation": {
+    "username": {
+      "min": "El nombre de usuario debe tener al menos {{count}} caracteres",
+      "required": "El nombre de usuario es obligatorio"
+    },
+    "email": {
+      "format": "Formato de correo electrónico inválido",
+      "min": "El correo debe tener al menos {{count}} caracteres",
+      "required": "El correo electrónico es obligatorio"
+    },
+    "password": {
+      "min": "La contraseña debe tener al menos {{count}} caracteres",
+      "pattern": "La contraseña solo puede contener letras y números, sin símbolos especiales",
+      "required": "La contraseña es obligatoria"
+    },
+    "confirmPassword": {
+      "oneOf": "Las contraseñas no coinciden",
+      "required": "Confirmar la contraseña es obligatorio"
+    }
+  },
+  "register": {
+    "title": "Registro",
+    "name": "Nombre",
+    "namePlaceholder": "Tu nombre completo",
+    "email": "Correo electrónico",
+    "emailPlaceholder": "Tu correo electrónico",
+    "password": "Contraseña",
+    "passwordPlaceholder": "Tu contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "confirmPasswordPlaceholder": "Repite tu contraseña",
+    "submit": "Registrarse",
+    "submitting": "Espere...",
+    "divider": "O",
+    "social": {
+      "google": "Google",
+      "apple": "Apple",
+      "facebook": "Facebook"
+    },
+    "redirectText": "¿Ya tienes cuenta?",
+    "redirectLink": "Iniciar sesión",
+    "errorRegister": "Error al registrarse"
+  },
+  "forgotPassword": {
+    "title": "¿Olvidaste tu contraseña?",
+    "emailLabel": "Correo electrónico",
+    "emailPlaceholder": "Introduce tu correo",
+    "sendBtn": "Enviar enlace",
+    "rememberText": "¿Recuerdas tu contraseña?",
+    "loginLink": "Iniciar sesión"
+  },
+  "resetPassword": {
+    "backBtn": "Atrás",
+    "title": "Crea una nueva contraseña",
+    "subtitle": "Tu nueva contraseña debe ser diferente a las usadas anteriormente.",
+    "passwordLabel": "Contraseña",
+    "passwordPlaceholder": "Tu contraseña",
+    "confirmPasswordLabel": "Confirmar contraseña",
+    "confirmPasswordPlaceholder": "Confirma tu contraseña",
+    "submitBtn": "Restablecer contraseña"
+  },
+  "header": "Buscar libro...",
+  "novelty": "Novedades",
+  "topRated": "Más valorados",
+  "more": "más",
+  "readMore": "Leer más",
+  "continueReading": "Continuar leyendo",
+  "tabs": {
+    "Home": "Inicio",
+    "Library": "Biblioteca",
+    "Import": "Importar",
+    "Profile": "Perfil",
+    "Premium": "Premium"
+  },
+  "libraryScreen": {
+    "tabs": {
+      "books": "Libros",
+      "audiobooks": "Audiolibros"
+    },
+    "filters": {
+      "all": "Todos los libros",
+      "reading": "Leyendo",
+      "read": "Leído",
+      "unread": "No leído"
+    },
+    "actions": {
+      "info": "Información",
+      "read": "Leer",
+      "markRead": "Marcar como leído",
+      "collections": "Colecciones",
+      "share": "Compartir",
+      "delete": "Eliminar"
+    },
+    "sortOptions": {
+      "title": "Título (A-Z)",
+      "author": "Autor (A-Z)",
+      "date": "Por fecha de adición",
+      "pages": "Por número de páginas"
+    },
+    "filterOptions": {
+      "language": "Idioma",
+      "genre": "Género",
+      "publisher": "Editorial",
+      "clear": "Limpiar"
+    },
+    "pickerSearchPlaceholder": "Buscar",
+    "emptyList": "La lista está vacía",
+    "readStatusModal": {
+      "title": "Estado de lectura",
+      "options": {
+        "all": "Todos",
+        "reading": "Leyendo",
+        "read": "Leído",
+        "unread": "No leído"
+      }
+    }
+  },
+  "collections": {
+    "title": "Colecciones",
+    "searchPlaceholder": "Buscar",
+    "system": {
+      "audio": "Audiolibros",
+      "saved": "Guardados",
+      "downloaded": "Descargados al dispositivo",
+      "postponed": "Pospuestos"
+    },
+    "sort": {
+      "title": "Ordenar",
+      "nameAsc": "Nombre (A-Z)",
+      "updated": "Por fecha de actualización",
+      "created": "Por fecha de creación",
+      "count": "Por número de libros",
+      "asc": "Ascendente",
+      "desc": "Descendente"
+    },
+    "modal": {
+      "newTitle": "Nueva colección",
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "placeholder": "Nombre de la colección",
+      "chooseIcon": "Elegir icono",
+      "chooseColor": "Elegir color del tema",
+      "pin": "Fijar"
+    },
+    "unnamed": "Sin nombre"
+  },
+  "trash": {
+    "title": "Papelera",
+    "autoClean": "Limpieza automática después de 30 días",
+    "restored": "Libro restaurado\n\"{{title}}\" restaurado en tu biblioteca",
+    "deletedForever": "Libro eliminado permanentemente\n\"{{title}}\" eliminado permanentemente",
+    "emptyTitle": "La papelera está vacía",
+    "emptySubtitle": "Tus libros eliminados aparecerán aquí",
+    "fetchError": "No se pudieron cargar los libros",
+    "clearAllError": "Error al eliminar todos los libros"
+  },
+  "trashBookCard": {
+    "restore": "Restaurar",
+    "deleteForever": "Eliminar",
+    "pageInfo": "Página {{currentPage}} de {{totalPages}}",
+    "removedAgo": "Eliminado {{deletedAt}}"
+  },
+  "publicBooks": "Libros públicos"
+}

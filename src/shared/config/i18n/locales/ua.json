@@ -20,6 +20,19 @@
     "or": "або"
   },
   "settings": {
+    "settings": "Налаштування",
+    "language": "Мова",
+    "brightnessGesture": "Яскравість жестом",
+    "brightnessDescription": "Змінювати яскравість рухом нагору чи донизу по лівому краю екрану",
+    "screenOff": "Відключення екрану",
+    "screenOffDescription": "Тримайти екран увімкненим",
+    "scanFiles": "Сканування файлів",
+    "changePassword": "Змінити пароль",
+    "deviceList": "Список пристроїв",
+    "onlyWIFIDownload": "Завантажувати тільки через WI-FI",
+    "support": "Написати в тех. підтримку",
+    "rateApp": "Оцінити застосунок",
+    "aboutApp": "Інформація про застосунок",
     "logout": "Вийти"
   },
   "drawerMenu" : {
@@ -147,6 +160,51 @@
         "unread": "Не прочитано"
       }
     }
+  },
+  "collections": {
+    "title": "Колекції",
+    "searchPlaceholder": "Пошук",
+    "system": {
+      "audio": "Аудіо книги",
+      "saved": "Збережені",
+      "downloaded": "Завантажені на пристрій",
+      "postponed": "Відкладені"
+    },
+    "sort": {
+      "title": "Сортування",
+      "nameAsc": "Назва (за алфавітом)",
+      "updated": "За датою оновлення",
+      "created": "За датою додавання",
+      "count": "За кількістю книг у колекції",
+      "asc": "За зростанням",
+      "desc": "За спаданням"
+    },
+    "modal": {
+      "newTitle": "Нова колекція",
+      "cancel": "Скасувати",
+      "save": "Зберегти",
+      "placeholder": "Назва колекції",
+      "chooseIcon": "Обрати іконку",
+      "chooseColor": "Обрати колір теми",
+      "pin": "Закріпити"
+    },
+    "unnamed": "Без назви"
+  },
+  "trash": {
+    "title": "Корзина",
+    "autoClean": "Автоматичне очищення через 30 днів",
+    "restored": "Книгу відновлено\n«{{title}}» відновлено в вашій бібліотеці",
+    "deletedForever": "Книгу видалено назавжди\n«{{title}}» видалено назавжди",
+    "emptyTitle": "Корзина порожня",
+    "emptySubtitle": "Тут з'являться ваші видалені книги",
+    "fetchError": "Не вдалося завантажити книги",
+    "clearAllError": "Помилка при видаленні всіх книг"
+  },
+  "trashBookCard": {
+    "restore": "Відновити",
+    "deleteForever": "Видалити",
+    "pageInfo": "Сторінка {{currentPage}} з {{totalPages}}",
+    "removedAgo": "Видалено {{deletedAt}}"
   },
   "publicBooks": "Публічні книги"
 }

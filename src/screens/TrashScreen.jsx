@@ -3,6 +3,7 @@ import { View, Text, Image, TouchableOpacity, FlatList, Animated, Easing, StyleS
 import { Ionicons } from '@expo/vector-icons';
 import { TrashBookCard } from "../entities";
 import { useFocusEffect } from "@react-navigation/native";
+import { useTranslation } from 'react-i18next';
 import {
     deleteLocalBook,
     deleteOnlineBook,
@@ -16,6 +17,8 @@ const deletePng = require('../../assets/Delete_Colection.png');
 const emptyPng = require('../../assets/Corzina.png');
 
 export default function TrashScreen({ navigation }) {
+    const { t } = useTranslation();
+
     const [books, setBooks] = useState([]);
     const [toast, setToast] = useState({ visible: false, text: '', mode: 'success' });
     const toastOpacity = useRef(new Animated.Value(0)).current;
@@ -34,7 +37,7 @@ export default function TrashScreen({ navigation }) {
             let localBooks = filterDeletedBooks(await getLocalBooks());
             setBooks([...onlineBooks, ...localBooks]);
         } catch (e) {
-            console.error('Не вдалося завантажити книги:', e);
+            console.error(t('trash.fetchError'), e);
         }
     };
 
@@ -69,7 +72,7 @@ export default function TrashScreen({ navigation }) {
                 await markIsDeletedLocalBook(item.id, 0);
             }
             await fetchDeletedBooks();
-            showToast(`Книгу відновлено\n«${item.title}» відновлено в вашій бібліотеці`, 'success');
+            showToast(t('trash.restored', { title: item.title }), 'success');
         } catch (error) {
             console.error(error);
         }
@@ -84,7 +87,7 @@ export default function TrashScreen({ navigation }) {
                 await deleteLocalBook(item.id);
             }
             await fetchDeletedBooks();
-            showToast(`Книгу видалено назавжди\n«${item.title}» видалено назавжди`, 'danger');
+            showToast(t('trash.deletedForever', { title: item.title }), 'danger');
         } catch (e) {
             console.error(e);
         }
@@ -102,7 +105,7 @@ export default function TrashScreen({ navigation }) {
             }
             await fetchDeletedBooks();
         } catch (e) {
-            console.error('Помилка при видаленні всіх книг:', e);
+            console.error(t('trash.clearAllError'), e);
         }
     };
 
@@ -112,19 +115,19 @@ export default function TrashScreen({ navigation }) {
                 <TouchableOpacity onPress={() => navigation?.openDrawer?.()} style={styles.backButton}>
                     <Ionicons name="menu" size={22} color="#0F0F0F" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Корзина</Text>
+                <Text style={styles.headerTitle}>{t('trash.title')}</Text>
                 <TouchableOpacity onPress={clearAll} style={styles.headerRight}>
                     <Image source={require('../../assets/trash.png')} style={{ width: 20, height: 20, tintColor: '#0F0F0F', resizeMode: 'contain' }} />
                 </TouchableOpacity>
             </View>
 
-            <Text style={styles.autoCleanText}>Автоматичне очищення через 30 днів</Text>
+            <Text style={styles.autoCleanText}>{t('trash.autoClean')}</Text>
 
             {books.length === 0 ? (
                 <View style={styles.emptyWrapper}>
                     <Image source={emptyPng} style={styles.emptyImage} />
-                    <Text style={styles.emptyTitle}>Корзина порожня</Text>
-                    <Text style={styles.emptySubtitle}>Тут з'являться ваші видалені книги</Text>
+                    <Text style={styles.emptyTitle}>{t('trash.emptyTitle')}</Text>
+                    <Text style={styles.emptySubtitle}>{t('trash.emptySubtitle')}</Text>
                 </View>
             ) : (
                 <FlatList
