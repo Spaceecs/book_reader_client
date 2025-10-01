@@ -265,10 +265,18 @@ export async function deleteComment(id) {
 // ======================
 // Book Progress
 // ======================
-export const updateBookProgress = async (id, currentPage, totalPages) => {
+export const updateOnlineBookProgress = async (id, currentPage, totalPages) => {
     await ensureDb();
     await db.runAsync(
         'UPDATE online_books SET currentPage = ?, totalPages = ? WHERE id = ?;',
+        [Number(currentPage) || 0, Number(totalPages) || 0, id]
+    );
+};
+
+export const updateLocalBookProgress = async (id, currentPage, totalPages) => {
+    await ensureDb();
+    await db.runAsync(
+        'UPDATE local_books SET currentPage = ?, totalPages = ? WHERE id = ?;',
         [Number(currentPage) || 0, Number(totalPages) || 0, id]
     );
 };
