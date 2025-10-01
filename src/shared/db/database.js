@@ -10,20 +10,43 @@ async function ensureDb() {
 }
 
 export async function initDatabase() {
-    db = await SQLite.openDatabaseAsync("books.db");
-    //await db.execAsync(`DROP TABLE IF EXISTS online_books;`);
+    try {
+        db = await SQLite.openDatabaseAsync("books.db");
+    } catch (e) {
+        try { await SQLite.deleteDatabaseAsync("books.db"); } catch(_) {}
+        db = await SQLite.openDatabaseAsync("books.db");
+    }
+    const execSafe = async (sql) => {
+        try {
+            await db.execAsync(sql);
+        } catch (e) {
+            const msg = String(e?.message || e);
+            if (/prepareAsync|NullPointer/i.test(msg)) {
+                try { await SQLite.deleteDatabaseAsync("books.db"); } catch(_) {}
+                db = await SQLite.openDatabaseAsync("books.db");
+                await db.execAsync(sql);
+            } else {
+                throw e;
+            }
+        }
+    };
+    // await execSafe(`DROP TABLE IF EXISTS online_books;`);
+    // await execSafe(`DROP TABLE IF EXISTS local_books`);
     // Локальні книги
-    await db.execAsync(`
+    await execSafe(`
         CREATE TABLE IF NOT EXISTS local_books (
-            id TEXT PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT,
-            author TEXT,
-            filePath TEXT
+            filePath TEXT,
+            format TEXT,
+            base64 TEXT,
+            currentPage INTEGER,
+            totalPages INTEGER
         );
     `);
 
     // Онлайн книги
-    await db.execAsync(`
+    await execSafe(`
         CREATE TABLE IF NOT EXISTS online_books (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             onlineId TEXT,
@@ -34,13 +57,15 @@ export async function initDatabase() {
             format TEXT,
             base64 TEXT,
             currentPage INTEGER,
-            totalPages INTEGER
+            totalPages INTEGER,
+            publisher TEXT,
+            language TEXT
         );
     `);
 
 
     // Закладки
-    await db.execAsync(`
+    await execSafe(`
     CREATE TABLE IF NOT EXISTS bookmarks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       bookId TEXT,
@@ -77,9 +102,18 @@ export async function initDatabase() {
 // ======================
 export async function addLocalBook(book) {
     await ensureDb();
-    await db.runAsync(
-        `INSERT INTO local_books (id, title, author, filePath) VALUES (?, ?, ?, ?);`,
-        [book.id, book.title, book.author, book.filePath]
+    const result = await db.runAsync(
+        'INSERT INTO local_books (title, filePath, format, base64, currentPage, totalPages) VALUES (?, ?, ?, ?, ?, ?)',
+        [book.title, book.filePath, book.format, book.base64, 0, 0]
+    );
+    return { ...book, id: result.lastInsertRowId };
+}
+
+export async function getLocalBookById(id) {
+    await ensureDb();
+    return await db.getFirstAsync(
+        `SELECT * FROM local_books WHERE id = ?;`,
+        [id]
     );
 }
 
@@ -91,8 +125,8 @@ export async function getLocalBooks() {
 export async function updateLocalBook(book) {
     await ensureDb();
     await db.runAsync(
-        `UPDATE local_books SET title=?, author=?, filePath=? WHERE id=?;`,
-        [book.title, book.author, book.filePath, book.id]
+        `UPDATE local_books SET title=?, filePath=? WHERE id=?;`,
+        [book.title, book.filePath, book.id]
     );
 }
 
@@ -104,13 +138,13 @@ export async function deleteLocalBook(id) {
 // ======================
 // Online Books
 // ======================
-export async function addOnlineBook(onlineId, title, filePath, format = 'pdf', base64 = '', imageUrl = '', author = '') {
+export async function addOnlineBook(onlineId, title, filePath, format = 'pdf', base64 = '', imageUrl = '', author = '', publisher = '', language = '') {
     await ensureDb();
     try {
         await db.runAsync(
-            `INSERT INTO online_books (onlineId, title, filePath, format, base64, currentPage, totalPages, imageUrl, author)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [onlineId, title, filePath, format, base64, 0, 0, imageUrl, author]
+            `INSERT INTO online_books (onlineId, title, filePath, format, base64, currentPage, totalPages, imageUrl, author, publisher, language)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            , [onlineId, title, filePath, format, base64, 0, 0, imageUrl, author, publisher, language]
         );
     } catch (error) {
         console.error("addOnlineBook error:", error);

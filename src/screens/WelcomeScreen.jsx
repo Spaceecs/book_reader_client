@@ -1,8 +1,8 @@
-import {StyleSheet, Dimensions, View, Text, Image} from 'react-native';
-import {useNavigation} from "@react-navigation/native";
-import {useTranslation} from "react-i18next";
-import {Button, OtherButton} from "../shared";
-import {useEffect} from "react";
+import { StyleSheet, Dimensions, View, Text, Image, ActivityIndicator } from 'react-native';
+import { useNavigation } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
+import { Button, OtherButton } from "../shared";
+import { useEffect, useState } from "react";
 import * as SecureStore from "expo-secure-store";
 
 const { width } = Dimensions.get('window');
@@ -11,22 +11,48 @@ export default function WelcomeScreen() {
     const navigation = useNavigation();
     const { t } = useTranslation();
 
+    const [loading, setLoading] = useState(true);
+    const [isFirstLaunch, setIsFirstLaunch] = useState(null);
+
     useEffect(() => {
-        const checkToken = async () => {
+        const checkFirstLaunch = async () => {
             try {
-                const token = await SecureStore.getItemAsync('token');
-                if (token) {
-                    console.log(token);
+                const hasLaunched = await SecureStore.getItemAsync("hasLaunched");
+                if (hasLaunched) {
+                    // якщо вже запускали — одразу перекидаємо на Login
+                    navigation.reset({
+                        index: 0,
+                        routes: [{ name: "LoginScreen" }],
+                    });
                 } else {
-                    console.log("No access token");
+                    // перший запуск → показуємо Welcome
+                    setIsFirstLaunch(true);
                 }
             } catch (error) {
-                console.error("Error reading token:", error);
+                console.error("Error reading flag:", error);
+            } finally {
+                setLoading(false);
             }
         };
 
-        checkToken();
+        checkFirstLaunch();
     }, []);
+
+    const handleAuthNavigation = async (screen) => {
+        await SecureStore.setItemAsync("hasLaunched", "true"); // зберігаємо, що вже заходили
+        navigation.reset({
+            index: 0,
+            routes: [{ name: screen }],
+        });
+    };
+
+    if (loading) {
+        return <ActivityIndicator size="large" style={{ flex: 1 }} />;
+    }
+
+    if (!isFirstLaunch) {
+        return null; // нічого не малюємо, бо навігація вже відбулась
+    }
 
     return (
         <View style={styles.container}>
@@ -47,27 +73,17 @@ export default function WelcomeScreen() {
                 </View>
 
                 <View style={styles.authOptions}>
-                    <Button
-                        onClick={() => navigation.reset({
-                            index: 0,
-                            routes: [{ name: "LoginScreen" }],
-                        })}
-                    >
+                    <Button onClick={() => handleAuthNavigation("LoginScreen")}>
                         <Text>{t('welcomeScreen.login')}</Text>
                     </Button>
 
-                    <OtherButton
-                        onClick={() => navigation.reset({
-                            index: 0,
-                            routes: [{ name: "RegisterScreen" }],
-                        })}
-                    >
+                    <OtherButton onClick={() => handleAuthNavigation("RegisterScreen")}>
                         <Text>{t('welcomeScreen.register')}</Text>
                     </OtherButton>
                 </View>
             </View>
         </View>
-    )
+    );
 }
 
 const styles = StyleSheet.create({

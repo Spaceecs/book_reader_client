@@ -1,4 +1,5 @@
 import {Text, TouchableOpacity, View, Image, StyleSheet, Dimensions} from "react-native";
+import { Ionicons } from '@expo/vector-icons';
 import { openOnlineBook } from "../utils/openOnlineBook";
 import {useDispatch} from "react-redux";
 import {useNavigation} from "@react-navigation/native";
@@ -36,11 +37,9 @@ export function BookCard({ book, setSelectedItem, setIsActionsVisible }) {
                     {book.title}
                 </Text>
                 <View style={styles.cardMetaRow}>
-                    <View style={styles.dot} />
+                    <Ionicons name="star" size={16} color="#FFD700" />
                     <Text style={styles.cardMetaText}>
-                        {book.avgRating && book.avgRating.toFixed
-                            ? book.avgRating.toFixed(1)
-                            : book.avgRating || 0}
+                        {book?.avgRating && book.avgRating.toFixed ? book.avgRating.toFixed(1) : (book?.avgRating ?? 0)}/5
                     </Text>
                 </View>
             </TouchableOpacity>

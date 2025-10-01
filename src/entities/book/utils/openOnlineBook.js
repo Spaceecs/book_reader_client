@@ -16,7 +16,7 @@ export async function openOnlineBook(id, book, dispatch, navigation) {
         let newLocalOnlineBook
 
         if (!localOnlineBook) {
-            const filePath = await downloadPublicBook(book.id, book.title);
+            const filePath = await downloadPublicBook(book.id, book.title, (book.format || '').toLowerCase() || 'pdf');
             console.log("Path: ",filePath);
             const base64 = await FileSystem.readAsStringAsync(filePath, {
                 encoding: FileSystem.EncodingType.Base64,
@@ -28,7 +28,10 @@ export async function openOnlineBook(id, book, dispatch, navigation) {
                 filePath,
                 book.format,
                 base64,
-                book.imageUrl
+                book.imageUrl,
+                book.author,
+                book.publisher || '',
+                book.language || ''
             );
 
             newLocalOnlineBook = await getOnlineBooksByOnlineId(book.id);

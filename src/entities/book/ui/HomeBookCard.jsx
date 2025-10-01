@@ -39,7 +39,9 @@ export function HomeBookCard({ book, setSelectedItem, setIsActionsVisible }) {
                 <Text style={styles.bookAuthor} numberOfLines={1}>{book.author}</Text>
                 <View style={styles.ratingContainer}>
                     <Ionicons name="star" size={16} color="#FFD700" />
-                    <Text style={styles.rating}>{book.avgRating}</Text>
+                    <Text style={styles.rating}>
+                        {book?.avgRating && book.avgRating.toFixed ? book.avgRating.toFixed(1) : (book?.avgRating ?? 0)}/5
+                    </Text>
                 </View>
             </View>
         </TouchableOpacity>

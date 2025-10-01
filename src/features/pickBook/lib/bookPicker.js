@@ -1,11 +1,13 @@
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import { addLocalBook } from "../../../shared";
+import {openLocalBook} from "../../../entities";
+import {useNavigation} from "@react-navigation/native";
 
 export const pickBook = async () => {
     try {
         const res = await DocumentPicker.getDocumentAsync({
-            type: ["application/pdf", "application/epub+zip"], // дозволяємо і PDF, і EPUB
+            type: ["application/pdf", "application/epub+zip"],
             copyToCacheDirectory: false,
         });
 
@@ -36,19 +38,15 @@ export const pickBook = async () => {
             base64Prefix = "data:application/pdf;base64,";
         }
 
-        await addLocalBook(
-            name,
-            newPath,
-            format,
-            `${base64Prefix}${base64}`
-        );
+        console.log(name, newPath, format);
 
-        return {
+        await addLocalBook({
             title: name,
             filePath: newPath,
-            format,
-            base64: `${base64Prefix}${base64}`,
-        };
+            format: format,
+            base64: `${base64Prefix}${base64}`
+        });
+
     } catch (error) {
         console.error("📛 Помилка при виборі файлу:", error);
         return null;
