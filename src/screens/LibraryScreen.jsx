@@ -15,7 +15,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StyleSheet } from 'react-native';
 import { useDispatch } from 'react-redux';
-import {getLocalBooks, getOnlineBooks, getReadingProgress} from '../shared';
+import {
+    getLocalBooks,
+    getOnlineBooks,
+    getReadingProgress,
+    markIsDeletedLocalBook,
+    markIsDeletedOnlineBook
+} from '../shared';
 import { getCollections, addBookToCollection, removeBookFromCollection, createCollection } from '../shared/api';
 import {openOnlineBook} from "../entities";
 import {BookCard} from "../entities";
@@ -61,10 +67,13 @@ export default function LibraryScreen({ navigation }) {
 
             const fetchBooks = async () => {
                 try {
-                    const onlineBooks = await getOnlineBooks();
-                    const localBooks = await getLocalBooks();
+                    let onlineBooks = await getOnlineBooks();
+                    let localBooks = await getLocalBooks();
 
-                    const combined = [...(onlineBooks || []), ...(localBooks || [])];
+                    localBooks = (localBooks || []).filter(b => !b.isDeleted || b.isDeleted === 0 || b.isDeleted === false);
+                    onlineBooks = (onlineBooks || []).filter(b => !b.isDeleted || b.isDeleted === 0 || b.isDeleted === false);
+
+                    const combined = [...(onlineBooks || []), ...localBooks];
 
                     if (isActive) setBooks(combined);
                 } catch (e) {
@@ -80,7 +89,7 @@ export default function LibraryScreen({ navigation }) {
         }, [])
     );
 
-  useEffect(() => {
+    useEffect(() => {
     const fetchProgress = async () => {
       try {
         const data = await getReadingProgress();
@@ -110,7 +119,24 @@ export default function LibraryScreen({ navigation }) {
     }
   }, [isActionsVisible]);
 
-  const ALL_LANGUAGES = ['Українська', 'English', 'Deutsch', 'Polski', 'Español', 'Français', 'Italiano', '中文', '日本語'];
+    const handleDelete = async (book) => {
+        try {
+            if (book.onlineId) {
+                await markIsDeletedOnlineBook(book.id, 1);
+            } else {
+                await markIsDeletedLocalBook(book.id, 1);
+            }
+
+            // Локальне оновлення стану
+            setBooks(prev => prev.filter(b => b.id !== book.id && b.onlineId !== book.onlineId));
+        } catch (e) {
+            console.error('Помилка при видаленні книги:', e);
+        }
+    };
+
+
+
+    const ALL_LANGUAGES = ['Українська', 'English', 'Deutsch', 'Polski', 'Español', 'Français', 'Italiano', '中文', '日本語'];
   const ALL_PUBLISHERS = ['Віхола', 'Vivat', 'Yakaboo', 'КСД', 'Nebo BookLab', 'ArtHuss', 'Project Gutenberg', 'READBERRY'];
   const ALL_GENRES = ['Детектив', 'Фантастика', 'Фентезі', 'Романтика', 'Трилер', 'Нон-фікшн', 'Мемуари', 'Пригоди', 'Історія'];
 
@@ -290,7 +316,19 @@ export default function LibraryScreen({ navigation }) {
                         } catch(_) { setIsCollectionsModalVisible(true); }
                       } },
                     { key: 'share', label: 'Поділитись' },
-                    { key: 'delete', label: 'Видалити', destructive: true },
+                    { key: 'delete',
+                        label: 'Видалити',
+                        destructive: true,
+                        onPress: async () => {
+                            setIsActionsVisible(false);
+                            if (!selectedItem) return;
+
+                            try {
+                                await handleDelete(selectedItem);
+                            } catch (e) {
+                                console.error('Помилка при видаленні книги:', e);
+                            }
+                        } },
                   ].map((row, index, arr) => {
                     const isLast = index === arr.length - 1;
                     return (

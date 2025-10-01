@@ -107,7 +107,7 @@ export async function getLocalBookById(id) {
 
 export async function getLocalBooks() {
     await ensureDb();
-    return await db.getAllAsync(`SELECT * FROM local_books WHERE isDeleted=0;`);
+    return await db.getAllAsync(`SELECT * FROM local_books;`);
 }
 
 export async function updateLocalBook(book) {
@@ -167,7 +167,7 @@ export async function addOnlineBook(onlineId, title, filePath, format = 'pdf', b
 
 export async function getOnlineBooks() {
     await ensureDb();
-    return await db.getAllAsync(`SELECT * FROM online_books WHERE isDeleted=0;`);
+    return await db.getAllAsync(`SELECT * FROM online_books;`);
 }
 
 export async function getOnlineBookById(id) {
