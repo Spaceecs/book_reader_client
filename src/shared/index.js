@@ -30,6 +30,10 @@ export {
     addComment,
     getCommentsByBook,
     deleteComment,
-    getLocalBookById
+    getLocalBookById,
+    markIsDeletedOnlineBook,
+    markIsDeletedLocalBook,
+    cleanupExpiredLocalBooks,
+    cleanupExpiredOnlineBooks
 } from "./db/database"
 export {getReadingProgress, setReadingProgress} from "./api/progress"

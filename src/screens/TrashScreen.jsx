@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, FlatList, Animated, Easing, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Swipeable } from 'react-native-gesture-handler';
+import {BookCard, TrashBookCard} from "../entities";
 
 const deletePng = require('../../assets/Delete_Colection.png');
 const emptyPng = require('../../assets/Corzina.png');
@@ -47,7 +48,7 @@ export default function TrashScreen({ navigation }) {
     const scale = dragX.interpolate({ inputRange: [-ACTION_PEEK_WIDTH, -20, 0], outputRange: [1, 0.97, 0.9], extrapolate: 'clamp' });
     const translateX = dragX.interpolate({ inputRange: [-ACTION_PEEK_WIDTH, 0], outputRange: [0, ACTION_PEEK_WIDTH * 0.3], extrapolate: 'clamp' });
     return (
-      <Animated.View style={[styles.rightActionContainer, { width: ACTION_PEEK_WIDTH, flex: 0, marginLeft: 0, marginRight: 0, transform: [{ translateX }] }]}> 
+      <Animated.View style={[styles.rightActionContainer, { width: ACTION_PEEK_WIDTH, flex: 0, marginLeft: 0, marginRight: 0, transform: [{ translateX }] }]}>
         <AnimatedTouchable
           style={[styles.deleteAction, { width: ACTION_BUTTON_WIDTH, opacity, transform: [{ scale }] }]}
           onPress={() => deleteForever(item)}
@@ -59,37 +60,6 @@ export default function TrashScreen({ navigation }) {
       </Animated.View>
     );
   };
-
-  const renderItem = ({ item }) => (
-    <Swipeable
-      renderRightActions={(progress, dragX) => renderRightActions(item, progress, dragX)}
-      overshootRight={false}
-      friction={1.2}
-      rightThreshold={40}
-    >
-      <View style={styles.card}>
-        <Image source={{ uri: item.cover }} style={styles.cover} defaultSource={require('../../assets/placeholder-cover.png')} />
-        <View style={styles.info}>
-          <View style={styles.titleRow}>
-            <Text style={styles.title} numberOfLines={1}>{item.title}</Text>
-            <TouchableOpacity style={styles.restoreBtn} onPress={() => restoreItem(item)}>
-              <Ionicons name="refresh" size={14} color="#2E8B57" />
-              <Text style={styles.restoreBtnText}>Відновити</Text>
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.author}>{item.author}</Text>
-          <Text style={styles.pageInfo}>Сторінка {item.currentPage} з {item.totalPages}</Text>
-          <View style={styles.progressBarWrapper}>
-            <View style={styles.progressBarBg}>
-              <View style={[styles.progressBarFill, { width: `${item.progress}%` }]} />
-            </View>
-            <Text style={styles.progressText}>{item.progress}%</Text>
-          </View>
-          <Text style={styles.removedAgo}>Видалено {item.removedAgo}</Text>
-        </View>
-      </View>
-    </Swipeable>
-  );
 
   const clearAll = () => setItems([]);
 
@@ -116,8 +86,13 @@ export default function TrashScreen({ navigation }) {
       ) : (
         <FlatList
           data={items}
-          renderItem={renderItem}
-          keyExtractor={item => item.id}
+          renderItem={({ item }) => <TrashBookCard
+              item={item}
+              onRestore={restoreItem}
+              onDeleteForever={deleteForever}
+              renderRightActions={renderRightActions}
+          />}
+          keyExtractor={(item, index) => `${item.id ?? item.onlineId}-${index}`}
           contentContainerStyle={styles.listContent}
         />
       )}
