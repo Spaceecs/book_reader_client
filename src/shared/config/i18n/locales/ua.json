@@ -206,5 +206,64 @@
     "pageInfo": "Сторінка {{currentPage}} з {{totalPages}}",
     "removedAgo": "Видалено {{deletedAt}}"
   },
+  "library": {
+    "tabs": {
+      "books": "Книги",
+      "audiobooks": "Аудіокниги"
+    },
+    "filters": {
+      "all": "Усі книги",
+      "reading": "Читаю",
+      "read": "Прочитано",
+      "unread": "Не прочитано"
+    },
+    "search": {
+      "placeholder": "Пошук"
+    },
+    "buttons": {
+      "sort": "Сортування",
+      "filter": "Фільтр",
+      "clear": "Очистити",
+      "readingStatus": "Статус читання",
+      "collections": "Колекції",
+      "addToCollection": "Додати до колекції",
+      "info": "Інформація",
+      "read": "Читати",
+      "markAsRead": "Позначити як прочитане",
+      "share": "Поділитись",
+      "delete": "Видалити"
+    },
+    "readingStatus": {
+      "all": "Усі",
+      "reading": "Читаю",
+      "read": "Прочитано",
+      "unread": "Не прочитано"
+    },
+    "sortOptions": {
+      "title": "Назва книги (за алфавітом)",
+      "author": "Автор (за алфавітом)",
+      "dateAdded": "За датою додавання",
+      "pages": "За кількістю сторінок"
+    },
+    "filtersOptions": {
+      "language": "Мова",
+      "genre": "Жанр",
+      "publisher": "Видавництво"
+    },
+    "picker": {
+      "search": "Пошук"
+    },
+    "collections": {
+      "saved": "Збережені",
+      "postponed": "Відкладені",
+      "audioBooks": "Аудіо книги",
+      "downloaded": "Завантажені на пристрій",
+      "untitled": "Без назви"
+    },
+    "misc": {
+      "allBooks": "Усі",
+      "listEmpty": "Список порожній"
+    }
+  },
   "publicBooks": "Публічні книги"
 }
