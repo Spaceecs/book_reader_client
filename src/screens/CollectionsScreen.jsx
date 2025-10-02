@@ -43,6 +43,8 @@ const systemRows = [
   { id: 'postponed', title: 'Відкладені', icon: iconPostponed, route: 'CollectionPostponed' },
 ];
 
+const RESERVED_COLLECTION_NAMES = new Set(['Збережені', 'Відкладені']);
+
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const ICON_COLS = 6;
 const ICON_GAP = 12;
@@ -77,7 +79,7 @@ export function CollectionsScreen({ navigation }) {
 
   const filteredCollections = useMemo(() => {
     const q = search.trim().toLowerCase();
-    let list = collections;
+    let list = collections.filter(c => !RESERVED_COLLECTION_NAMES.has(String(c.name || c.title || '')));
     list = [...list].sort((a, b) => {
       let cmp = 0;
       if (sortKey === 'title') {
@@ -122,12 +124,17 @@ export function CollectionsScreen({ navigation }) {
   };
   const saveCollection = async () => {
     if (!nameDraft.trim()) { setIsModalVisible(false); return; }
+    const trimmed = nameDraft.trim();
+    if (RESERVED_COLLECTION_NAMES.has(trimmed)) {
+      setIsModalVisible(false);
+      return;
+    }
     try {
       if (editingId) {
         // simple local edit (no PATCH in API spec); recreate by delete/create could be used later
-        setCollections(prev => prev.map(c => c.id === editingId ? { ...c, name: nameDraft.trim() } : c));
+        setCollections(prev => prev.map(c => c.id === editingId ? { ...c, name: trimmed } : c));
       } else {
-        const created = await createCollection(nameDraft.trim());
+        const created = await createCollection(trimmed);
         setCollections(prev => [created, ...prev]);
       }
     } catch(_) {}
@@ -143,16 +150,7 @@ export function CollectionsScreen({ navigation }) {
     (async () => {
       try {
         const list = await getCollections();
-        let arr = Array.isArray(list) ? list : [];
-        // Ensure system collections exist: "Збережені" and "Відкладені"
-        const hasSaved = arr.some(c => (c.name || c.title) === 'Збережені');
-        const hasPostponed = arr.some(c => (c.name || c.title) === 'Відкладені');
-        if (!hasSaved) {
-          try { const created = await createCollection('Збережені'); arr = [created, ...arr]; } catch(_) {}
-        }
-        if (!hasPostponed) {
-          try { const created = await createCollection('Відкладені'); arr = [created, ...arr]; } catch(_) {}
-        }
+        const arr = Array.isArray(list) ? list : [];
         setCollections(arr);
       } catch(_) {}
       try { const locals = await getLocalBooks(); setDownloadedCount(Array.isArray(locals) ? locals.length : 0); } catch(_) {}

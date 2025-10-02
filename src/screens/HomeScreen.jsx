@@ -19,6 +19,21 @@ export function HomeScreen() {
     const [isCollectionsModalVisible, setIsCollectionsModalVisible] = useState(false);
     const [collections, setCollections] = useState([]);
 
+    const getServerBookId = (item) => {
+        if (!item) return null;
+        const prefer = item?.onlineId ?? item?.id ?? item?.bookId ?? item?.book?.id;
+        const n = Number(prefer);
+        if (Number.isFinite(n) && n > 0) return n;
+        if (typeof item?.onlineId === 'string') {
+            const m = item.onlineId.match(/\d+/);
+            if (m) {
+                const v = Number(m[0]);
+                if (Number.isFinite(v) && v > 0) return v;
+            }
+        }
+        return null;
+    };
+
     useEffect(() => {
         const fetchUser = async () => {
             try {
@@ -87,14 +102,10 @@ export function HomeScreen() {
                         <TouchableOpacity style={{ paddingHorizontal:16, paddingVertical:12, borderTopWidth:1, borderTopColor:'#eee' }} onPress={async () => {
                             try{
                                 const list = await getCollections();
-                                let arr = Array.isArray(list)?list:[];
-                                const hasSaved = arr.some(c => (c.name || c.title) === 'Збережені');
-                                const hasPostponed = arr.some(c => (c.name || c.title) === 'Відкладені');
-                                if (!hasSaved) { try { const created = await createCollection('Збережені'); arr = [created, ...arr]; } catch(_) {} }
-                                if (!hasPostponed) { try { const created = await createCollection('Відкладені'); arr = [created, ...arr]; } catch(_) {} }
+                                const arr = Array.isArray(list)?list:[];
                                 setCollections(arr);
                                 setIsCollectionsModalVisible(true);
-                            }catch(_){ setIsCollectionsModalVisible(true);} }}> 
+                            }catch(_){ setIsCollectionsModalVisible(true);} }}>
                             <Text style={{ fontSize:15, fontWeight:'600', color:'#0F0F0F' }}>Додати до колекції</Text>
                         </TouchableOpacity>
                     </View>
@@ -121,10 +132,59 @@ export function HomeScreen() {
                                         <Ionicons name="information-circle-outline" size={20} color="#999" />
                                     </View>
                                 ))}
+                                {/* System collections (always visible) */}
+                                {(() => {
+                                    const targetBookId = getServerBookId(selectedItem);
+                                    const saved = (collections||[]).find(c => (c.name || c.title) === 'Збережені');
+                                    const postponed = (collections||[]).find(c => (c.name || c.title) === 'Відкладені');
+                                    const sysRows = [
+                                        { key: 'saved', label: 'Збережені', col: saved },
+                                        { key: 'postponed', label: 'Відкладені', col: postponed },
+                                    ];
+                                    return sysRows.map(({ key, label, col }) => {
+                                        const isIn = !!(targetBookId && col && Array.isArray(col.books) && col.books.some(b => Number(b?.id) === targetBookId));
+                                        return (
+                                            <TouchableOpacity
+                                                key={`sys-${key}`}
+                                                style={{ flexDirection:'row', justifyContent:'space-between', alignItems:'center', paddingVertical:14, borderBottomWidth:1, borderBottomColor:'#eee', ...(isIn ? { backgroundColor:'#e6f5ef' } : {}) }}
+                                                onPress={async () => {
+                                                    try{
+                                                        if (!targetBookId) return;
+                                                        let collectionId = col?.id;
+                                                        if (!collectionId) {
+                                                            try { const created = await createCollection(label); collectionId = created?.id; } catch(_) {}
+                                                        }
+                                                        if (!collectionId) return;
+                                                        setCollections(prev => {
+                                                            const exists = prev.some(c => c.id === collectionId);
+                                                            const baseCol = exists ? prev.find(c => c.id === collectionId) : { id: collectionId, name: label, books: [] };
+                                                            const nextCol = {
+                                                                ...baseCol,
+                                                                books: isIn
+                                                                    ? (Array.isArray(baseCol.books) ? baseCol.books.filter(b => Number(b?.id) !== targetBookId) : [])
+                                                                    : [ ...(Array.isArray(baseCol.books) ? baseCol.books : []), { id: targetBookId } ],
+                                                            };
+                                                            const without = prev.filter(c => c.id !== collectionId);
+                                                            return [nextCol, ...without];
+                                                        });
+                                                        if (isIn) await removeBookFromCollection(collectionId, targetBookId);
+                                                        else await addBookToCollection(collectionId, targetBookId);
+                                                        const list = await getCollections(); setCollections(Array.isArray(list)?list:[]);
+                                                    }catch(_){ }
+                                                }}
+                                                activeOpacity={0.85}
+                                            >
+                                                <Text style={{ fontSize:14, color: isIn ? '#0E7A4A' : '#222', fontWeight: isIn ? '700' : '400' }}>{label}</Text>
+                                                <Ionicons name={isIn ? 'checkbox' : 'square-outline'} size={20} color={isIn ? '#2E8B57' : '#666'} />
+                                            </TouchableOpacity>
+                                        );
+                                    });
+                                })()}
                                 {(collections||[]).map(c => {
                                     const targetBookIdRaw = selectedItem?.onlineId ?? selectedItem?.id;
                                     const targetBookId = Number(targetBookIdRaw);
                                     const isIn = Array.isArray(c.books) ? c.books.some(b => Number(b?.id) === targetBookId) : false;
+                                    if ((c.name || c.title) === 'Збережені' || (c.name || c.title) === 'Відкладені') return null;
                                     return (
                                         <TouchableOpacity
                                             key={String(c.id)}
