@@ -30,8 +30,8 @@ export async function initDatabase() {
             }
         }
     };
-    await execSafe(`DROP TABLE IF EXISTS online_books;`);
-    await execSafe(`DROP TABLE IF EXISTS local_books`);
+    // await execSafe(`DROP TABLE IF EXISTS online_books;`);
+    // await execSafe(`DROP TABLE IF EXISTS local_books`);
     // Локальні книги
     await execSafe(`
         CREATE TABLE IF NOT EXISTS local_books (

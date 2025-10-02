@@ -124,41 +124,68 @@
       "audiobooks": "Audiobooks"
     },
     "filters": {
-      "all": "All Books",
+      "all_books": "All Books",
+      "reading": "Reading",
+      "read": "Read",
+      "unread": "Unread",
+      "all": "All"
+    },
+    "search": {
+      "placeholder": "Search"
+    },
+    "empty_list": "List is empty",
+    "read_status": {
+      "title": "Reading Status",
+      "all": "All",
       "reading": "Reading",
       "read": "Read",
       "unread": "Unread"
     },
     "actions": {
-      "info": "Info",
-      "read": "Read",
-      "markRead": "Mark as Read",
+      "info": "Information",
+      "mark_reading": "Mark as Reading",
+      "rate_book": "Rate Book",
+      "mark_read": "Mark as Read",
       "collections": "Collections",
       "share": "Share",
       "delete": "Delete"
     },
-    "sortOptions": {
-      "title": "Title (A-Z)",
-      "author": "Author (A-Z)",
-      "date": "By Date Added",
-      "pages": "By Number of Pages"
+    "collections": {
+      "saved": "Saved",
+      "postponed": "Postponed"
     },
-    "filterOptions": {
+    "rate_book": {
+      "title": "Rate Book",
+      "save": "Save"
+    },
+    "sort": {
+      "title": "Sorting",
+      "title_alpha": "Title (A-Z)",
+      "author_alpha": "Author (A-Z)",
+      "date_added": "By Date Added",
+      "page_count": "By Page Count"
+    },
+    "filter": {
+      "title": "Filter",
+      "clear": "Clear",
       "language": "Language",
       "genre": "Genre",
       "publisher": "Publisher",
-      "clear": "Clear"
+      "not_selected": "—"
     },
-    "pickerSearchPlaceholder": "Search",
-    "emptyList": "List is empty",
-    "readStatusModal": {
-      "title": "Reading Status",
-      "options": {
-        "all": "All",
-        "reading": "Reading",
-        "read": "Read",
-        "unread": "Unread"
-      }
+    "collections_modal": {
+      "title": "Add to Collection",
+      "audio_books": "Audio Books",
+      "downloaded": "Downloaded to Device"
+    },
+    "errors": {
+      "load_books_failed": "Failed to load books:",
+      "delete_book_error": "Error deleting book:"
+    },
+    "bookCard": {
+      "read": "Read",
+      "reading": "Reading",
+      "no_title": "No title"
     }
   },
   "collections": {

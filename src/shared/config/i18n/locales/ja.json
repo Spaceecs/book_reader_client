@@ -1,7 +1,7 @@
 {
   "welcomeScreen": {
     "welcomeTitle": "ようこそ！",
-    "welcomeText": "意識のある読書愛好家コミュニティへようこそ！\n一緒に読書を楽しい習慣にし、新しい世界を発見し、\nお気に入りの本をいつでも手元に置きましょう。",
+    "welcomeText": "意識的な読書愛好家のコミュニティへようこそ！\n一緒に読書を楽しい習慣にし、新しい世界を発見するお手伝いをし、\nお気に入りの本をいつでも手元に置けるようにします。",
     "login": "ログイン",
     "register": "登録"
   },
@@ -14,22 +14,22 @@
     "signIn": "ログイン",
     "noAccount": "アカウントをお持ちでないですか？",
     "register": "登録",
-    "error": "ユーザー名またはパスワードが正しくありません",
+    "error": "ユーザー名またはパスワードが無効です",
     "enterEmail": "メールアドレスを入力",
-    "forgotPassword": "パスワードを忘れた？",
+    "forgotPassword": "パスワードをお忘れですか？",
     "or": "または"
   },
   "settings": {
     "settings": "設定",
     "language": "言語",
     "brightnessGesture": "ジェスチャーで明るさ調整",
-    "brightnessDescription": "画面左側を上下にスワイプして明るさを変更",
+    "brightnessDescription": "画面の左端を上下にスワイプして明るさを調整",
     "screenOff": "画面オフ",
     "screenOffDescription": "画面をオンに保つ",
     "scanFiles": "ファイルをスキャン",
     "changePassword": "パスワードを変更",
-    "deviceList": "デバイス一覧",
-    "onlyWIFIDownload": "Wi-Fi接続時のみダウンロード",
+    "deviceList": "デバイスリスト",
+    "onlyWIFIDownload": "Wi-Fiのみでダウンロード",
     "support": "サポートに連絡",
     "rateApp": "アプリを評価",
     "aboutApp": "アプリについて",
@@ -43,21 +43,21 @@
     "Collections": "コレクション",
     "readMore": "続きを読む",
     "Trash": "ゴミ箱",
-    "Feedback": "フィードバック"
+    "Feedback": "フィードバックを送信"
   },
   "validation": {
     "username": {
-      "min": "名前は少なくとも {{count}} 文字である必要があります",
-      "required": "名前は必須です"
+      "min": "ユーザー名は{{count}}文字以上である必要があります",
+      "required": "ユーザー名は必須です"
     },
     "email": {
-      "format": "メールアドレスの形式が正しくありません",
-      "min": "メールアドレスは少なくとも {{count}} 文字である必要があります",
+      "format": "無効なメール形式です",
+      "min": "メールアドレスは{{count}}文字以上である必要があります",
       "required": "メールアドレスは必須です"
     },
     "password": {
-      "min": "パスワードは少なくとも {{count}} 文字である必要があります",
-      "pattern": "パスワードは英数字のみで、特殊文字は使用できません",
+      "min": "パスワードは{{count}}文字以上である必要があります",
+      "pattern": "パスワードは文字と数字のみを含めることができ、特殊記号は使用できません",
       "required": "パスワードは必須です"
     },
     "confirmPassword": {
@@ -68,13 +68,13 @@
   "register": {
     "title": "登録",
     "name": "名前",
-    "namePlaceholder": "あなたの名前",
+    "namePlaceholder": "あなたのフルネーム",
     "email": "メールアドレス",
     "emailPlaceholder": "あなたのメールアドレス",
     "password": "パスワード",
     "passwordPlaceholder": "あなたのパスワード",
     "confirmPassword": "パスワード確認",
-    "confirmPasswordPlaceholder": "もう一度パスワードを入力",
+    "confirmPasswordPlaceholder": "パスワードを再入力",
     "submit": "登録",
     "submitting": "お待ちください...",
     "divider": "または",
@@ -88,7 +88,7 @@
     "errorRegister": "登録エラー"
   },
   "forgotPassword": {
-    "title": "パスワードを忘れた？",
+    "title": "パスワードをお忘れですか？",
     "emailLabel": "メールアドレス",
     "emailPlaceholder": "メールアドレスを入力",
     "sendBtn": "リンクを送信",
@@ -98,7 +98,7 @@
   "resetPassword": {
     "backBtn": "戻る",
     "title": "新しいパスワードを作成",
-    "subtitle": "新しいパスワードは以前使用したものと異なる必要があります。",
+    "subtitle": "新しいパスワードは以前使用したパスワードと異なる必要があります。",
     "passwordLabel": "パスワード",
     "passwordPlaceholder": "あなたのパスワード",
     "confirmPasswordLabel": "パスワード確認",
@@ -106,7 +106,7 @@
     "submitBtn": "パスワードをリセット"
   },
   "header": "本を検索...",
-  "novelty": "新刊",
+  "novelty": "新着",
   "topRated": "高評価",
   "more": "もっと見る",
   "readMore": "続きを読む",
@@ -124,41 +124,68 @@
       "audiobooks": "オーディオブック"
     },
     "filters": {
-      "all": "すべての本",
-      "reading": "読んでいる",
+      "all_books": "すべての本",
+      "reading": "読書中",
+      "read": "読了",
+      "unread": "未読",
+      "all": "すべて"
+    },
+    "search": {
+      "placeholder": "検索"
+    },
+    "empty_list": "リストは空です",
+    "read_status": {
+      "title": "読書ステータス",
+      "all": "すべて",
+      "reading": "読書中",
       "read": "読了",
       "unread": "未読"
     },
     "actions": {
       "info": "情報",
-      "read": "読む",
-      "markRead": "読了としてマーク",
+      "mark_reading": "読書中としてマーク",
+      "rate_book": "本を評価",
+      "mark_read": "読了としてマーク",
       "collections": "コレクション",
       "share": "共有",
       "delete": "削除"
     },
-    "sortOptions": {
-      "title": "タイトル (A-Z)",
-      "author": "著者 (A-Z)",
-      "date": "追加日順",
-      "pages": "ページ数順"
+    "collections": {
+      "saved": "保存済み",
+      "postponed": "延期済み"
     },
-    "filterOptions": {
+    "rate_book": {
+      "title": "本を評価",
+      "save": "保存"
+    },
+    "sort": {
+      "title": "並び替え",
+      "title_alpha": "タイトル (A-Z)",
+      "author_alpha": "著者 (A-Z)",
+      "date_added": "追加日順",
+      "page_count": "ページ数順"
+    },
+    "filter": {
+      "title": "フィルター",
+      "clear": "クリア",
       "language": "言語",
       "genre": "ジャンル",
       "publisher": "出版社",
-      "clear": "クリア"
+      "not_selected": "—"
     },
-    "pickerSearchPlaceholder": "検索",
-    "emptyList": "リストが空です",
-    "readStatusModal": {
-      "title": "読書ステータス",
-      "options": {
-        "all": "すべて",
-        "reading": "読んでいる",
-        "read": "読了",
-        "unread": "未読"
-      }
+    "collections_modal": {
+      "title": "コレクションに追加",
+      "audio_books": "オーディオブック",
+      "downloaded": "デバイスにダウンロード済み"
+    },
+    "errors": {
+      "load_books_failed": "本の読み込みに失敗しました：",
+      "delete_book_error": "本の削除エラー："
+    },
+    "bookCard": {
+      "read": "読了",
+      "reading": "読書中",
+      "no_title": "タイトルなし"
     }
   },
   "collections": {
@@ -168,14 +195,14 @@
       "audio": "オーディオブック",
       "saved": "保存済み",
       "downloaded": "デバイスにダウンロード済み",
-      "postponed": "保留"
+      "postponed": "延期済み"
     },
     "sort": {
       "title": "並び替え",
       "nameAsc": "名前 (A-Z)",
       "updated": "更新日順",
       "created": "作成日順",
-      "count": "書籍数順",
+      "count": "本の数順",
       "asc": "昇順",
       "desc": "降順"
     },
@@ -186,25 +213,25 @@
       "placeholder": "コレクション名",
       "chooseIcon": "アイコンを選択",
       "chooseColor": "テーマカラーを選択",
-      "pin": "固定"
+      "pin": "ピン留め"
     },
     "unnamed": "名前なし"
   },
   "trash": {
     "title": "ゴミ箱",
-    "autoClean": "30日後に自動削除",
-    "restored": "本が復元されました\n«{{title}}» がライブラリに復元されました",
-    "deletedForever": "本が完全に削除されました\n«{{title}}» が永久に削除されました",
+    "autoClean": "30日後に自動クリーンアップ",
+    "restored": "本を復元しました\n\"{{title}}\"がライブラリに復元されました",
+    "deletedForever": "本を完全に削除しました\n\"{{title}}\"が完全に削除されました",
     "emptyTitle": "ゴミ箱は空です",
     "emptySubtitle": "削除した本はここに表示されます",
     "fetchError": "本の読み込みに失敗しました",
-    "clearAllError": "すべての本の削除中にエラーが発生しました"
+    "clearAllError": "すべての本の削除エラー"
   },
   "trashBookCard": {
     "restore": "復元",
     "deleteForever": "削除",
-    "pageInfo": "{{totalPages}}ページ中{{currentPage}}ページ",
-    "removedAgo": "{{deletedAt}} に削除"
+    "pageInfo": "{{currentPage}}ページ / {{totalPages}}ページ中",
+    "removedAgo": "{{deletedAt}}に削除"
   },
-  "publicBooks": "公開本"
+  "publicBooks": "公開書籍"
 }

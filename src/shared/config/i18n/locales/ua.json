@@ -1,20 +1,20 @@
 {
   "welcomeScreen": {
-    "welcomeTitle": "Вітаємо!",
-    "welcomeText": "Вітаємо у спільноті свідомих книголюбів!\n Разом ми зробимо читання приємною звичкою, допоможемо тобі відкривати \n нові світи та завжди мати улюблені книги під рукою.",
+    "welcomeTitle": "Ласкаво просимо!",
+    "welcomeText": "Ласкаво просимо до спільноти свідомих любителів книг!\nРазом ми зробимо читання приємною звичкою, допоможемо відкривати \nнові світи та завжди мати улюблені книги під рукою.",
     "login": "Увійти",
     "register": "Зареєструватися"
   },
   "login": {
     "title": "Увійти",
-    "username": "Логін",
-    "enterUsername": "Введіть логін",
+    "username": "Ім'я користувача",
+    "enterUsername": "Введіть ім'я користувача",
     "password": "Пароль",
     "enterPassword": "Введіть пароль",
     "signIn": "Увійти",
-    "noAccount": "Ще не маєш акаунта?",
+    "noAccount": "Немає облікового запису?",
     "register": "Зареєструватися",
-    "error": "Невірний логін або пароль",
+    "error": "Неправильне ім'я користувача або пароль",
     "enterEmail": "Введіть email",
     "forgotPassword": "Забули пароль?",
     "or": "або"
@@ -23,94 +23,94 @@
     "settings": "Налаштування",
     "language": "Мова",
     "brightnessGesture": "Яскравість жестом",
-    "brightnessDescription": "Змінювати яскравість рухом нагору чи донизу по лівому краю екрану",
-    "screenOff": "Відключення екрану",
-    "screenOffDescription": "Тримайти екран увімкненим",
-    "scanFiles": "Сканування файлів",
+    "brightnessDescription": "Регулюйте яскравість, проводячи вгору або вниз по лівому краю екрана",
+    "screenOff": "Екран не вимикати",
+    "screenOffDescription": "Не вимикати екран",
+    "scanFiles": "Сканувати файли",
     "changePassword": "Змінити пароль",
     "deviceList": "Список пристроїв",
-    "onlyWIFIDownload": "Завантажувати тільки через WI-FI",
-    "support": "Написати в тех. підтримку",
-    "rateApp": "Оцінити застосунок",
-    "aboutApp": "Інформація про застосунок",
+    "onlyWIFIDownload": "Завантажувати тільки через Wi-Fi",
+    "support": "Зв'язатися з підтримкою",
+    "rateApp": "Оцінити додаток",
+    "aboutApp": "Про додаток",
     "logout": "Вийти"
   },
-  "drawerMenu" : {
+  "drawerMenu": {
     "Home": "Головна",
     "Settings": "Налаштування",
     "Library": "Бібліотека",
     "AddBook": "Додати книгу",
     "Collections": "Колекції",
     "readMore": "Читати далі",
-    "Trash": "Корзина",
-    "Feedback": "Відправити відгук"
+    "Trash": "Кошик",
+    "Feedback": "Надіслати відгук"
   },
   "validation": {
     "username": {
-      "min": "Імʼя повинно містити мінімум {{count}} символів",
-      "required": "Імʼя обовʼязкове"
+      "min": "Ім'я користувача має містити щонайменше {{count}} символів",
+      "required": "Ім'я користувача обов'язкове"
     },
     "email": {
-      "format": "Невірний формат електронної пошти",
-      "min": "Пошта повинна містити мінімум {{count}} символи",
-      "required": "Пошта обовʼязкова"
+      "format": "Неправильний формат email",
+      "min": "Email має містити щонайменше {{count}} символів",
+      "required": "Email обов'язковий"
     },
     "password": {
-      "min": "Пароль повинен містити мінімум {{count}} символів",
-      "pattern": "Пароль має містити лише латинські літери та цифри, без спецсимволів",
-      "required": "Пароль обовʼязковий"
+      "min": "Пароль має містити щонайменше {{count}} символів",
+      "pattern": "Пароль може містити лише літери та цифри, без спеціальних символів",
+      "required": "Пароль обов'язковий"
     },
     "confirmPassword": {
-      "oneOf": "Паролі не збігаються",
-      "required": "Підтвердження паролю обовʼязкове"
+      "oneOf": "Паролі не співпадають",
+      "required": "Підтвердження паролю обов'язкове"
     }
   },
   "register": {
     "title": "Реєстрація",
-    "name": "Імʼя",
-    "namePlaceholder": "Ваше імʼя та прізвище",
-    "email": "Електронна пошта",
-    "emailPlaceholder": "Ваша електронна пошта",
+    "name": "Ім'я",
+    "namePlaceholder": "Ваше повне ім'я",
+    "email": "Email",
+    "emailPlaceholder": "Ваш email",
     "password": "Пароль",
     "passwordPlaceholder": "Ваш пароль",
     "confirmPassword": "Підтвердження паролю",
-    "confirmPasswordPlaceholder": "Повторіть пароль",
-    "submit": "Зареєструватись",
-    "submitting": "Зачекай...",
+    "confirmPasswordPlaceholder": "Повторіть ваш пароль",
+    "submit": "Зареєструватися",
+    "submitting": "Будь ласка, зачекайте...",
     "divider": "Або",
     "social": {
       "google": "Google",
       "apple": "Apple",
       "facebook": "Facebook"
     },
-    "redirectText": "Вже маєте акаунт?",
-    "redirectLink": "Вхід",
+    "redirectText": "Вже є обліковий запис?",
+    "redirectLink": "Увійти",
     "errorRegister": "Помилка реєстрації"
   },
   "forgotPassword": {
     "title": "Забули пароль?",
-    "emailLabel": "Електронна пошта",
-    "emailPlaceholder": "Введіть вашу пошту",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Введіть ваш email",
     "sendBtn": "Надіслати посилання",
     "rememberText": "Пам'ятаєте пароль?",
     "loginLink": "Увійти"
   },
   "resetPassword": {
     "backBtn": "Назад",
-    "title": "Створіть новий пароль",
-    "subtitle": "Ваш новий пароль має відрізнятися від паролів, що використовувалися раніше.",
+    "title": "Створити новий пароль",
+    "subtitle": "Ваш новий пароль має відрізнятися від раніше використовуваних паролів.",
     "passwordLabel": "Пароль",
     "passwordPlaceholder": "Ваш пароль",
     "confirmPasswordLabel": "Підтвердження паролю",
-    "confirmPasswordPlaceholder": "Підтвердьте свій пароль",
+    "confirmPasswordPlaceholder": "Підтвердіть ваш пароль",
     "submitBtn": "Скинути пароль"
   },
   "header": "Пошук книги...",
   "novelty": "Новинки",
-  "topRated": "Найвище оцінені",
+  "topRated": "Популярні",
   "more": "більше",
   "readMore": "Читати далі",
-  "continueReading": "Продовжити читати",
+  "continueReading": "Продовжити читання",
   "tabs": {
     "Home": "Головна",
     "Library": "Бібліотека",
@@ -124,58 +124,85 @@
       "audiobooks": "Аудіокниги"
     },
     "filters": {
-      "all": "Усі книги",
+      "all_books": "Усі книги",
+      "reading": "Читаю",
+      "read": "Прочитано",
+      "unread": "Не прочитано",
+      "all": "Усі"
+    },
+    "search": {
+      "placeholder": "Пошук"
+    },
+    "empty_list": "Список порожній",
+    "read_status": {
+      "title": "Статус читання",
+      "all": "Усі",
       "reading": "Читаю",
       "read": "Прочитано",
       "unread": "Не прочитано"
     },
     "actions": {
       "info": "Інформація",
-      "read": "Читати",
-      "markRead": "Позначити як прочитане",
+      "mark_reading": "Позначити як читаю",
+      "rate_book": "Оцінити книгу",
+      "mark_read": "Позначити як прочитане",
       "collections": "Колекції",
       "share": "Поділитись",
       "delete": "Видалити"
     },
-    "sortOptions": {
-      "title": "Назва книги (за алфавітом)",
-      "author": "Автор (за алфавітом)",
-      "date": "За датою додавання",
-      "pages": "За кількістю сторінок"
+    "collections": {
+      "saved": "Збережені",
+      "postponed": "Відкладені"
     },
-    "filterOptions": {
+    "rate_book": {
+      "title": "Оцінити книгу",
+      "save": "Зберегти"
+    },
+    "sort": {
+      "title": "Сортування",
+      "title_alpha": "Назва книги (за алфавітом)",
+      "author_alpha": "Автор (за алфавітом)",
+      "date_added": "За датою додавання",
+      "page_count": "За кількістю сторінок"
+    },
+    "filter": {
+      "title": "Фільтр",
+      "clear": "Очистити",
       "language": "Мова",
       "genre": "Жанр",
       "publisher": "Видавництво",
-      "clear": "Очистити"
+      "not_selected": "—"
     },
-    "pickerSearchPlaceholder": "Пошук",
-    "emptyList": "Список порожній",
-    "readStatusModal": {
-      "title": "Статус читання",
-      "options": {
-        "all": "Усі",
-        "reading": "Читаю",
-        "read": "Прочитано",
-        "unread": "Не прочитано"
-      }
+    "collections_modal": {
+      "title": "Додати до колекції",
+      "audio_books": "Аудіо книги",
+      "downloaded": "Завантажені на пристрій"
+    },
+    "errors": {
+      "load_books_failed": "Не вдалося завантажити книги:",
+      "delete_book_error": "Помилка при видаленні книги:"
+    },
+    "bookCard": {
+      "read": "Прочитано",
+      "reading": "Читаю",
+      "no_title": "Без назви"
     }
   },
   "collections": {
     "title": "Колекції",
     "searchPlaceholder": "Пошук",
     "system": {
-      "audio": "Аудіо книги",
+      "audio": "Аудіокниги",
       "saved": "Збережені",
       "downloaded": "Завантажені на пристрій",
       "postponed": "Відкладені"
     },
     "sort": {
       "title": "Сортування",
-      "nameAsc": "Назва (за алфавітом)",
+      "nameAsc": "Назва (А-Я)",
       "updated": "За датою оновлення",
-      "created": "За датою додавання",
-      "count": "За кількістю книг у колекції",
+      "created": "За датою створення",
+      "count": "За кількістю книг",
       "asc": "За зростанням",
       "desc": "За спаданням"
     },
@@ -184,86 +211,27 @@
       "cancel": "Скасувати",
       "save": "Зберегти",
       "placeholder": "Назва колекції",
-      "chooseIcon": "Обрати іконку",
-      "chooseColor": "Обрати колір теми",
+      "chooseIcon": "Вибрати іконку",
+      "chooseColor": "Вибрати колір теми",
       "pin": "Закріпити"
     },
     "unnamed": "Без назви"
   },
   "trash": {
-    "title": "Корзина",
-    "autoClean": "Автоматичне очищення через 30 днів",
-    "restored": "Книгу відновлено\n«{{title}}» відновлено в вашій бібліотеці",
-    "deletedForever": "Книгу видалено назавжди\n«{{title}}» видалено назавжди",
-    "emptyTitle": "Корзина порожня",
+    "title": "Кошик",
+    "autoClean": "Автоочищення через 30 днів",
+    "restored": "Книгу відновлено\n\"{{title}}\" повернуто до вашої бібліотеки",
+    "deletedForever": "Книгу видалено назавжди\n\"{{title}}\" видалено назавжди",
+    "emptyTitle": "Кошик порожній",
     "emptySubtitle": "Тут з'являться ваші видалені книги",
     "fetchError": "Не вдалося завантажити книги",
-    "clearAllError": "Помилка при видаленні всіх книг"
+    "clearAllError": "Помилка видалення всіх книг"
   },
   "trashBookCard": {
     "restore": "Відновити",
     "deleteForever": "Видалити",
     "pageInfo": "Сторінка {{currentPage}} з {{totalPages}}",
     "removedAgo": "Видалено {{deletedAt}}"
-  },
-  "library": {
-    "tabs": {
-      "books": "Книги",
-      "audiobooks": "Аудіокниги"
-    },
-    "filters": {
-      "all": "Усі книги",
-      "reading": "Читаю",
-      "read": "Прочитано",
-      "unread": "Не прочитано"
-    },
-    "search": {
-      "placeholder": "Пошук"
-    },
-    "buttons": {
-      "sort": "Сортування",
-      "filter": "Фільтр",
-      "clear": "Очистити",
-      "readingStatus": "Статус читання",
-      "collections": "Колекції",
-      "addToCollection": "Додати до колекції",
-      "info": "Інформація",
-      "read": "Читати",
-      "markAsRead": "Позначити як прочитане",
-      "share": "Поділитись",
-      "delete": "Видалити"
-    },
-    "readingStatus": {
-      "all": "Усі",
-      "reading": "Читаю",
-      "read": "Прочитано",
-      "unread": "Не прочитано"
-    },
-    "sortOptions": {
-      "title": "Назва книги (за алфавітом)",
-      "author": "Автор (за алфавітом)",
-      "dateAdded": "За датою додавання",
-      "pages": "За кількістю сторінок"
-    },
-    "filtersOptions": {
-      "language": "Мова",
-      "genre": "Жанр",
-      "publisher": "Видавництво"
-    },
-    "picker": {
-      "search": "Пошук"
-    },
-    "collections": {
-      "saved": "Збережені",
-      "postponed": "Відкладені",
-      "audioBooks": "Аудіо книги",
-      "downloaded": "Завантажені на пристрій",
-      "untitled": "Без назви"
-    },
-    "misc": {
-      "allBooks": "Усі",
-      "listEmpty": "Список порожній"
-    }
   },
   "publicBooks": "Публічні книги"
 }

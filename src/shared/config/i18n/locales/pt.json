@@ -1,21 +1,21 @@
 {
   "welcomeScreen": {
     "welcomeTitle": "Bem-vindo!",
-    "welcomeText": "Bem-vindo à comunidade de amantes de livros conscientes!\nJuntos, tornaremos a leitura um hábito agradável, ajudando você a descobrir \nnovos mundos e sempre ter seus livros favoritos à mão.",
+    "welcomeText": "Bem-vindo à comunidade de amantes conscientes de livros!\nJuntos faremos da leitura um hábito prazeroso, ajudaremos você a descobrir \nnovos mundos e ter sempre seus livros favoritos à mão.",
     "login": "Entrar",
-    "register": "Registrar-se"
+    "register": "Registrar"
   },
   "login": {
     "title": "Entrar",
-    "username": "Usuário",
-    "enterUsername": "Digite o usuário",
+    "username": "Nome de usuário",
+    "enterUsername": "Digite o nome de usuário",
     "password": "Senha",
     "enterPassword": "Digite a senha",
     "signIn": "Entrar",
-    "noAccount": "Ainda não tem uma conta?",
-    "register": "Registrar-se",
-    "error": "Usuário ou senha incorretos",
-    "enterEmail": "Digite o e-mail",
+    "noAccount": "Não tem uma conta?",
+    "register": "Registrar",
+    "error": "Nome de usuário ou senha inválidos",
+    "enterEmail": "Digite o email",
     "forgotPassword": "Esqueceu a senha?",
     "or": "ou"
   },
@@ -23,60 +23,60 @@
     "settings": "Configurações",
     "language": "Idioma",
     "brightnessGesture": "Brilho por gesto",
-    "brightnessDescription": "Deslize para cima ou para baixo na borda esquerda da tela para ajustar o brilho",
-    "screenOff": "Desligar tela",
-    "screenOffDescription": "Mantenha a tela ligada",
-    "scanFiles": "Escanear arquivos",
-    "changePassword": "Alterar senha",
-    "deviceList": "Lista de dispositivos",
+    "brightnessDescription": "Ajuste o brilho deslizando para cima ou para baixo na borda esquerda da tela",
+    "screenOff": "Tela Desligada",
+    "screenOffDescription": "Manter a tela ligada",
+    "scanFiles": "Escanear Arquivos",
+    "changePassword": "Alterar Senha",
+    "deviceList": "Lista de Dispositivos",
     "onlyWIFIDownload": "Baixar apenas via Wi-Fi",
-    "support": "Contato com suporte",
-    "rateApp": "Avaliar app",
-    "aboutApp": "Sobre o aplicativo",
+    "support": "Contatar Suporte",
+    "rateApp": "Avaliar App",
+    "aboutApp": "Sobre o App",
     "logout": "Sair"
   },
   "drawerMenu": {
     "Home": "Início",
     "Settings": "Configurações",
     "Library": "Biblioteca",
-    "AddBook": "Adicionar livro",
+    "AddBook": "Adicionar Livro",
     "Collections": "Coleções",
-    "readMore": "Ler mais",
+    "readMore": "Ler Mais",
     "Trash": "Lixeira",
-    "Feedback": "Enviar feedback"
+    "Feedback": "Enviar Feedback"
   },
   "validation": {
     "username": {
-      "min": "O nome deve ter no mínimo {{count}} caracteres",
-      "required": "Nome é obrigatório"
+      "min": "Nome de usuário deve ter pelo menos {{count}} caracteres",
+      "required": "Nome de usuário é obrigatório"
     },
     "email": {
-      "format": "Formato de e-mail inválido",
-      "min": "O e-mail deve ter no mínimo {{count}} caracteres",
-      "required": "E-mail é obrigatório"
+      "format": "Formato de email inválido",
+      "min": "Email deve ter pelo menos {{count}} caracteres",
+      "required": "Email é obrigatório"
     },
     "password": {
-      "min": "A senha deve ter no mínimo {{count}} caracteres",
-      "pattern": "A senha deve conter apenas letras e números latinos, sem símbolos especiais",
+      "min": "Senha deve ter pelo menos {{count}} caracteres",
+      "pattern": "Senha pode conter apenas letras e números, sem símbolos especiais",
       "required": "Senha é obrigatória"
     },
     "confirmPassword": {
       "oneOf": "As senhas não coincidem",
-      "required": "Confirmação da senha é obrigatória"
+      "required": "Confirmação de senha é obrigatória"
     }
   },
   "register": {
-    "title": "Registrar-se",
+    "title": "Registrar",
     "name": "Nome",
     "namePlaceholder": "Seu nome completo",
-    "email": "E-mail",
-    "emailPlaceholder": "Seu e-mail",
+    "email": "Email",
+    "emailPlaceholder": "Seu email",
     "password": "Senha",
     "passwordPlaceholder": "Sua senha",
-    "confirmPassword": "Confirmar senha",
-    "confirmPasswordPlaceholder": "Repita a senha",
+    "confirmPassword": "Confirmar Senha",
+    "confirmPasswordPlaceholder": "Repita sua senha",
     "submit": "Registrar",
-    "submitting": "Aguarde...",
+    "submitting": "Por favor aguarde...",
     "divider": "Ou",
     "social": {
       "google": "Google",
@@ -85,32 +85,32 @@
     },
     "redirectText": "Já tem uma conta?",
     "redirectLink": "Entrar",
-    "errorRegister": "Erro ao registrar"
+    "errorRegister": "Erro de registro"
   },
   "forgotPassword": {
-    "title": "Esqueceu a senha?",
-    "emailLabel": "E-mail",
-    "emailPlaceholder": "Digite seu e-mail",
-    "sendBtn": "Enviar link",
-    "rememberText": "Lembra a senha?",
+    "title": "Esqueceu a Senha?",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Digite seu email",
+    "sendBtn": "Enviar Link",
+    "rememberText": "Lembra sua senha?",
     "loginLink": "Entrar"
   },
   "resetPassword": {
     "backBtn": "Voltar",
-    "title": "Crie uma nova senha",
-    "subtitle": "Sua nova senha deve ser diferente das usadas anteriormente.",
+    "title": "Criar Nova Senha",
+    "subtitle": "Sua nova senha deve ser diferente das senhas usadas anteriormente.",
     "passwordLabel": "Senha",
     "passwordPlaceholder": "Sua senha",
-    "confirmPasswordLabel": "Confirmar senha",
+    "confirmPasswordLabel": "Confirmar Senha",
     "confirmPasswordPlaceholder": "Confirme sua senha",
-    "submitBtn": "Redefinir senha"
+    "submitBtn": "Redefinir Senha"
   },
-  "header": "Procurar livro...",
-  "novelty": "Novidades",
-  "topRated": "Mais avaliados",
+  "header": "Pesquisar um livro...",
+  "novelty": "Novos Lançamentos",
+  "topRated": "Mais Bem Avaliados",
   "more": "mais",
-  "readMore": "Ler mais",
-  "continueReading": "Continuar lendo",
+  "readMore": "Ler Mais",
+  "continueReading": "Continuar Lendo",
   "tabs": {
     "Home": "Início",
     "Library": "Biblioteca",
@@ -124,41 +124,68 @@
       "audiobooks": "Audiolivros"
     },
     "filters": {
-      "all": "Todos os livros",
+      "all_books": "Todos os Livros",
       "reading": "Lendo",
-      "read": "Lido",
-      "unread": "Não lido"
+      "read": "Lidos",
+      "unread": "Não Lidos",
+      "all": "Todos"
+    },
+    "search": {
+      "placeholder": "Pesquisar"
+    },
+    "empty_list": "Lista está vazia",
+    "read_status": {
+      "title": "Status de Leitura",
+      "all": "Todos",
+      "reading": "Lendo",
+      "read": "Lidos",
+      "unread": "Não Lidos"
     },
     "actions": {
-      "info": "Informações",
-      "read": "Ler",
-      "markRead": "Marcar como lido",
+      "info": "Informação",
+      "mark_reading": "Marcar como Lendo",
+      "rate_book": "Avaliar Livro",
+      "mark_read": "Marcar como Lido",
       "collections": "Coleções",
       "share": "Compartilhar",
       "delete": "Excluir"
     },
-    "sortOptions": {
-      "title": "Título (A-Z)",
-      "author": "Autor (A-Z)",
-      "date": "Por data de adição",
-      "pages": "Por número de páginas"
+    "collections": {
+      "saved": "Salvos",
+      "postponed": "Adiados"
     },
-    "filterOptions": {
+    "rate_book": {
+      "title": "Avaliar Livro",
+      "save": "Salvar"
+    },
+    "sort": {
+      "title": "Ordenar",
+      "title_alpha": "Título (A-Z)",
+      "author_alpha": "Autor (A-Z)",
+      "date_added": "Por Data de Adição",
+      "page_count": "Por Número de Páginas"
+    },
+    "filter": {
+      "title": "Filtrar",
+      "clear": "Limpar",
       "language": "Idioma",
       "genre": "Gênero",
       "publisher": "Editora",
-      "clear": "Limpar"
+      "not_selected": "—"
     },
-    "pickerSearchPlaceholder": "Pesquisar",
-    "emptyList": "Lista vazia",
-    "readStatusModal": {
-      "title": "Status de leitura",
-      "options": {
-        "all": "Todos",
-        "reading": "Lendo",
-        "read": "Lido",
-        "unread": "Não lido"
-      }
+    "collections_modal": {
+      "title": "Adicionar à Coleção",
+      "audio_books": "Audiolivros",
+      "downloaded": "Baixados no Dispositivo"
+    },
+    "errors": {
+      "load_books_failed": "Falha ao carregar livros:",
+      "delete_book_error": "Erro ao excluir livro:"
+    },
+    "bookCard": {
+      "read": "Lido",
+      "reading": "Lendo",
+      "no_title": "Sem título"
     }
   },
   "collections": {
@@ -173,38 +200,38 @@
     "sort": {
       "title": "Ordenar",
       "nameAsc": "Nome (A-Z)",
-      "updated": "Por data de atualização",
-      "created": "Por data de criação",
-      "count": "Por número de livros",
-      "asc": "Crescente",
-      "desc": "Decrescente"
+      "updated": "Por Data de Atualização",
+      "created": "Por Data de Criação",
+      "count": "Por Número de Livros",
+      "asc": "Ascendente",
+      "desc": "Descendente"
     },
     "modal": {
-      "newTitle": "Nova coleção",
+      "newTitle": "Nova Coleção",
       "cancel": "Cancelar",
       "save": "Salvar",
-      "placeholder": "Nome da coleção",
-      "chooseIcon": "Escolher ícone",
-      "chooseColor": "Escolher cor do tema",
+      "placeholder": "Nome da Coleção",
+      "chooseIcon": "Escolher Ícone",
+      "chooseColor": "Escolher Cor do Tema",
       "pin": "Fixar"
     },
     "unnamed": "Sem nome"
   },
   "trash": {
     "title": "Lixeira",
-    "autoClean": "Limpeza automática em 30 dias",
-    "restored": "Livro restaurado\n«{{title}}» restaurado em sua biblioteca",
-    "deletedForever": "Livro excluído permanentemente\n«{{title}}» excluído permanentemente",
-    "emptyTitle": "Lixeira vazia",
-    "emptySubtitle": "Seus livros deletados aparecerão aqui",
-    "fetchError": "Não foi possível carregar os livros",
+    "autoClean": "Limpeza automática após 30 dias",
+    "restored": "Livro restaurado\n\"{{title}}\" restaurado na sua biblioteca",
+    "deletedForever": "Livro excluído permanentemente\n\"{{title}}\" excluído permanentemente",
+    "emptyTitle": "Lixeira está vazia",
+    "emptySubtitle": "Seus livros excluídos aparecerão aqui",
+    "fetchError": "Falha ao carregar livros",
     "clearAllError": "Erro ao excluir todos os livros"
   },
   "trashBookCard": {
     "restore": "Restaurar",
     "deleteForever": "Excluir",
     "pageInfo": "Página {{currentPage}} de {{totalPages}}",
-    "removedAgo": "Excluído em {{deletedAt}}"
+    "removedAgo": "Excluído {{deletedAt}}"
   },
-  "publicBooks": "Livros públicos"
+  "publicBooks": "Livros Públicos"
 }
