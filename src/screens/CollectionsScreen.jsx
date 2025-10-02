@@ -7,6 +7,11 @@ import { useTranslation } from 'react-i18next';
 import { getCollections, createCollection, deleteCollection as apiDeleteCollection } from '../shared/api';
 import { getLocalBooks } from '../shared';
 
+const iconAudio = require('../../assets/Audio_Books.png');
+const iconSaved = require('../../assets/Save.png');
+const iconDownloaded = require('../../assets/Dowload_Android.png');
+const iconPostponed = require('../../assets/Vidckad.png');
+
 const pinPng = require('../../assets/Zakrep_Colection.png');
 const editPng = require('../../assets/Redakt_colection.png');
 const deletePng = require('../../assets/Delete_Colection.png');
@@ -38,6 +43,8 @@ const systemRows = [
     { id: 'downloaded', icon: iconMap.download, route: 'CollectionDownloaded' },
     { id: 'postponed', icon: iconMap.postponed, route: 'CollectionPostponed' },
 ];
+
+const RESERVED_COLLECTION_NAMES = new Set(['Збережені', 'Відкладені']);
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const ICON_COLS = 6;
@@ -72,85 +79,85 @@ export function CollectionsScreen({ navigation }) {
     const iconChoices = Object.keys(iconMap);
     const colorChoices = ['#000000', '#9e9e9e', '#e5e7eb', '#22c55e', '#ef4444', '#f59e0b', '#6366f1'];
 
-    const filteredCollections = useMemo(() => {
-        const q = search.trim().toLowerCase();
-        let list = collections;
-        list = [...list].sort((a, b) => {
-            let cmp = 0;
-            if (sortKey === 'title') {
-                cmp = String(a.name || a.title || '').localeCompare(String(b.name || b.title || ''));
-            } else if (sortKey === 'updated') {
-                cmp = (Number(b.updatedAt) || 0) - (Number(a.updatedAt) || 0);
-            } else if (sortKey === 'created') {
-                cmp = (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0);
-            } else if (sortKey === 'count') {
-                const ac = Number(a.count != null ? a.count : (Array.isArray(a.books) ? a.books.length : 0)) || 0;
-                const bc = Number(b.count != null ? b.count : (Array.isArray(b.books) ? b.books.length : 0)) || 0;
-                cmp = bc - ac;
-            }
-            return sortDir === 'asc' ? cmp : -cmp;
-        });
-        if (!q) return list;
-        return list.filter(c => String(c.name || c.title || '').toLowerCase().includes(q));
-    }, [search, collections, sortKey, sortDir]);
+  const filteredCollections = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    let list = collections.filter(c => !RESERVED_COLLECTION_NAMES.has(String(c.name || c.title || '')));
+    list = [...list].sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === 'title') {
+        const at = String(a.name || a.title || '');
+        const bt = String(b.name || b.title || '');
+        cmp = at.localeCompare(bt);
+      } else if (sortKey === 'updated') {
+        cmp = (Number(b.updatedAt) || 0) - (Number(a.updatedAt) || 0);
+      } else if (sortKey === 'created') {
+        cmp = (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0);
+      } else if (sortKey === 'count') {
+        const ac = Number(a.count != null ? a.count : (Array.isArray(a.books) ? a.books.length : 0)) || 0;
+        const bc = Number(b.count != null ? b.count : (Array.isArray(b.books) ? b.books.length : 0)) || 0;
+        cmp = bc - ac;
+      }
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+    if (!q) return list;
+    return list.filter(c => String(c.name || c.title || '').toLowerCase().includes(q));
+  }, [search, collections, sortKey, sortDir]);
 
     const chunk = (arr, size) => arr.reduce((rows, key, idx) => {
         if (idx % size === 0) rows.push([key]); else rows[rows.length - 1].push(key);
         return rows;
     }, []);
 
-    const openCreate = () => {
-        setEditingId(null);
-        setNameDraft('');
-        setIconDraft('audio');
-        setColorDraft('#2E8B57');
-        setPinnedDraft(false);
-        setIsModalVisible(true);
-    };
-    const openEdit = (item) => {
-        setEditingId(item.id);
-        setNameDraft(item.title);
-        setIconDraft(item.icon);
-        setColorDraft(item.color);
-        setPinnedDraft(!!item.pinned);
-        setIsModalVisible(true);
-    };
-    const saveCollection = async () => {
-        if (!nameDraft.trim()) { setIsModalVisible(false); return; }
-        try {
-            if (editingId) {
-                setCollections(prev => prev.map(c => c.id === editingId ? { ...c, name: nameDraft.trim() } : c));
-            } else {
-                const created = await createCollection(nameDraft.trim());
-                setCollections(prev => [created, ...prev]);
-            }
-        } catch(_) {}
-        setIsModalVisible(false);
-    };
-    const togglePin = (id) => setCollections(prev => prev.map(c => c.id === id ? { ...c, pinned: !c.pinned, updatedAt: Date.now() } : c));
-    const deleteCollection = async (id) => {
-        try { await apiDeleteCollection(id); } catch(_) {}
-        setCollections(prev => prev.filter(c => c.id !== id));
-    };
+  const openCreate = () => {
+    setEditingId(null);
+    setNameDraft('');
+    setIconDraft('audio');
+    setColorDraft('#2E8B57');
+    setPinnedDraft(false);
+    setIsModalVisible(true);
+  };
+  const openEdit = (item) => {
+    setEditingId(item.id);
+    setNameDraft(item.title);
+    setIconDraft(item.icon);
+    setColorDraft(item.color);
+    setPinnedDraft(!!item.pinned);
+    setIsModalVisible(true);
+  };
+  const saveCollection = async () => {
+    if (!nameDraft.trim()) { setIsModalVisible(false); return; }
+    const trimmed = nameDraft.trim();
+    if (RESERVED_COLLECTION_NAMES.has(trimmed)) {
+      setIsModalVisible(false);
+      return;
+    }
+    try {
+      if (editingId) {
+        // simple local edit (no PATCH in API spec); recreate by delete/create could be used later
+        setCollections(prev => prev.map(c => c.id === editingId ? { ...c, name: trimmed } : c));
+      } else {
+        const created = await createCollection(trimmed);
+        setCollections(prev => [created, ...prev]);
+      }
+    } catch(_) {}
+    setIsModalVisible(false);
+  };
+  const togglePin = (id) => setCollections(prev => prev.map(c => c.id === id ? { ...c, pinned: !c.pinned, updatedAt: Date.now() } : c));
+  const deleteCollection = async (id) => {
+    try { await apiDeleteCollection(id); } catch(_) {}
+    setCollections(prev => prev.filter(c => c.id !== id));
+  };
 
-    React.useEffect(() => {
-        (async () => {
-            try {
-                const list = await getCollections();
-                let arr = Array.isArray(list) ? list : [];
-                const hasSaved = arr.some(c => (c.name || c.title) === t("collections.system.saved"));
-                const hasPostponed = arr.some(c => (c.name || c.title) === t("collections.system.postponed"));
-                if (!hasSaved) {
-                    try { const created = await createCollection(t("collections.system.saved")); arr = [created, ...arr]; } catch(_) {}
-                }
-                if (!hasPostponed) {
-                    try { const created = await createCollection(t("collections.system.postponed")); arr = [created, ...arr]; } catch(_) {}
-                }
-                setCollections(arr);
-            } catch(_) {}
-            try { const locals = await getLocalBooks(); setDownloadedCount(Array.isArray(locals) ? locals.length : 0); } catch(_) {}
-        })();
-    }, [t]);
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const list = await getCollections();
+        const arr = Array.isArray(list) ? list : [];
+        setCollections(arr);
+      } catch(_) {}
+      try { const locals = await getLocalBooks(); setDownloadedCount(Array.isArray(locals) ? locals.length : 0); } catch(_) {}
+    })();
+  }, []);
 
     const pinned = filteredCollections.filter(c => c.pinned);
     const others = filteredCollections.filter(c => !c.pinned);
