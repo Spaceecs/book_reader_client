@@ -1,17 +1,27 @@
-import React, { useState } from "react";
+import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import {useTranslation} from "react-i18next";
 
-const DrawerContent = ({ navigation }) => {
+const DrawerContent = ({ navigation, state }) => {
     const { t } = useTranslation();
-    const [activeItem, setActiveItem] = useState('Home');
+    const routeName = state?.routes?.[state?.index || 0]?.name;
+    let activeKey = routeName || 'Home';
+    if ([
+      'CollectionSaved',
+      'CollectionPostponed',
+      'CollectionDownloaded',
+      'CollectionAudio',
+      'CollectionDetails',
+      'Collections',
+    ].includes(activeKey)) {
+      activeKey = 'Collections';
+    }
 
     const handlePress = (key, navigateTo) => {
-        setActiveItem(key);
-        if (navigateTo) {
-            navigation.navigate(navigateTo);
-            navigation.closeDrawer();
-        }
+      if (navigateTo) {
+        navigation.navigate(navigateTo);
+        navigation.closeDrawer();
+      }
     };
 
   return (
@@ -25,25 +35,25 @@ const DrawerContent = ({ navigation }) => {
         <DrawerItem
           icon={require("../../../assets/Main.png")}
           label={t('drawerMenu.Home')}
-          isActive={activeItem === 'Home'}
+          isActive={activeKey === 'Home'}
           onPress={() => handlePress('Home', 'Home')}
         />
         <DrawerItem
           icon={require("../../../assets/collections.png")}
           label={t('drawerMenu.Collections')}
-          isActive={activeItem === 'Collections'}
+          isActive={activeKey === 'Collections'}
           onPress={() => handlePress('Collections', 'Collections')}
         />
         <DrawerItem
           icon={require("../../../assets/Book.png")}
           label={t('drawerMenu.readMore')}
-          isActive={activeItem === 'ReadMore'}
+          isActive={activeKey === 'ReadMore'}
           onPress={() => handlePress('ReadMore', 'ReadMore')}
         />
         <DrawerItem
           icon={require("../../../assets/basket.png")}
           label={t('drawerMenu.Trash')}
-          isActive={activeItem === 'Trash'}
+          isActive={activeKey === 'Trash'}
           onPress={() => handlePress('Trash', 'Trash')}
         />
       </View>
@@ -53,13 +63,13 @@ const DrawerContent = ({ navigation }) => {
         <DrawerItem
           icon={require("../../../assets/settings.png")}
           label={t('drawerMenu.Settings')}
-          isActive={activeItem === 'Settings'}
+          isActive={activeKey === 'Settings'}
           onPress={() => handlePress('Settings', 'Settings')}
         />
         <DrawerItem
           icon={require("../../../assets/feedback.png")}
           label={t('drawerMenu.Feedback')}
-          isActive={activeItem === 'Feedback'}
+          isActive={activeKey === 'Feedback'}
           onPress={() => handlePress('Feedback')}
         />
       </View>

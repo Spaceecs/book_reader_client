@@ -24,7 +24,12 @@ export function BookListWidget({sectionHeader, books, setSelectedItem, setIsActi
         <View style={styles.container}>
             <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>{t(sectionHeader)}</Text>
-                <TouchableOpacity onPress={() => navigation.navigate('Category', { title: 'Новинки' })}>
+                <TouchableOpacity onPress={() => {
+                    const params = sectionHeader === 'novelty'
+                        ? { titleKey: 'novelty', sortBy: 'createdAt', sortOrder: 'desc' }
+                        : { titleKey: 'topRated', sortBy: 'avgRating', sortOrder: 'desc', minRating: 0 };
+                    navigation.navigate('Category', params);
+                }}>
                     <Text style={styles.seeAll}>{t('more')}</Text>
                 </TouchableOpacity>
             </View>

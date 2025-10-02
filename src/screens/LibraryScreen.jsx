@@ -8,7 +8,8 @@ import {
   FlatList,
   Modal,
   TextInput,
-  Animated
+  Animated,
+  Image
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,11 +21,12 @@ import {
     getOnlineBooks,
     getReadingProgress,
     markIsDeletedLocalBook,
-    markIsDeletedOnlineBook
+    markIsDeletedOnlineBook,
+    setReadingProgress
 } from '../shared';
 import { getCollections, addBookToCollection, removeBookFromCollection, createCollection } from '../shared/api';
-import {openOnlineBook} from "../entities";
-import {BookCard} from "../entities";
+
+import {LibraryBookCard, openLocalBook, openOnlineBook, rateBook} from "../entities";
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 
@@ -34,7 +36,7 @@ const filters = ['Усі книги', 'Читаю', 'Прочитано', 'Не 
 export default function LibraryScreen({ navigation }) {
     const dispatch = useDispatch();
     const [activeTab, setActiveTab] = useState('Книги');
-    const [activeFilter, setActiveFilter] = useState('Усі книги');
+  const [activeFilter, setActiveFilter] = useState('Усі книги');
   const [isSortVisible, setIsSortVisible] = useState(false);
   const [isFilterVisible, setIsFilterVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,21 +47,47 @@ export default function LibraryScreen({ navigation }) {
   const [selectedLanguages, setSelectedLanguages] = useState([]);
   const [selectedPublishers, setSelectedPublishers] = useState([]);
   const [selectedGenres, setSelectedGenres] = useState([]);
+  const [selectedLibLanguages, setSelectedLibLanguages] = useState([]);
+  const [selectedLibPublishers, setSelectedLibPublishers] = useState([]);
   const [showFilterReadModal, setShowFilterReadModal] = useState(false);
   const [readStatusFilter, setReadStatusFilter] = useState('all'); // all|reading|read|unread
   const [readingProgressMap, setReadingProgressMap] = useState({}); // bookId -> progress 0..1
   const [pickerQuery, setPickerQuery] = useState('');
   const [isActionsVisible, setIsActionsVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [isMarkedRead, setIsMarkedRead] = useState(false);
+  // derive read-mark state from readingProgressMap for the selected item
   const [isCollectionsModalVisible, setIsCollectionsModalVisible] = useState(false);
   const [collections, setCollections] = useState([]);
   const coverScale = useRef(new Animated.Value(1)).current;
   const sheetOpacity = useRef(new Animated.Value(0)).current;
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isRateVisible, setIsRateVisible] = useState(false);
+  const [tempRating, setTempRating] = useState(0);
 
   const insets = useSafeAreaInsets();
+
+  const isSelectedMarkedRead = useMemo(() => {
+    const key = Number(selectedItem?.onlineId ?? selectedItem?.id);
+    if (!key) return false;
+    return (readingProgressMap[key] || 0) >= 1;
+  }, [selectedItem, readingProgressMap]);
+
+  const applyFilter = (label) => {
+    setActiveFilter(label);
+    if (label === 'Усі книги') setReadStatusFilter('all');
+    else if (label === 'Читаю') setReadStatusFilter('reading');
+    else if (label === 'Прочитано') setReadStatusFilter('read');
+    else if (label === 'Не прочитано') setReadStatusFilter('unread');
+  };
+
+  useEffect(() => {
+    // keep chip label in sync when status changes via modal
+    if (readStatusFilter === 'all') setActiveFilter('Усі книги');
+    else if (readStatusFilter === 'reading') setActiveFilter('Читаю');
+    else if (readStatusFilter === 'read') setActiveFilter('Прочитано');
+    else if (readStatusFilter === 'unread') setActiveFilter('Не прочитано');
+  }, [readStatusFilter]);
 
     useFocusEffect(
         useCallback(() => {
@@ -90,21 +118,21 @@ export default function LibraryScreen({ navigation }) {
     );
 
     useEffect(() => {
-    const fetchProgress = async () => {
-      try {
-        const data = await getReadingProgress();
-        const map = {};
-        (data || []).forEach(p => {
-          if (p.book?.id != null && typeof p.progress === 'number') {
-            map[p.book.id] = p.progress;
+        const fetchProgress = async () => {
+          try {
+            const data = await getReadingProgress();
+            const map = {};
+            (data || []).forEach(p => {
+              if (p.book?.id != null && typeof p.progress === 'number') {
+                map[p.book.id] = p.progress;
+              }
+            });
+            setReadingProgressMap(map);
+          } catch (e) {
+            // ignore
           }
-        });
-        setReadingProgressMap(map);
-      } catch (e) {
-        // ignore
-      }
-    };
-    fetchProgress();
+        };
+        fetchProgress();
   }, []);
 
   useEffect(() => {
@@ -118,6 +146,18 @@ export default function LibraryScreen({ navigation }) {
       sheetOpacity.setValue(0);
     }
   }, [isActionsVisible]);
+
+  const handleOpenBook = async (book) => {
+      try {
+          if (book.onlineId) {
+              await openOnlineBook(book.onlineId, book, dispatch, navigation)
+          } else {
+              await openLocalBook(book.id, book, dispatch, navigation);
+          }
+      } catch (e) {
+          console.log("Open book error: ", e);
+      }
+  }
 
     const handleDelete = async (book) => {
         try {
@@ -158,13 +198,21 @@ export default function LibraryScreen({ navigation }) {
       const q = searchQuery.trim().toLowerCase();
       list = list.filter(b => (b.title || '').toLowerCase().includes(q) || (b.author || '').toLowerCase().includes(q));
     }
+    if (selectedLibLanguages.length) {
+      const setL = new Set(selectedLibLanguages.map(s => s.toLowerCase()));
+      list = list.filter(b => b.language && setL.has(String(b.language).toLowerCase()));
+    }
+    if (selectedLibPublishers.length) {
+      const setP = new Set(selectedLibPublishers.map(s => s.toLowerCase()));
+      list = list.filter(b => b.publisher && setP.has(String(b.publisher).toLowerCase()));
+    }
     // apply read status filter
     if (readStatusFilter === 'reading') {
-      list = list.filter(b => (readingProgressMap[b.id] || 0) > 0 && (readingProgressMap[b.id] || 0) < 1);
+      list = list.filter(b => (readingProgressMap[b?.onlineId] || 0) > 0 && (readingProgressMap[b?.onlineId] || 0) < 1);
     } else if (readStatusFilter === 'read') {
-      list = list.filter(b => (readingProgressMap[b.id] || 0) >= 1);
+      list = list.filter(b => (readingProgressMap[b?.onlineId] || 0) >= 1);
     } else if (readStatusFilter === 'unread') {
-      list = list.filter(b => !readingProgressMap[b.id] || readingProgressMap[b.id] === 0);
+      list = list.filter(b => !readingProgressMap[b?.onlineId] || readingProgressMap[b?.onlineId] === 0);
     }
     return list;
   }, [books, activeTab, searchQuery, readStatusFilter, readingProgressMap]);
@@ -221,25 +269,34 @@ export default function LibraryScreen({ navigation }) {
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersRow}>
         {filters.map(f => (
-          <TouchableOpacity key={f} style={[styles.filterChip, activeFilter === f && styles.filterChipActive]} onPress={() => setActiveFilter(f)}>
+          <TouchableOpacity key={f} style={[styles.filterChip, activeFilter === f && styles.filterChipActive]} onPress={() => applyFilter(f)}>
             <Text style={[styles.filterText, activeFilter === f && styles.filterTextActive]}>{f}</Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
 
-      <View style={styles.listHeaderRow}>
-        <Text style={styles.listHeaderTitle}>
-          {activeFilter === 'Усі книги' ? 'Усі' : activeFilter}
-        </Text>
-      </View>
+        {visibleBooks.length > 0 && (
+            <View style={styles.listHeaderRow}>
+                <Text style={styles.listHeaderTitle}>
+                    {activeFilter === 'Усі книги' ? 'Усі' : activeFilter}
+                </Text>
+            </View>
+        )}
 
-      <FlatList
+        <FlatList
         data={visibleBooks}
         keyExtractor={(item, index) => `${item.id ?? item.onlineId}-${index}`}
         numColumns={2}
         columnWrapperStyle={styles.gridRow}
         contentContainerStyle={[styles.grid, { paddingBottom: 60 + insets.bottom }]}
-        renderItem={({ item }) => <BookCard book={item} setSelectedItem={setSelectedItem} setIsActionsVisible={setIsActionsVisible} />}
+        renderItem={({ item }) => (
+          <LibraryBookCard
+            book={item}
+            readingProgressMap={readingProgressMap}
+            onLongPress={() => { setSelectedItem(item); setIsActionsVisible(true); }}
+            onPress={() => handleOpenBook(item)}
+          />
+        )}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={!loading ? (
           <View style={{ padding: 24 }}>
@@ -272,7 +329,7 @@ export default function LibraryScreen({ navigation }) {
               const active = readStatusFilter === opt.key;
               return (
                 <View key={opt.key} style={styles.rowBlock}>
-                  <TouchableOpacity style={styles.optionRow} onPress={() => setReadStatusFilter(opt.key)}>
+                  <TouchableOpacity style={styles.optionRow} onPress={() => { setReadStatusFilter(opt.key); setShowFilterReadModal(false); }}>
                     <Text style={styles.optionText}>{opt.label}</Text>
                     <View style={[styles.radioOuter, active && { borderColor: '#2E8B57' }]}>
                       {active && <View style={styles.radioInner} />}
@@ -291,18 +348,37 @@ export default function LibraryScreen({ navigation }) {
           <BlurView style={styles.blurFill} intensity={40} tint="dark" />
           <TouchableOpacity style={styles.blurFill} activeOpacity={1} onPress={() => setIsActionsVisible(false)} />
           {selectedItem && (
-            <View style={styles.actionsStack}>
-              <Animated.View style={[styles.actionsContainer, { opacity: sheetOpacity }] }>
+            <View style={[styles.actionsStack, { alignSelf: 'flex-start', marginLeft: 20 }]}>
+              <Animated.View style={[styles.actionsContainer, { opacity: sheetOpacity, width: 300 }] }>
                 <View style={styles.actionsHeaderTitle}>
                   <Text style={styles.actionsTitle} numberOfLines={1}>{selectedItem.title}</Text>
                   <Text style={styles.actionsSubtitle}>{(selectedItem.format || '').toUpperCase()}</Text>
                 </View>
                 <View style={styles.actionsList}>
                   {[
-                    { key: 'info', label: 'Інформація' },
-                    { key: 'read', label: 'Читати', onPress: () => { setIsActionsVisible(false); openOnlineBook(selectedItem.onlineId, selectedItem); } },
-                    { key: 'mark', label: 'Позначити як прочитане', renderRight: () => (isMarkedRead ? <Ionicons name="checkmark" size={18} color="#2E8B57" /> : <Ionicons name="ellipse-outline" size={18} color="#999" />), onPress: () => setIsMarkedRead(prev => !prev) },
-                    { key: 'collections', label: 'Колекції', onPress: async () => {
+                    { key: 'info', label: 'Інформація', icon: require('../../assets/information-circle.png') },
+                    { key: 'read', label: 'Позначити як читаю', icon: require('../../assets/Book.png'), onPress: async () => {
+                        setIsActionsVisible(false);
+                        // не змінюємо прогрес примусово; просто оновимо з бекенду
+                        await fetchProgress();
+                      } },
+                    { key: 'rate', label: 'Оцінити книгу', renderRight: () => (<Ionicons name="star" size={18} color="#FFCC66" />), onPress: () => {
+                        setIsActionsVisible(false);
+                        setTempRating(0);
+                        setIsRateVisible(true);
+                      } },
+                    { key: 'mark', label: 'Позначити як прочитане', renderRight: () => (isSelectedMarkedRead ? <Ionicons name="checkmark" size={18} color="#2E8B57" /> : <Ionicons name="ellipse-outline" size={18} color="#999" />), onPress: async () => {
+                        try {
+                          const bid = Number(selectedItem?.onlineId ?? selectedItem?.id);
+                          if (!bid) return;
+                          await setReadingProgress(bid, 1, 'done');
+                          const data = await getReadingProgress();
+                          const map = {};
+                          (data || []).forEach(p => { if (p.book?.id != null && typeof p.progress === 'number') { map[p.book.id] = p.progress; } });
+                          setReadingProgressMap(map);
+                        } catch(_) {}
+                      } },
+                    { key: 'collections', label: 'Колекції', icon: require('../../assets/collections.png'), onPress: async () => {
                         try {
                           setIsActionsVisible(false);
                           const list = await getCollections();
@@ -339,7 +415,7 @@ export default function LibraryScreen({ navigation }) {
                         activeOpacity={0.85}
                       >
                         <Text style={[styles.actionText, row.destructive && styles.actionTextDestructive]}>{row.label}</Text>
-                        {row.renderRight ? row.renderRight() : <Ionicons name="chevron-forward" size={18} color="#222" />}
+                        {row.renderRight ? row.renderRight() : (row.icon ? <Image source={row.icon} style={{ width:18, height:18, marginLeft:10, tintColor: row.destructive ? '#d62f2f' : '#0F0F0F', resizeMode:'contain' }} /> : null)}
                       </TouchableOpacity>
                     );
                   })}
@@ -347,6 +423,49 @@ export default function LibraryScreen({ navigation }) {
               </Animated.View>
             </View>
           )}
+        </View>
+      </Modal>
+
+      {/* Rate modal (bottom sheet) */}
+      <Modal visible={isRateVisible} transparent animationType="slide" onRequestClose={() => setIsRateVisible(false)}>
+        <View style={styles.sheetOverlay}>
+          <TouchableOpacity style={{ flex: 1 }} onPress={() => setIsRateVisible(false)} />
+          <View style={[styles.sheetContainer, { paddingBottom: 20 + (insets?.bottom || 0) }] }>
+            <View style={styles.sheetHeaderRow}>
+              <TouchableOpacity onPress={() => setIsRateVisible(false)}>
+                <Ionicons name="chevron-back" size={22} color="#222" />
+              </TouchableOpacity>
+              <Text style={styles.sheetTitle}>Оцінити книгу</Text>
+              <View style={{ width: 24 }} />
+            </View>
+            <View style={{ paddingHorizontal: 16, paddingBottom: 16, alignItems:'center' }}>
+              <Text style={{ fontSize:16, fontWeight:'700', color:'#0F0F0F', marginBottom: 12 }} numberOfLines={1}>{selectedItem?.title || 'Книга'}</Text>
+              <View style={{ flexDirection:'row', alignItems:'center', marginBottom: 16 }}>
+                {[1,2,3,4,5].map(v => (
+                  <TouchableOpacity key={v} onPress={() => setTempRating(v)} style={{ padding: 6 }}>
+                    <Ionicons name={tempRating >= v ? 'star' : 'star-outline'} size={28} color={tempRating >= v ? '#FFCC66' : '#999'} />
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <TouchableOpacity
+                onPress={async () => {
+                  try{
+                    const bid = Number(selectedItem?.onlineId ?? selectedItem?.id);
+                    if (!bid || !tempRating) return;
+                    await rateBook(bid, tempRating);
+                  }catch(_){}
+                  finally{
+                    setIsRateVisible(false);
+                    setTempRating(0);
+                  }
+                }}
+                style={{ backgroundColor:'#2E8B57', paddingVertical:12, paddingHorizontal:24, borderRadius: 24 }}
+                activeOpacity={0.9}
+              >
+                <Text style={{ color:'#fff', fontWeight:'700' }}>Зберегти</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </Modal>
 
@@ -391,7 +510,7 @@ export default function LibraryScreen({ navigation }) {
                 <Ionicons name="chevron-back" size={22} color="#222" />
               </TouchableOpacity>
               <Text style={styles.sheetTitle}>Фільтр</Text>
-              <TouchableOpacity onPress={() => { setSelectedLanguages([]); setSelectedGenres([]); setSelectedPublishers([]); }}>
+              <TouchableOpacity onPress={() => { setSelectedLibLanguages([]); setSelectedGenres([]); setSelectedLibPublishers([]); }}>
                 <Text style={styles.clearText}>Очистити</Text>
               </TouchableOpacity>
             </View>
@@ -401,7 +520,7 @@ export default function LibraryScreen({ navigation }) {
                 <Text style={styles.optionText}>Мова</Text>
                 <View style={styles.optionRight}>
                   <Text numberOfLines={1} style={styles.optionValue}>
-                    {selectedLanguages.length ? `${selectedLanguages.slice(0, 2).join(', ')}${selectedLanguages.length > 2 ? '…' : ''}` : '—'}
+                    {selectedLibLanguages.length ? `${selectedLibLanguages.slice(0, 2).join(', ')}${selectedLibLanguages.length > 2 ? '…' : ''}` : '—'}
                   </Text>
                   <Ionicons name="chevron-forward" size={18} color="#888" />
                 </View>
@@ -425,7 +544,7 @@ export default function LibraryScreen({ navigation }) {
                 <Text style={styles.optionText}>Видавництво</Text>
                 <View style={styles.optionRight}>
                   <Text numberOfLines={1} style={styles.optionValue}>
-                    {selectedPublishers.length ? `${selectedPublishers.slice(0, 2).join(', ')}${selectedPublishers.length > 2 ? '…' : ''}` : '—'}
+                    {selectedLibPublishers.length ? `${selectedLibPublishers.slice(0, 2).join(', ')}${selectedLibPublishers.length > 2 ? '…' : ''}` : '—'}
                   </Text>
                   <Ionicons name="chevron-forward" size={18} color="#888" />
                 </View>
@@ -454,8 +573,8 @@ export default function LibraryScreen({ navigation }) {
               </View>
               <View style={styles.pickerList}>
                 {filteredPickerData.map(item => {
-                  const array = isLangPickerVisible ? selectedLanguages : isPublisherPickerVisible ? selectedPublishers : selectedGenres;
-                  const setArray = isLangPickerVisible ? setSelectedLanguages : isPublisherPickerVisible ? setSelectedPublishers : setSelectedGenres;
+                  const array = isLangPickerVisible ? selectedLibLanguages : isPublisherPickerVisible ? selectedLibPublishers : selectedGenres;
+                  const setArray = isLangPickerVisible ? setSelectedLibLanguages : isPublisherPickerVisible ? setSelectedLibPublishers : setSelectedGenres;
                   const checked = array.includes(item);
                   return (
                     <TouchableOpacity key={item} style={styles.selectRow} onPress={() => {
@@ -605,7 +724,7 @@ const styles = StyleSheet.create({
   filtersRow: {
     paddingHorizontal: 12,
     paddingVertical: 10,
-    marginBottom: 8,
+    marginBottom: 18,
   },
   filterChip: {
     paddingHorizontal: 18,
@@ -646,7 +765,7 @@ const styles = StyleSheet.create({
   },
   listHeaderRow: {
     paddingHorizontal: 16,
-    marginTop: 10,
+    marginTop: 24,
     marginBottom: 12,
   },
   listHeaderTitle: {
@@ -682,7 +801,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 12,
-    maxHeight: 370,
+    maxHeight: 420,
     width: '100%',
     shadowColor: '#000',
     shadowOpacity: 0.1,
