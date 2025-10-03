@@ -4,6 +4,7 @@ import SettingsScreen from "../../../screens/SettingsScreen";
 import SettingsDevices from "../../../screens/SettingsDevices";
 import SettingsChangePassword from "../../../screens/SettingsChangePassword";
 import SettingsChangeEmail from "../../../screens/SettingsChangeEmail";
+import {ChangeLanguageScreen} from "../../../screens/ChangeLanguageScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -14,6 +15,7 @@ export function SettingsStack() {
             <Stack.Screen name="SettingsDevices" component={SettingsDevices} />
             <Stack.Screen name="SettingsChangePassword" component={SettingsChangePassword} />
             <Stack.Screen name="SettingsChangeEmail" component={SettingsChangeEmail} />
+            <Stack.Screen name="ChangeLanguage" component={ChangeLanguageScreen} />
         </Stack.Navigator>
     );
 }

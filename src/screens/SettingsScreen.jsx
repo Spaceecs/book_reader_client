@@ -34,8 +34,7 @@ export default function SettingsScreen({ navigation }) {
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>{t("settings.language")}</Text>
-          <ChangeLanguage />
+            <Row left={t("settings.language")} onPress={() => navigation && navigation.navigate && navigation.navigate('ChangeLanguage')} />
         </View>
 
         <View style={styles.card}>
