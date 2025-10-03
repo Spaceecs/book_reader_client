@@ -130,7 +130,7 @@ export default function LibraryScreen({ navigation }) {
             fetchBooks();
 
             return () => { isActive = false; };
-        }, [t])
+        }, [books])
     );
 
     useEffect(() => {
