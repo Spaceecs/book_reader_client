@@ -31,6 +31,7 @@ export const PdfViewer = forwardRef(({ base64, currentPage = 1, searchTerm = '',
   canvas { display:block; margin:0 auto 16px auto; filter: var(--canvas-filter); mix-blend-mode: var(--canvas-blend); }
   .textLayer { color: var(--text-color); }
   .textLayer span.highlight { background: yellow; }
+  .textLayer span.active-highlight { background: #ffcc00; outline: 2px solid #ffcc00; }
 </style>
 </head>
 <body>
@@ -48,6 +49,19 @@ export const PdfViewer = forwardRef(({ base64, currentPage = 1, searchTerm = '',
   let currentVisiblePage = startPage;
   let renderMode = 'scrolled'; // 'scrolled' | 'single'
   let initialTargetPage = startPage;
+  // Search state
+  window._search = { term: '', indices: [], active: -1 };
+
+  function postSearchState(){
+    try {
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        type: 'searchState',
+        term: window._search.term,
+        activeIndex: window._search.active,
+        total: (window._search.indices||[]).length
+      }));
+    } catch(_) {}
+  }
   function applyRenderMode(){
     try {
       const wrappers = Array.from(viewer.children);
@@ -264,10 +278,105 @@ export const PdfViewer = forwardRef(({ base64, currentPage = 1, searchTerm = '',
     const spans = document.querySelectorAll('.textLayer span');
     spans.forEach(s=>s.classList.remove('highlight'));
     spans.forEach(s=>{
-      if(s.textContent.toLowerCase().includes(term.toLowerCase())){
+      if(s.textContent.toLowerCase().includes(String(term||'').toLowerCase())){
         s.classList.add('highlight');
       }
     });
+  };
+
+  // Full search with results list (index + excerpt) similar to Bookzy app
+  window.searchInPdf = function(query){
+    try {
+      const term = String(query || '').trim();
+      const spans = document.querySelectorAll('.textLayer span');
+      const results = [];
+      // reset highlights
+      spans.forEach(s=>{ s.classList.remove('highlight'); s.classList.remove('active-highlight'); });
+      if (!term) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'searchResults', results: [] }));
+        window._search = { term: '', indices: [], active: -1 };
+        postSearchState();
+        return;
+      }
+      const matchIndices = [];
+      spans.forEach((span, index) => {
+        const text = span.textContent || '';
+        const lower = text.toLowerCase();
+        const q = term.toLowerCase();
+        const pos = lower.indexOf(q);
+        if (pos !== -1) {
+          const excerpt = text.slice(Math.max(0, pos - 30), pos + q.length + 30);
+          results.push({ index, excerpt });
+          matchIndices.push(index);
+          span.classList.add('highlight');
+        }
+      });
+      // set active to first result
+      if (matchIndices.length > 0) {
+        try {
+          const spansAll = document.querySelectorAll('.textLayer span');
+          const activeSpan = spansAll[matchIndices[0]];
+          if (activeSpan) { activeSpan.classList.add('active-highlight'); activeSpan.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        } catch(_) {}
+      }
+      window._search = { term, indices: matchIndices, active: matchIndices.length ? 0 : -1 };
+      postSearchState();
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'searchResults', results }));
+    } catch(_) {
+      try { window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'searchResults', results: [] })); } catch(__) {}
+    }
+  };
+
+  window.scrollToResult = function(index){
+    try {
+      const spans = document.querySelectorAll('.textLayer span');
+      if (spans && spans[index]) {
+        // move active marker
+        document.querySelectorAll('.textLayer span.active-highlight').forEach(s=>s.classList.remove('active-highlight'));
+        spans[index].classList.add('active-highlight');
+        spans[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // update active if index belongs to current results
+        const pos = (window._search.indices||[]).indexOf(index);
+        if (pos >= 0) { window._search.active = pos; postSearchState(); }
+      }
+    } catch(_) {}
+  };
+
+  window.searchNext = function(){
+    try {
+      const list = window._search.indices || [];
+      if (!list.length) return;
+      window._search.active = (window._search.active + 1) % list.length;
+      const spans = document.querySelectorAll('.textLayer span');
+      document.querySelectorAll('.textLayer span.active-highlight').forEach(s=>s.classList.remove('active-highlight'));
+      const idx = list[window._search.active];
+      const el = spans[idx];
+      if (el) { el.classList.add('active-highlight'); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+      postSearchState();
+    } catch(_) {}
+  };
+
+  window.searchPrev = function(){
+    try {
+      const list = window._search.indices || [];
+      if (!list.length) return;
+      window._search.active = (window._search.active - 1 + list.length) % list.length;
+      const spans = document.querySelectorAll('.textLayer span');
+      document.querySelectorAll('.textLayer span.active-highlight').forEach(s=>s.classList.remove('active-highlight'));
+      const idx = list[window._search.active];
+      const el = spans[idx];
+      if (el) { el.classList.add('active-highlight'); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+      postSearchState();
+    } catch(_) {}
+  };
+
+  window.clearSearch = function(){
+    try {
+      document.querySelectorAll('.textLayer span.highlight').forEach(s=>s.classList.remove('highlight'));
+      document.querySelectorAll('.textLayer span.active-highlight').forEach(s=>s.classList.remove('active-highlight'));
+      window._search = { term: '', indices: [], active: -1 };
+      postSearchState();
+    } catch(_) {}
   };
 
   // Selection bridge for comments
