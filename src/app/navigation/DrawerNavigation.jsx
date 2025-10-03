@@ -12,6 +12,7 @@ import TrashScreen from "../../screens/TrashScreen";
 import { CollectionsScreen } from "../../screens/CollectionsScreen";
 import CollectionSimpleScreen from "../../screens/CollectionSimpleScreen";
 import CollectionDetailsScreen from "../../screens/CollectionDetailsScreen";
+import CollectionStack from "./stacks/CollectionStack";
 
 const Drawer =  createDrawerNavigator();
 
@@ -24,12 +25,7 @@ export function DrawerNavigator() {
             <Drawer.Screen name="Home" component={MainTabs} />
             <Drawer.Screen name="Library" component={LibraryScreen} />
             <Drawer.Screen name="Settings" component={SettingsScreen} />
-            <Drawer.Screen name="Collections" component={CollectionsScreen} />
-            <Drawer.Screen name="CollectionDetails" component={CollectionDetailsScreen} />
-            <Drawer.Screen name="CollectionSaved" component={CollectionSimpleScreen} initialParams={{ mode: 'saved' }} />
-            <Drawer.Screen name="CollectionPostponed" component={CollectionSimpleScreen} initialParams={{ mode: 'postponed' }} />
-            <Drawer.Screen name="CollectionDownloaded" component={CollectionSimpleScreen} initialParams={{ mode: 'downloaded' }} />
-            <Drawer.Screen name="CollectionAudio" component={CollectionSimpleScreen} initialParams={{ mode: 'audio' }} />
+            <Drawer.Screen name="CollectionsStack" component={CollectionStack} />
             <Drawer.Screen name="Trash" component={TrashScreen} />
             <Drawer.Screen name="EpubReaderScreen" component={EpubReaderScreen} />
             <Drawer.Screen name="PdfReaderScreen" component={PdfReaderScreen} />

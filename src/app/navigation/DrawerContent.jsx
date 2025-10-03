@@ -17,11 +17,9 @@ const DrawerContent = ({ navigation, state }) => {
       activeKey = 'Collections';
     }
 
-    const handlePress = (key, navigateTo) => {
-      if (navigateTo) {
+    const handlePress = (navigateTo) => {
         navigation.navigate(navigateTo);
         navigation.closeDrawer();
-      }
     };
 
   return (
@@ -38,13 +36,13 @@ const DrawerContent = ({ navigation, state }) => {
           isActive={activeKey === 'Home'}
           onPress={() => handlePress('Home', 'Home')}
         />
-        <DrawerItem
-          icon={require("../../../assets/collections.png")}
-          label={t('drawerMenu.Collections')}
-          isActive={activeKey === 'Collections'}
-          onPress={() => handlePress('Collections', 'Collections')}
-        />
-        <DrawerItem
+          <DrawerItem
+              icon={require("../../../assets/collections.png")}
+              label={t('drawerMenu.Collections')}
+              isActive={activeKey === 'Collections'}
+              onPress={() => handlePress('CollectionsStack')}
+          />
+          <DrawerItem
           icon={require("../../../assets/Book.png")}
           label={t('drawerMenu.readMore')}
           isActive={activeKey === 'ReadMore'}
