@@ -5,7 +5,8 @@ import Slider from '@react-native-community/slider';
 import { WebView } from 'react-native-webview';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
-import { ReadingBottomToolbar, ReadingSettingsModal, ReadingChaptersDrawer, ReadingTextSelectionToolbar } from '../widgets';
+import * as Clipboard from 'expo-clipboard';
+import { ReadingBottomToolbar, ReadingSettingsModal, ReadingChaptersDrawer, ReadingTextSelectionModal, ReadingCommentInputModal } from '../widgets';
 import {
     addBookmark,
     deleteBookmark, getOnlineBookById,
@@ -629,6 +630,10 @@ export default function EpubReaderScreen({ route }) {
                     var txt = sel && sel.toString ? sel.toString() : '';
                     if (typeof txt === 'string') {
                         window.lastSelectedText = txt.trim();
+                        // Post selection to React Native
+                        if (txt.trim().length > 0) {
+                            window.postSelectedText();
+                        }
                     }
                 } catch(_) {}
             }
@@ -1060,20 +1065,33 @@ export default function EpubReaderScreen({ route }) {
                 onSearchPress={() => setSearchVisible(true)}
             />
 
-            {selectionVisible && (
-                <ReadingTextSelectionToolbar
-                    style={{ position: 'absolute', top: selectionPosition.y, left: selectionPosition.x }}
-                    onTranslate={() => { setSelectionVisible(false); }}
-                    onUnderline={() => { setSelectionVisible(false); }}
-                    onCopy={() => { setSelectionVisible(false); }}
-                    onComment={() => {
-                        setSelectionVisible(false);
-                        setCommentText('');
-                        setCommentModalVisible(true);
-                    }}
-                    onColorPicker={() => setSelectionVisible(false)}
-                />
-            )}
+            <ReadingTextSelectionModal
+                visible={selectionVisible}
+                onClose={() => setSelectionVisible(false)}
+                onAddComment={() => {
+                    setSelectionVisible(false);
+                    setCommentText('');
+                    setCommentModalVisible(true);
+                }}
+                onHighlight={(color) => {
+                    // Highlight functionality - can be implemented later
+                    setSelectionVisible(false);
+                }}
+                onCopy={async () => {
+                    try {
+                        if (lastSelectedText) {
+                            await Clipboard.setStringAsync(lastSelectedText);
+                            Alert.alert('Скопійовано!');
+                        }
+                    } catch (err) {
+                        console.log('Copy error:', err);
+                    }
+                    setSelectionVisible(false);
+                }}
+                onDelete={() => {
+                    setSelectionVisible(false);
+                }}
+            />
 
             {/* Settings Modal (minimal inline version) */}
             {settingsVisible && (
@@ -1182,38 +1200,21 @@ export default function EpubReaderScreen({ route }) {
 
             {/* Comment Input Modal */}
             {commentModalVisible && (
-                <Modal visible transparent animationType="slide" onRequestClose={() => setCommentModalVisible(false)}>
-                    <View style={styles.overlayCenter}>
-                        <TouchableOpacity style={styles.overlayFill} activeOpacity={1} onPress={() => setCommentModalVisible(false)} />
-                        <View style={styles.centerCard}>
-                            <Text style={styles.sheetTitle}>Коментар</Text>
-                            <Text style={{ color: '#666', marginBottom: 8 }}>{(lastSelectedText || '').slice(0, 180)}</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Введіть коментар"
-                                placeholderTextColor="#999"
-                                value={commentText}
-                                onChangeText={setCommentText}
-                                multiline
-                            />
-                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 12 }}>
-                                <TouchableOpacity onPress={() => setCommentModalVisible(false)} style={{ marginRight: 12 }}>
-                                    <Text style={{ color: '#444' }}>Скасувати</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity onPress={async () => {
-                                    try {
-                                        if (book?.id != null) {
-                                            await addComment(String(book.id), Number(currentPage) || 0, lastSelectedText || '', commentText || '');
-                                        }
-                                    } catch (_) {}
-                                    setCommentModalVisible(false);
-                                }}>
-                                    <Text style={{ color: '#008655', fontWeight: '700' }}>Зберегти</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </View>
-                </Modal>
+                <ReadingCommentInputModal
+                    visible={commentModalVisible}
+                    onClose={() => setCommentModalVisible(false)}
+                    previewText={lastSelectedText}
+                    value={commentText}
+                    onChange={setCommentText}
+                    onSave={async () => {
+                        try {
+                            if (book?.id != null) {
+                                await addComment(String(book.id), Number(currentPage) || 0, lastSelectedText || '', commentText || '');
+                            }
+                        } catch (_) {}
+                        setCommentModalVisible(false);
+                    }}
+                />
             )}
 
             {/* Auto Scroll (minimal inline) */}

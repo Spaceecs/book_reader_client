@@ -10,28 +10,32 @@ export default function CommentInputModal({
   onSave,
 }) {
   return (
-    <Modal visible={!!visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={!!visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlayCenter}>
         <TouchableOpacity style={styles.overlayFill} activeOpacity={1} onPress={onClose} />
         <View style={styles.centerCard}>
-          <Text style={styles.title}>Коментар</Text>
+          <Text style={styles.title}>Примітка</Text>
           {!!previewText && (
-            <Text style={styles.preview}>{String(previewText || '').slice(0, 180)}</Text>
+            <View style={styles.previewContainer}>
+              <Text style={styles.previewLabel}>Виділений текст:</Text>
+              <Text style={styles.preview}>{String(previewText || '').slice(0, 180)}</Text>
+            </View>
           )}
           <TextInput
             style={styles.input}
-            placeholder="Введіть коментар"
+            placeholder="Введіть свій коментар"
             placeholderTextColor="#999"
             value={value}
             onChangeText={onChange}
             multiline
+            textAlignVertical="top"
           />
           <View style={styles.rowRight}>
-            <TouchableOpacity onPress={onClose} style={{ marginRight: 12 }}>
-              <Text style={{ color: '#444' }}>Скасувати</Text>
+            <TouchableOpacity onPress={onClose} style={styles.cancelBtn}>
+              <Text style={styles.cancelText}>Скасувати</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={onSave}>
-              <Text style={{ color: '#008655', fontWeight: '700' }}>Зберегти</Text>
+            <TouchableOpacity onPress={onSave} style={styles.saveBtn}>
+              <Text style={styles.saveText}>Зберегти</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -41,13 +45,84 @@ export default function CommentInputModal({
 }
 
 const styles = StyleSheet.create({
-  overlayCenter: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  overlayFill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
-  centerCard: { width: '86%', backgroundColor: '#fff', borderRadius: 12, padding: 16 },
-  title: { fontSize: 16, fontWeight: '700', color: '#111', marginBottom: 8 },
-  preview: { color: '#666', marginBottom: 8 },
-  input: { flexGrow: 1, borderWidth: 1, borderColor: '#ccc', padding: 8, borderRadius: 6, minHeight: 80 },
-  rowRight: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 12 },
+  overlayCenter: { 
+    flex: 1, 
+    backgroundColor: 'rgba(0,0,0,0.5)', 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
+  overlayFill: { 
+    position: 'absolute', 
+    top: 0, 
+    left: 0, 
+    right: 0, 
+    bottom: 0 
+  },
+  centerCard: { 
+    width: '85%', 
+    backgroundColor: '#fff', 
+    borderRadius: 12, 
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  title: { 
+    fontSize: 18, 
+    fontWeight: 'bold', 
+    color: '#111', 
+    marginBottom: 12 
+  },
+  previewContainer: {
+    backgroundColor: '#f5f5f5',
+    padding: 10,
+    borderRadius: 6,
+    marginBottom: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: '#008655',
+  },
+  previewLabel: {
+    fontSize: 12,
+    color: '#666',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  preview: { 
+    color: '#333', 
+    fontSize: 14,
+    fontStyle: 'italic',
+    lineHeight: 20,
+  },
+  input: { 
+    borderWidth: 1, 
+    borderColor: '#ccc', 
+    padding: 10, 
+    borderRadius: 6, 
+    minHeight: 80,
+    fontSize: 14,
+    marginBottom: 16,
+  },
+  rowRight: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+  },
+  cancelBtn: {
+    padding: 10,
+  },
+  cancelText: {
+    color: '#d32f2f',
+    fontSize: 16,
+  },
+  saveBtn: {
+    padding: 10,
+  },
+  saveText: {
+    color: '#008655',
+    fontSize: 16,
+    fontWeight: '700',
+  },
 });
 
 
