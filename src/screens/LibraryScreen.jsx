@@ -22,7 +22,7 @@ import {
     getReadingProgress,
     markIsDeletedLocalBook,
     markIsDeletedOnlineBook,
-    setReadingProgress
+    setReadingProgress, updateOnlineBookProgress
 } from '../shared';
 import { getCollections, addBookToCollection, removeBookFromCollection, createCollection } from '../shared/api';
 
@@ -133,21 +133,22 @@ export default function LibraryScreen({ navigation }) {
         }, [books])
     );
 
+    const fetchProgress = async () => {
+        try {
+            const data = await getReadingProgress();
+            const map = {};
+            (data || []).forEach(p => {
+                if (p.book?.id != null && typeof p.progress === 'number') {
+                    map[p.book.id] = p.progress;
+                }
+            });
+            setReadingProgressMap(map);
+        } catch (e) {
+            // ignore
+        }
+    };
+
     useEffect(() => {
-        const fetchProgress = async () => {
-            try {
-                const data = await getReadingProgress();
-                const map = {};
-                (data || []).forEach(p => {
-                    if (p.book?.id != null && typeof p.progress === 'number') {
-                        map[p.book.id] = p.progress;
-                    }
-                });
-                setReadingProgressMap(map);
-            } catch (e) {
-                // ignore
-            }
-        };
         fetchProgress();
     }, []);
 
@@ -371,12 +372,33 @@ export default function LibraryScreen({ navigation }) {
                 <View style={styles.actionsList}>
                   {[
                     { key: 'info', label: 'Інформація', icon: require('../../assets/information-circle.png') },
-                    { key: 'read', label: 'Позначити як читаю', icon: require('../../assets/Book.png'), onPress: async () => {
-                        setIsActionsVisible(false);
-                        // не змінюємо прогрес примусово; просто оновимо з бекенду
-                        await fetchProgress();
-                      } },
-                    { key: 'rate', label: 'Оцінити книгу', renderRight: () => (<Ionicons name="star" size={18} color="#FFCC66" />), onPress: () => {
+                      {
+                          key: 'read',
+                          label: 'Позначити як читаю',
+                          icon: require('../../assets/Book.png'),
+                          onPress: async () => {
+                              try {
+                                  setIsActionsVisible(false);
+                                  await fetchProgress();
+                                  const bid = Number(selectedItem?.onlineId ?? selectedItem?.id);
+                                  if (!bid) return;
+                                  console.log(selectedItem.currentPage);
+                                  await updateOnlineBookProgress(selectedItem.id, 1, selectedItem.totalPages);
+                                  console.log(selectedItem.currentPage);
+                                  const progress = selectedItem.totalPages > 0
+                                      ? 1 / selectedItem.totalPages
+                                      : 0;
+                                  await setReadingProgress(bid, progress, String(selectedItem.currentPage));
+                                  const data = await getReadingProgress();
+                                  const map = {};
+                                  (data || []).forEach(p => { if (p.book?.id != null && typeof p.progress === 'number') { map[p.book.id] = p.progress; } });
+                                  setReadingProgressMap(map);
+                              } catch(e) {
+                                  console.error('Помилка при fetchProgress', e);
+                              }
+                          }
+                      },
+                      { key: 'rate', label: 'Оцінити книгу', renderRight: () => (<Ionicons name="star" size={18} color="#FFCC66" />), onPress: () => {
                         setIsActionsVisible(false);
                         setTempRating(0);
                         setIsRateVisible(true);
@@ -387,6 +409,7 @@ export default function LibraryScreen({ navigation }) {
                           if (!bid) return;
                           await setReadingProgress(bid, 1, 'done');
                           const data = await getReadingProgress();
+                            await updateOnlineBookProgress(selectedItem.id, selectedItem.totalPages, selectedItem.totalPages);
                           const map = {};
                           (data || []).forEach(p => { if (p.book?.id != null && typeof p.progress === 'number') { map[p.book.id] = p.progress; } });
                           setReadingProgressMap(map);
