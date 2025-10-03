@@ -33,6 +33,8 @@
     "support": "Contact Support",
     "rateApp": "Rate App",
     "aboutApp": "About App",
+    "changeEmail": "Change Email",
+    "confirm": "Confirm",
     "logout": "Log Out"
   },
   "drawerMenu": {
