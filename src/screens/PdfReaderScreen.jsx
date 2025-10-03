@@ -7,6 +7,7 @@ import {
     TouchableOpacity,
     Alert,
     Modal,
+    ScrollView,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import {
@@ -69,7 +70,9 @@ export default function PdfReaderScreen({ route }) {
 
     // Пошук
     const [searchVisible, setSearchVisible] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
+    const [showResults, setShowResults] = useState(false);
+    const [searchResults, setSearchResults] = useState([]);
+    const searchDebounceRef = useRef(null);
 
     // Автопрокрутка (мінімальна заглушка як в EPUB)
     const [autoScrollVisible, setAutoScrollVisible] = useState(false);
@@ -133,6 +136,8 @@ export default function PdfReaderScreen({ route }) {
         } catch(_) {}
     }, [readingMode]);
 
+    const [searchState, setSearchState] = useState({ term: '', activeIndex: -1, total: 0 });
+
     const handleMessage = async (event) => {
         try {
             const data = JSON.parse(event.nativeEvent.data);
@@ -161,6 +166,18 @@ export default function PdfReaderScreen({ route }) {
                     const c = await getCommentsByBook(String(book.id));
                     setCommentsList(Array.isArray(c) ? c : []);
                 } catch(_) {}
+            }
+            if (data.type === 'searchResults') {
+                const results = Array.isArray(data.results) ? data.results : [];
+                setSearchResults(results);
+                setShowResults(true);
+            }
+            if (data.type === 'searchState') {
+                setSearchState({
+                    term: String(data.term || ''),
+                    activeIndex: Number.isFinite(data.activeIndex) ? Number(data.activeIndex) : -1,
+                    total: Number.isFinite(data.total) ? Number(data.total) : 0,
+                });
             }
             if (data.type === 'toc') {
                 try {
@@ -421,38 +438,68 @@ export default function PdfReaderScreen({ route }) {
             )}
 
             {searchVisible && (
-                <Modal visible transparent animationType="fade" onRequestClose={() => setSearchVisible(false)}>
-                    <View style={styles.overlayCenter}>
-                        <TouchableOpacity style={styles.overlayFill} activeOpacity={1} onPress={() => setSearchVisible(false)} />
-                        <View style={styles.centerCard}>
-                            <Text style={styles.sheetTitle}>Пошук у книзі</Text>
-                            <View style={styles.searchBar}>
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Введіть слово або фразу"
-                                    placeholderTextColor="#999"
-                                    value={searchTerm}
-                                    onChangeText={setSearchTerm}
-                                    returnKeyType="search"
-                                    onSubmitEditing={() => {
-                                        if (searchTerm && searchTerm.trim().length > 0) {
-                                            const q = JSON.stringify(searchTerm.trim());
-                                            viewerRef.current?.injectJavaScript(`window.searchInDocument(${q}); true;`);
-                                        }
-                                    }}
-                                />
-                                <TouchableOpacity onPress={() => {
-                                    if (searchTerm && searchTerm.trim().length > 0) {
-                                        const q = JSON.stringify(searchTerm.trim());
-                                        viewerRef.current?.injectJavaScript(`window.searchInDocument(${q}); true;`);
+                <View style={styles.topSearchBar}>
+                    <TextInput
+                        style={styles.topSearchInput}
+                        placeholder="Пошук у книзі"
+                        placeholderTextColor="#666"
+                        value={searchTerm}
+                        onChangeText={(t) => {
+                            setSearchTerm(t);
+                            try { if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current); } catch(_) {}
+                            searchDebounceRef.current = setTimeout(() => {
+                                try {
+                                    const val = String(t || '').trim();
+                                    if (val.length === 0) {
+                                        setShowResults(false);
+                                        setSearchResults([]);
+                                        viewerRef.current?.injectJavaScript('window.clearSearch(); true;');
+                                    } else {
+                                        const q = JSON.stringify(val);
+                                        viewerRef.current?.injectJavaScript(`window.searchInPdf(${q}); true;`);
                                     }
-                                }}>
-                                    <Text style={{ color: '#008655', fontWeight: '700' }}>Пошук</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
+                                } catch(_) {}
+                            }, 250);
+                        }}
+                        returnKeyType="search"
+                        onSubmitEditing={() => {
+                            const q = JSON.stringify(String(searchTerm||'').trim());
+                            viewerRef.current?.injectJavaScript(`window.searchInPdf(${q}); true;`);
+                        }}
+                    />
+                    <View style={styles.topSearchControls}>
+                        <Text style={styles.topSearchCount}>{searchState.total > 0 ? `${(searchState.activeIndex+1)} / ${searchState.total}` : '0 / 0'}</Text>
+                        <TouchableOpacity style={styles.navBtn} onPress={() => viewerRef.current?.injectJavaScript('window.searchPrev(); true;')}>
+                            <Text style={styles.navLabel}>◀</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.navBtn} onPress={() => viewerRef.current?.injectJavaScript('window.searchNext(); true;')}>
+                            <Text style={styles.navLabel}>▶</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.closeBtn} onPress={() => { setSearchVisible(false); viewerRef.current?.injectJavaScript('window.clearSearch(); true;'); }}>
+                            <Text style={styles.closeLabel}>✕</Text>
+                        </TouchableOpacity>
                     </View>
-                </Modal>
+                </View>
+            )}
+
+            {searchVisible && showResults && Array.isArray(searchResults) && searchResults.length > 0 && (
+                <View style={styles.suggestionsPanel}>
+                    <ScrollView style={{ maxHeight: 320 }}>
+                        {searchResults.map((r, idx) => (
+                            <TouchableOpacity
+                                key={String(idx)}
+                                style={styles.suggestionItem}
+                                onPress={() => {
+                                    try { viewerRef.current?.injectJavaScript(`window.scrollToResult(${Number(r.index)||0}); true;`); } catch(_) {}
+                                    setShowResults(false);
+                                }}
+                            >
+                                <Text style={styles.suggestionIndex}>Збіг {idx + 1}</Text>
+                                <Text style={styles.suggestionText}>{String(r.excerpt || '').trim()}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                </View>
             )}
 
             {commentModalVisible && (
@@ -540,4 +587,60 @@ const styles = StyleSheet.create({
         marginHorizontal: 2,
     },
     // removed floating buttons (replaced by header bar)
+    topSearchBar: {
+        position: 'absolute',
+        top: 8,
+        left: 8,
+        right: 8,
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        paddingHorizontal: 10,
+        paddingVertical: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+    },
+    topSearchInput: {
+        flex: 1,
+        backgroundColor: '#fff',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#ddd',
+        marginRight: 8,
+    },
+    topSearchControls: { flexDirection: 'row', alignItems: 'center' },
+    topSearchCount: { color: '#111', marginRight: 8 },
+    navBtn: { paddingHorizontal: 6, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: '#ddd', marginHorizontal: 2, backgroundColor: '#f7f7f7' },
+    navLabel: { color: '#111', fontWeight: '700' },
+    closeBtn: { paddingHorizontal: 8, paddingVertical: 4, marginLeft: 4 },
+    closeLabel: { color: '#111', fontSize: 16 },
+    suggestionsPanel: {
+        position: 'absolute',
+        top: 52,
+        left: 8,
+        right: 8,
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        paddingHorizontal: 10,
+        paddingVertical: 8,
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+        elevation: 3,
+    },
+    suggestionItem: {
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderColor: '#eee',
+    },
+    suggestionIndex: {
+        fontWeight: '700',
+        color: '#555',
+        marginBottom: 4,
+    },
+    suggestionText: {
+        color: '#111',
+    },
 });

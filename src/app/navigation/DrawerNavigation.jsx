@@ -1,6 +1,6 @@
 import React from "react";
 import {createDrawerNavigator} from "@react-navigation/drawer";
-import SettingsScreen from "../../screens/SettingsScreen";
+import { SettingsStack } from "./stacks/SettingsStack";
 import DrawerContent from "./DrawerContent";
 import EpubReaderScreen from "../../screens/EpubReaderScreen";
 import PdfReaderScreen from "../../screens/PdfReaderScreen";
@@ -24,7 +24,7 @@ export function DrawerNavigator() {
 
             <Drawer.Screen name="Home" component={MainTabs} />
             <Drawer.Screen name="Library" component={LibraryScreen} />
-            <Drawer.Screen name="Settings" component={SettingsScreen} />
+            <Drawer.Screen name="Settings" component={SettingsStack} />
             <Drawer.Screen name="CollectionsStack" component={CollectionStack} />
             <Drawer.Screen name="Trash" component={TrashScreen} />
             <Drawer.Screen name="EpubReaderScreen" component={EpubReaderScreen} />

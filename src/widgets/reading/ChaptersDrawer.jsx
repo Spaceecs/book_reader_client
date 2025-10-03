@@ -25,13 +25,13 @@ export default function ChaptersDrawer({ visible, onClose, chapters = [], curren
 
           {activeTab === 'chapters' ? (
             <ScrollView style={{ flex: 1, marginTop: 12 }}>
-              {chapters.map((ch) => {
+              {chapters.map((ch, idx) => {
                 const isRead = readIds.includes(ch.id);
-                const isCurrent = currentId === ch.id;
+                const isCurrent = (currentIndex === (idx + 1)) || (currentId === ch.id);
                 const isExpanded = expandedIds.includes(ch.id);
                 return (
                   <View key={ch.id} style={{ marginBottom: 8 }}>
-                    <TouchableOpacity style={{ paddingVertical: 12, paddingHorizontal: 12, borderWidth: 1, borderColor: isCurrent ? '#008655' : '#e0e0e0', borderRadius: 12, backgroundColor: '#fff', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', opacity: isRead ? 0.7 : 1 }} onPress={() => onSelectChapter(ch)}>
+                    <TouchableOpacity style={{ paddingVertical: 12, paddingHorizontal: 12, borderWidth: 1, borderColor: isCurrent ? '#008655' : '#e0e0e0', borderRadius: 12, backgroundColor: isCurrent ? '#0086551A' : '#fff', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', opacity: isRead ? 0.7 : 1 }} onPress={() => onSelectChapter(ch)}>
                       <Text style={{ color: isCurrent ? '#008655' : '#000', fontWeight: isCurrent ? '700' : '400' }}>{ch.title}</Text>
                       {ch.children && ch.children.length > 0 && (
                         <TouchableOpacity onPress={() => onToggleExpand(ch.id)}>

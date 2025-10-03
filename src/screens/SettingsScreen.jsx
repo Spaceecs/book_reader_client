@@ -65,6 +65,8 @@ export default function SettingsScreen({ navigation }) {
           <View style={styles.separator} />
           <Row left={t("settings.deviceList")} onPress={() => navigation && navigation.navigate && navigation.navigate('SettingsDevices')} />
           <View style={styles.separator} />
+          <Row left={t('settings.changeEmail', 'Змінити пошту')} onPress={() => navigation && navigation.navigate && navigation.navigate('SettingsChangeEmail')} />
+          <View style={styles.separator} />
           <View style={styles.switchRowOnly}>
             <Text style={styles.rowLabel}>{t("settings.onlyWIFIDownload")}</Text>
             <Switch value={wifiOnly} onValueChange={setWifiOnly} trackColor={{ true: '#9bd3bf', false: '#ddd' }} thumbColor={wifiOnly ? '#2E8B57' : '#f5f5f5'} />

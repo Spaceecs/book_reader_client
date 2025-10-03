@@ -70,6 +70,8 @@ export default function EpubReaderScreen({ route }) {
     const [searchQuery, setSearchQuery] = useState('');
     const [showResults, setShowResults] = useState(false);
     const [searchResults, setSearchResults] = useState([]);
+    const [searchState, setSearchState] = useState({ term: '', activeIndex: -1, total: 0 });
+    const searchDebounceRef = useRef(null);
     const [chapters, setChapters] = useState([]);
     const [currentChapterIndex, setCurrentChapterIndex] = useState(null);
     const [bookmarksList, setBookmarksList] = useState([]);
@@ -454,7 +456,21 @@ export default function EpubReaderScreen({ route }) {
         } catch(e) { return ''; }
     };
 
+    // Search state and helpers (match PDF behavior)
+    window._search = { results: [], active: -1, term: '' };
+    window.postSearchState = function(){
+        try {
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+                type: 'searchState',
+                term: String(window._search.term||''),
+                activeIndex: Number(window._search.active||-1),
+                total: Array.isArray(window._search.results) ? window._search.results.length : 0
+            }));
+        } catch(_) {}
+    };
+
     window.searchInBook = async function(query) {
+        try { window._search.term = String(query||''); } catch(_) {}
         const results = [];
         const spineItems = book.spine.spineItems;
 
@@ -464,43 +480,38 @@ export default function EpubReaderScreen({ route }) {
                 await item.load(book.load.bind(book));
                 const doc = item.document;
                 const body = doc && doc.body;
-                if (!body) continue;
+                if (!body) { try{ await item.unload(); }catch(_){}; continue; }
 
                 const walker = doc.createTreeWalker(body, NodeFilter.SHOW_TEXT, null, false);
                 while (walker.nextNode()) {
                     const node = walker.currentNode;
-                    const text = node.textContent;
-                    const index = text.toLowerCase().indexOf(query.toLowerCase());
-                    if (index !== -1) {
+                    const text = node.textContent || '';
+                    const q = String(query||'');
+                    const idx = text.toLowerCase().indexOf(q.toLowerCase());
+                    if (idx !== -1) {
                         const range = doc.createRange();
-                        range.setStart(node, index);
-                        range.setEnd(node, index + query.length);
-
+                        range.setStart(node, idx);
+                        range.setEnd(node, idx + q.length);
                         const cfi = item.cfiFromRange(range);
-                        results.push({
-                            cfi,
-                            excerpt: node.textContent.slice(Math.max(0, index - 30), index + query.length + 30)
-                        });
+                        results.push({ cfi, excerpt: text.slice(Math.max(0, idx - 30), idx + q.length + 30) });
                     }
                 }
                 await item.unload();
             } catch (e) {
-                window.ReactNativeWebView.postMessage(JSON.stringify({
-                    type: 'debug',
-                    message: '[ERROR] Failed in spineItem: ' + e.message
-                }));
+                window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'debug', message: '[ERROR] Failed in spineItem: ' + e.message }));
             }
         }
 
+        window._search.results = results;
+        window._search.active = results.length ? 0 : -1;
+
         if (results.length > 0) {
-            await rendition.display(results[0].cfi);
-            window.highlightSearchResults(results);
+            try { await rendition.display(results[0].cfi); } catch(_) {}
+            try { window.highlightSearchResults(results); } catch(_) {}
         }
 
-        window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'searchResults',
-            results
-        }));
+        window.postSearchState();
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'searchResults', results }));
     };
 
    window.highlightSearchResults = function(results) {
@@ -516,6 +527,39 @@ export default function EpubReaderScreen({ route }) {
             }));
         }
     });
+   };
+
+   window.searchNext = function(){
+       try {
+           const list = Array.isArray(window._search.results) ? window._search.results : [];
+           if (!list.length) return;
+           window._search.active = (Number(window._search.active||0) + 1) % list.length;
+           const target = list[window._search.active];
+           if (target && target.cfi) { try { rendition.display(target.cfi); } catch(_) {} }
+           window.postSearchState();
+       } catch(_) {}
+   };
+
+   window.searchPrev = function(){
+       try {
+           const list = Array.isArray(window._search.results) ? window._search.results : [];
+           if (!list.length) return;
+           const len = list.length;
+           window._search.active = (Number(window._search.active||0) - 1 + len) % len;
+           const target = list[window._search.active];
+           if (target && target.cfi) { try { rendition.display(target.cfi); } catch(_) {} }
+           window.postSearchState();
+       } catch(_) {}
+   };
+
+   window.clearSearch = function(){
+       try {
+           const list = Array.isArray(window._search.results) ? window._search.results : [];
+           list.forEach(r => { try { rendition.annotations.remove(r.cfi, 'highlight'); } catch(_) {} });
+           window._search = { results: [], active: -1, term: '' };
+           window.postSearchState();
+       } catch(_) {}
+   };
 
     // Detect user scroll near bottom to show toolbar
     // Also toggle via CFI location percent if available
@@ -594,11 +638,7 @@ export default function EpubReaderScreen({ route }) {
         } catch(e) {}
     });
 
-    window.ReactNativeWebView.postMessage(JSON.stringify({
-        type: 'debug',
-        message: '[✅] Highlighted: ' + count + ' of ' + results.length
-    }));
-}
+    
 </script>
 </body>
 </html>
@@ -697,6 +737,14 @@ export default function EpubReaderScreen({ route }) {
 
         if (parsed.type === 'toggleToolbar') {
             setShowToolbar(!!parsed.visible);
+        }
+
+        if (parsed.type === 'searchState') {
+            setSearchState({
+                term: String(parsed.term || ''),
+                activeIndex: Number.isFinite(parsed.activeIndex) ? Number(parsed.activeIndex) : -1,
+                total: Number.isFinite(parsed.total) ? Number(parsed.total) : 0,
+            });
         }
 
         if (parsed.type === 'chapter') {
@@ -936,7 +984,70 @@ export default function EpubReaderScreen({ route }) {
                 onMessage={handleMessage}
             />
 
-            {/* search UI removed for full-screen reading */}
+            {/* Top search overlay bar + suggestions */}
+            {searchVisible && (
+                <View style={styles.topSearchBar}>
+                    <TextInput
+                        style={styles.topSearchInput}
+                        placeholder="Пошук у книзі"
+                        placeholderTextColor="#666"
+                        value={searchQuery}
+                        onChangeText={(t) => {
+                            setSearchQuery(t);
+                            try { if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current); } catch(_) {}
+                            searchDebounceRef.current = setTimeout(() => {
+                                try {
+                                    const val = String(t || '').trim();
+                                    if (val.length === 0) {
+                                        setShowResults(false);
+                                        setSearchResults([]);
+                                        sendCommand('window.clearSearch()');
+                                    } else {
+                                        const q = JSON.stringify(val);
+                                        sendCommand(`window.searchInBook(${q})`);
+                                    }
+                                } catch(_) {}
+                            }, 250);
+                        }}
+                        returnKeyType="search"
+                        onSubmitEditing={() => {
+                            const q = JSON.stringify(String(searchQuery||'').trim());
+                            sendCommand(`window.searchInBook(${q})`);
+                        }}
+                    />
+                    <View style={styles.topSearchControls}>
+                        <Text style={styles.topSearchCount}>{searchState.total > 0 ? `${(searchState.activeIndex+1)} / ${searchState.total}` : '0 / 0'}</Text>
+                        <TouchableOpacity style={styles.navBtn} onPress={() => sendCommand('window.searchPrev()')}>
+                            <Text style={styles.navLabel}>◀</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.navBtn} onPress={() => sendCommand('window.searchNext()')}>
+                            <Text style={styles.navLabel}>▶</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.closeBtn} onPress={() => { setSearchVisible(false); sendCommand('window.clearSearch()'); }}>
+                            <Text style={styles.closeLabel}>✕</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            )}
+            {searchVisible && showResults && Array.isArray(searchResults) && searchResults.length > 0 && (
+                <View style={styles.suggestionsPanel}>
+                    <ScrollView style={{ maxHeight: 320 }}>
+                        {searchResults.map((r, idx) => (
+                            <TouchableOpacity
+                                key={String(idx)}
+                                style={styles.suggestionItem}
+                                onPress={() => {
+                                    try { const c = String(r.cfi || ''); sendCommand(`window.rendition.display(${JSON.stringify(c)})`); } catch(_) {}
+                                    setShowResults(false);
+                                }}
+                            >
+                                <Text style={styles.suggestionIndex}>Збіг {idx + 1}</Text>
+                                <Text style={styles.suggestionText}>{String(r.excerpt || '').trim()}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                </View>
+            )}
 
             <ReadingBottomToolbar
                 progress={progressPct}
@@ -1067,58 +1178,7 @@ export default function EpubReaderScreen({ route }) {
                 />
             )}
 
-            {/* Search Modal */}
-            {searchVisible && (
-                <Modal visible transparent animationType="fade" onRequestClose={() => setSearchVisible(false)}>
-                    <View style={styles.overlayCenter}>
-                        <TouchableOpacity style={styles.overlayFill} activeOpacity={1} onPress={() => setSearchVisible(false)} />
-                        <View style={styles.centerCard}>
-                            <Text style={styles.sheetTitle}>Пошук у книзі</Text>
-                            <View style={styles.searchBar}>
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Введіть слово або фразу"
-                                    placeholderTextColor="#999"
-                                    value={searchQuery}
-                                    onChangeText={setSearchQuery}
-                                    returnKeyType="search"
-                                    onSubmitEditing={() => {
-                                        if (searchQuery && searchQuery.trim().length > 0) {
-                                            const q = JSON.stringify(searchQuery.trim());
-                                            sendCommand(`window.searchInBook(${q})`);
-                                        }
-                                    }}
-                                />
-                                <TouchableOpacity onPress={() => {
-                                    if (searchQuery && searchQuery.trim().length > 0) {
-                                        const q = JSON.stringify(searchQuery.trim());
-                                        sendCommand(`window.searchInBook(${q})`);
-                                    }
-                                }}>
-                                    <Text style={{ color: '#008655', fontWeight: '700' }}>Пошук</Text>
-                                </TouchableOpacity>
-                            </View>
-
-                            {showResults && Array.isArray(searchResults) && searchResults.length > 0 && (
-                                <ScrollView style={{ maxHeight: 280, marginTop: 8 }}>
-                                    {searchResults.map((r, idx) => (
-                                        <TouchableOpacity key={r.cfi || String(idx)} style={styles.resultContainer} onPress={() => {
-                                            if (r.cfi) {
-                                                const cfi = String(r.cfi).replace(/"/g, '\\"');
-                                                sendCommand(`window.rendition.display("${cfi}")`);
-                                                setSearchVisible(false);
-                                            }
-                                        }}>
-                                            <Text style={styles.resultIndex}>Збіг {idx + 1}</Text>
-                                            <Text style={{ color: '#111' }}>{r.excerpt || ''}</Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                </ScrollView>
-                            )}
-                        </View>
-                    </View>
-                </Modal>
-            )}
+            {/* Old search modal removed – using top overlay search instead */}
 
             {/* Comment Input Modal */}
             {commentModalVisible && (
@@ -1311,5 +1371,62 @@ const styles = StyleSheet.create({
         borderRadius: 30,
         padding: 6,
         elevation: 4,
+    },
+    // Search overlay styles (same as PDF)
+    topSearchBar: {
+        position: 'absolute',
+        top: 8,
+        left: 8,
+        right: 8,
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        paddingHorizontal: 10,
+        paddingVertical: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+    },
+    topSearchInput: {
+        flex: 1,
+        backgroundColor: '#fff',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#ddd',
+        marginRight: 8,
+    },
+    topSearchControls: { flexDirection: 'row', alignItems: 'center' },
+    topSearchCount: { color: '#111', marginRight: 8 },
+    navBtn: { paddingHorizontal: 6, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: '#ddd', marginHorizontal: 2, backgroundColor: '#f7f7f7' },
+    navLabel: { color: '#111', fontWeight: '700' },
+    closeBtn: { paddingHorizontal: 8, paddingVertical: 4, marginLeft: 4 },
+    closeLabel: { color: '#111', fontSize: 16 },
+    suggestionsPanel: {
+        position: 'absolute',
+        top: 52,
+        left: 8,
+        right: 8,
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        paddingHorizontal: 10,
+        paddingVertical: 8,
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+        elevation: 3,
+    },
+    suggestionItem: {
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderColor: '#eee',
+    },
+    suggestionIndex: {
+        fontWeight: '700',
+        color: '#555',
+        marginBottom: 4,
+    },
+    suggestionText: {
+        color: '#111',
     },
 });

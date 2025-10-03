@@ -62,7 +62,7 @@ const DrawerContent = ({ navigation, state }) => {
           icon={require("../../../assets/settings.png")}
           label={t('drawerMenu.Settings')}
           isActive={activeKey === 'Settings'}
-          onPress={() => handlePress('Settings', 'Settings')}
+          onPress={() => handlePress('Settings', 'SettingsHome')}
         />
         <DrawerItem
           icon={require("../../../assets/feedback.png")}
