@@ -9,7 +9,8 @@ export function CategoryScreen({ route, navigation }) {
   const { t } = useTranslation();
   const params = route?.params || {};
   const [books, setBooks] = useState([]);
-  const [loading, setLoading] = useState(true);
+    const [searchText, setSearchText] = useState('');
+    const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isRateVisible, setIsRateVisible] = useState(false);
   const [tempRating, setTempRating] = useState(0);
@@ -29,7 +30,16 @@ export function CategoryScreen({ route, navigation }) {
     return t('publicBooks');
   }, [params.titleKey, params.title, t]);
 
-  useEffect(() => {
+    const filteredBooks = useMemo(() => {
+        if (!searchText) return books;
+        const lower = searchText.toLowerCase();
+        return books.filter(b =>
+            (b.title?.toLowerCase().includes(lower)) ||
+            (b.author?.toLowerCase().includes(lower))
+        );
+    }, [books, searchText]);
+
+    useEffect(() => {
     let mounted = true;
     (async () => {
       try {
@@ -75,8 +85,12 @@ export function CategoryScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      <SecondHeader title={title} />
-      <View style={styles.actionsRow}>
+        <SecondHeader
+            title={title}
+            searchValue={searchText}
+            onSearchChange={setSearchText}
+        />
+        <View style={styles.actionsRow}>
         <TouchableOpacity style={[styles.actionPill, styles.actionPillSort]} activeOpacity={0.85} onPress={() => setIsSortVisible(true)}>
           <Ionicons name="swap-vertical-outline" size={18} color="#222" />
           <Text style={styles.actionPillText}>Сортування</Text>
@@ -86,23 +100,23 @@ export function CategoryScreen({ route, navigation }) {
           <Text style={styles.actionPillText}>Фільтр</Text>
         </TouchableOpacity>
       </View>
-      <FlatList
-        data={books}
-        keyExtractor={(item) => String(item.id)}
-        numColumns={2}
-        columnWrapperStyle={styles.gridRow}
-        contentContainerStyle={styles.grid}
-        renderItem={({ item }) => (
-          <BookCard book={item} setSelectedItem={setSelectedItem} setIsActionsVisible={setIsRateVisible} />
-        )}
-        ListEmptyComponent={!loading ? (
-          <View style={{ padding: 24 }}>
-            <Text>{t('libraryScreen.emptyList')}</Text>
-          </View>
-        ) : null}
-      />
+        <FlatList
+            data={filteredBooks}
+            keyExtractor={(item) => String(item.id)}
+            numColumns={2}
+            columnWrapperStyle={styles.gridRow}
+            contentContainerStyle={styles.grid}
+            renderItem={({ item }) => (
+                <BookCard book={item} setSelectedItem={setSelectedItem} setIsActionsVisible={setIsRateVisible} />
+            )}
+            ListEmptyComponent={!loading ? (
+                <View style={{ padding: 24 }}>
+                    <Text>{t('libraryScreen.emptyList')}</Text>
+                </View>
+            ) : null}
+        />
 
-      {/* Rate modal (bottom sheet) */}
+        {/* Rate modal (bottom sheet) */}
       <Modal visible={isRateVisible} transparent animationType="slide" onRequestClose={() => setIsRateVisible(false)}>
         <View style={styles.sheetOverlay}>
           <TouchableOpacity style={{ flex: 1 }} onPress={() => setIsRateVisible(false)} />
