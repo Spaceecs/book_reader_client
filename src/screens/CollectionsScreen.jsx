@@ -136,7 +136,7 @@ export function CollectionsScreen({ navigation }) {
         // simple local edit (no PATCH in API spec); recreate by delete/create could be used later
         setCollections(prev => prev.map(c => c.id === editingId ? { ...c, name: trimmed } : c));
       } else {
-        const created = await createCollection(trimmed);
+          const created = await createCollection({ name: trimmed, icon: iconDraft, color: colorDraft, pinned: pinnedDraft });
         setCollections(prev => [created, ...prev]);
       }
     } catch(_) {}
@@ -228,11 +228,11 @@ export function CollectionsScreen({ navigation }) {
                 {pinned.map(item => (
                     <View key={`p-${item.id}`} style={[styles.row, { borderColor: '#c7eadb', backgroundColor: '#f7fffb' }]}>
                         <View style={styles.rowLeft}>
-                            <View style={[styles.rowIconCircle, { backgroundColor: item.color }]}>
-                                {iconMap[item.icon] ? (
+                            <View style={[styles.rowIconCircle, { backgroundColor: item.color || '#2E8B57' }]}>
+                            {iconMap[item.icon] ? (
                                     <Image source={iconMap[item.icon]} style={{ width: 18, height: 18, tintColor: '#fff', resizeMode: 'contain' }} />
                                 ) : (
-                                    <Ionicons name={item.icon} size={18} color="#fff" />
+                                    <Ionicons name={item.icon || 'folder'} size={18} color="#fff" />
                                 )}
                             </View>
                             <View>
