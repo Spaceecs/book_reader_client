@@ -4,7 +4,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from './index';
 import { MainNavigator } from './index';
 import '../shared/config/i18n';
-import { initDatabase } from "../shared";
+import {cleanupExpiredLocalBooks, cleanupExpiredOnlineBooks, initDatabase} from "../shared";
 import { View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -15,6 +15,8 @@ export default function App() {
         (async () => {
             try {
                 await initDatabase();
+                await cleanupExpiredLocalBooks();
+                await cleanupExpiredOnlineBooks();
             } finally {
                 setDbReady(true);
             }

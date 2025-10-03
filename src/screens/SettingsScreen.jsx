@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Switch, ScrollView, Image, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ChangeLanguage } from '../features';
+import {useTranslation} from "react-i18next";
+import {logout} from "../entities";
+import {useDispatch} from "react-redux";
 
 const Row = ({ left, right, onPress, isDestructive = false }) => (
   <TouchableOpacity onPress={onPress} activeOpacity={onPress ? 0.7 : 1} style={styles.row}>
@@ -11,6 +14,8 @@ const Row = ({ left, right, onPress, isDestructive = false }) => (
 );
 
 export default function SettingsScreen({ navigation }) {
+    const {t} = useTranslation();
+    const dispatch = useDispatch();
   const [brightnessGesture, setBrightnessGesture] = useState(false);
   const [keepScreenOn, setKeepScreenOn] = useState(true);
   const [wifiOnly, setWifiOnly] = useState(true);
@@ -22,22 +27,22 @@ export default function SettingsScreen({ navigation }) {
           <Image source={require('../../assets/weui_arrow-filled (1).png')} style={{ width: 22, height: 22, resizeMode: 'contain' }} />
         </TouchableOpacity>
         <View style={styles.titleWrap}>
-          <Text style={styles.headerTitle}>Налаштування</Text>
+          <Text style={styles.headerTitle}>{t("settings.settings")}</Text>
         </View>
         <View style={styles.headerRight} />
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Мова</Text>
+          <Text style={styles.sectionTitle}>{t("settings.language")}</Text>
           <ChangeLanguage />
         </View>
 
         <View style={styles.card}>
           <View style={styles.switchRowWrapper}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.switchTitle}>Яскравість жестом</Text>
-              <Text style={styles.switchSubtitle}>Змінювати яскравість рухом нагору чи донизу по лівому краю екрану</Text>
+              <Text style={styles.switchTitle}>{t("settings.brightnessGesture")}</Text>
+              <Text style={styles.switchSubtitle}>{t("settings.brightnessDescription")}</Text>
             </View>
             <Switch value={brightnessGesture} onValueChange={setBrightnessGesture} trackColor={{ true: '#9bd3bf', false: '#ddd' }} thumbColor={brightnessGesture ? '#2E8B57' : '#f5f5f5'} />
           </View>
@@ -46,36 +51,36 @@ export default function SettingsScreen({ navigation }) {
         <View style={styles.card}>
           <View style={styles.switchRowWrapper}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.switchTitle}>Відключення екрану</Text>
-              <Text style={styles.switchSubtitle}>Keep the screen on</Text>
+              <Text style={styles.switchTitle}>{t("settings.screenOff")}</Text>
+              <Text style={styles.switchSubtitle}>{t("settings.screenOffDescription")}</Text>
             </View>
             <Switch value={keepScreenOn} onValueChange={setKeepScreenOn} trackColor={{ true: '#9bd3bf', false: '#ddd' }} thumbColor={keepScreenOn ? '#2E8B57' : '#f5f5f5'} />
           </View>
         </View>
 
         <View style={styles.card}>
-          <Row left="Сканування файлів" onPress={() => {}} />
+          <Row left={t("settings.scanFiles")} onPress={() => {}} />
           <View style={styles.separator} />
-          <Row left="Змінити пароль" onPress={() => navigation && navigation.navigate && navigation.navigate('SettingsChangePassword')} />
+          <Row left={t("settings.changePassword")} onPress={() => navigation && navigation.navigate && navigation.navigate('SettingsChangePassword')} />
           <View style={styles.separator} />
-          <Row left="Список пристроїв" onPress={() => navigation && navigation.navigate && navigation.navigate('SettingsDevices')} />
+          <Row left={t("settings.deviceList")} onPress={() => navigation && navigation.navigate && navigation.navigate('SettingsDevices')} />
           <View style={styles.separator} />
           <View style={styles.switchRowOnly}>
-            <Text style={styles.rowLabel}>Завантажувати тільки через Wi-fi</Text>
+            <Text style={styles.rowLabel}>{t("settings.onlyWIFIDownload")}</Text>
             <Switch value={wifiOnly} onValueChange={setWifiOnly} trackColor={{ true: '#9bd3bf', false: '#ddd' }} thumbColor={wifiOnly ? '#2E8B57' : '#f5f5f5'} />
           </View>
         </View>
 
-        <View style={styles.card}>
-          <Row left="Написати в тех. підтримку" onPress={() => {}} isDestructive />
-          <View style={styles.separator} />
-          <Row left="Оцінити застосунок" onPress={() => {}} />
-          <View style={styles.separator} />
-          <Row left="Інформація про застосунок" onPress={() => {}} />
-        </View>
+          <View style={styles.card}>
+              <Row left={t("settings.support")} onPress={() => {}} isDestructive />
+              <View style={styles.separator} />
+              <Row left={t("settings.rateApp")} onPress={() => {}} />
+              <View style={styles.separator} />
+              <Row left={t("settings.aboutApp")} onPress={() => {}} />
+          </View>
 
-        <TouchableOpacity style={styles.logout} onPress={() => {}}>
-          <Text style={styles.logoutText}>Вийти</Text>
+        <TouchableOpacity style={styles.logout} onPress={() => logout(dispatch, navigation)}>
+          <Text style={styles.logoutText}>{t("settings.logout")}</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>

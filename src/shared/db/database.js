@@ -41,25 +41,29 @@ export async function initDatabase() {
             format TEXT,
             base64 TEXT,
             currentPage INTEGER,
-            totalPages INTEGER
+            totalPages INTEGER,
+            isDeleted BOOLEAN,
+            deletedAt TEXT
         );
     `);
 
     // Онлайн книги
     await execSafe(`
         CREATE TABLE IF NOT EXISTS online_books (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            onlineId TEXT,
-            title TEXT,
-            author TEXT,
-            imageUrl TEXT,
-            filePath TEXT,
-            format TEXT,
-            base64 TEXT,
-            currentPage INTEGER,
-            totalPages INTEGER,
-            publisher TEXT,
-            language TEXT
+                                                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                    onlineId TEXT,
+                                                    title TEXT,
+                                                    author TEXT,
+                                                    imageUrl TEXT,
+                                                    filePath TEXT,
+                                                    format TEXT,
+                                                    base64 TEXT,
+                                                    currentPage INTEGER,
+                                                    totalPages INTEGER,
+                                                    publisher TEXT,
+                                                    language TEXT,
+                                                    isDeleted BOOLEAN,
+                                                    deletedAt TEXT
         );
     `);
 
@@ -95,6 +99,9 @@ export async function initDatabase() {
     await safeAlter('bookmarks', 'cfi', 'TEXT');
     await safeAlter('bookmarks', 'userId', 'TEXT');
     await safeAlter('bookmarks', 'createdAt', 'TEXT');
+    await safeAlter('local_books', 'deletedAt', 'TEXT');
+    await safeAlter('online_books', 'deletedAt', 'TEXT');
+
 }
 
 // ======================
@@ -103,8 +110,8 @@ export async function initDatabase() {
 export async function addLocalBook(book) {
     await ensureDb();
     const result = await db.runAsync(
-        'INSERT INTO local_books (title, filePath, format, base64, currentPage, totalPages) VALUES (?, ?, ?, ?, ?, ?)',
-        [book.title, book.filePath, book.format, book.base64, 0, 0]
+        'INSERT INTO local_books (title, filePath, format, base64, currentPage, totalPages, isDeleted) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [book.title, book.filePath, book.format, book.base64, 0, 0, 0]
     );
     return { ...book, id: result.lastInsertRowId };
 }
@@ -135,21 +142,59 @@ export async function deleteLocalBook(id) {
     await db.runAsync(`DELETE FROM local_books WHERE id=?;`, [id]);
 }
 
+export async function markIsDeletedLocalBook(id, isDeleted) {
+    await ensureDb();
+    await db.runAsync(
+        `UPDATE local_books SET isDeleted = ? WHERE id = ?;`,
+        [isDeleted, id]
+    );
+}
+
+export async function cleanupExpiredLocalBooks() {
+    await ensureDb();
+    const now = Date.now();
+    const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+
+    const rows = await db.getAllAsync(`SELECT id, deletedAt FROM local_books WHERE isDeleted = 1;`);
+
+    for (const row of rows) {
+        if (row.deletedAt) {
+            const deletedAt = new Date(row.deletedAt).getTime();
+            if (now - deletedAt >= THIRTY_DAYS) {
+                await db.runAsync(`DELETE FROM local_books WHERE id = ?;`, [row.id]);
+            }
+        }
+    }
+}
+
+
 // ======================
 // Online Books
 // ======================
-export async function addOnlineBook(onlineId, title, filePath, format = 'pdf', base64 = '', imageUrl = '', author = '', publisher = '', language = '') {
+export async function addOnlineBook({
+                                        onlineId,
+                                        title,
+                                        filePath,
+                                        format = 'pdf',
+                                        base64 = '',
+                                        imageUrl = '',
+                                        author = '',
+                                        publisher = '',
+                                        language = ''
+                                    }) {
     await ensureDb();
     try {
         await db.runAsync(
-            `INSERT INTO online_books (onlineId, title, filePath, format, base64, currentPage, totalPages, imageUrl, author, publisher, language)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-            , [onlineId, title, filePath, format, base64, 0, 0, imageUrl, author, publisher, language]
+            `INSERT INTO online_books
+             (onlineId, title, filePath, format, base64, currentPage, totalPages, imageUrl, author, publisher, language)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [onlineId, title, filePath, format, base64, 0, 0, imageUrl, author, publisher, language]
         );
     } catch (error) {
         console.error("addOnlineBook error:", error);
     }
 }
+
 
 export async function getOnlineBooks() {
     await ensureDb();
@@ -178,6 +223,29 @@ export async function deleteOnlineBook(id) {
     await ensureDb();
     await db.runAsync(`DELETE FROM online_books WHERE id=?;`, [id]);
 }
+
+export async function markIsDeletedOnlineBook(id, isDeleted) {
+    await ensureDb();
+    await db.runAsync(`UPDATE online_books SET isDeleted=? WHERE id=?;`, [isDeleted, id]);
+}
+
+export async function cleanupExpiredOnlineBooks() {
+    await ensureDb();
+    const now = Date.now();
+    const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+
+    const rows = await db.getAllAsync(`SELECT id, deletedAt FROM online_books WHERE isDeleted = 1;`);
+
+    for (const row of rows) {
+        if (row.deletedAt) {
+            const deletedAt = new Date(row.deletedAt).getTime();
+            if (now - deletedAt >= THIRTY_DAYS) {
+                await db.runAsync(`DELETE FROM online_books WHERE id = ?;`, [row.id]);
+            }
+        }
+    }
+}
+
 
 // ======================
 // Bookmarks
@@ -286,10 +354,18 @@ export async function deleteComment(id) {
 // ======================
 // Book Progress
 // ======================
-export const updateBookProgress = async (id, currentPage, totalPages) => {
+export const updateOnlineBookProgress = async (id, currentPage, totalPages) => {
     await ensureDb();
     await db.runAsync(
         'UPDATE online_books SET currentPage = ?, totalPages = ? WHERE id = ?;',
+        [Number(currentPage) || 0, Number(totalPages) || 0, id]
+    );
+};
+
+export const updateLocalBookProgress = async (id, currentPage, totalPages) => {
+    await ensureDb();
+    await db.runAsync(
+        'UPDATE local_books SET currentPage = ?, totalPages = ? WHERE id = ?;',
         [Number(currentPage) || 0, Number(totalPages) || 0, id]
     );
 };

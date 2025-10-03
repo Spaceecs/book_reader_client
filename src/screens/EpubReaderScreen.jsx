@@ -10,9 +10,8 @@ import {
     addBookmark,
     deleteBookmark, getOnlineBookById,
     isBookmarked,
-    updateBookProgress,
     getBookmarksByBook,
-    addComment,
+    addComment, updateLocalBookProgress, updateOnlineBookProgress, getLocalBookById,
 } from '../shared';
 import { getCommentsByBook } from '../shared';
 import {setLastBook} from "../entities";
@@ -658,9 +657,15 @@ export default function EpubReaderScreen({ route }) {
 
                     try {
                         console.log(book.id, loc, total)
-                        await updateBookProgress(book.id, loc, total);
-                        const newBook = await getOnlineBookById(book.id);
-                        dispatch(setLastBook(newBook));
+                        if (book.onlineId) {
+                            await updateOnlineBookProgress(book.id, loc, total);
+                            const newBook = await getOnlineBookById(book.id);
+                            dispatch(setLastBook(newBook));
+                        } else {
+                            await updateLocalBookProgress(book.id, loc, total);
+                            const newBook = await getLocalBookById(book.id);
+                            dispatch(setLastBook(newBook));
+                        }
                         // refresh bookmarks list and comments for drawer
                         try {
                             const list = await getBookmarksByBook(String(book.id));

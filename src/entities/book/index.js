@@ -8,4 +8,6 @@ export * from './model/BooksSlice';
 export * from './model/BooksSelector'
 export {BookCard} from './ui/BookCard';
 export { openLocalBook } from './utils/openLocalBook';
+export { ReadMoreCard } from "./ui/ReadMoreCard"
+export { TrashBookCard } from './ui/TrashBookCard';
 export { LibraryBookCard } from './ui/LibraryBookCard';

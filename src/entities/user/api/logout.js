@@ -8,6 +8,10 @@ export const logout = async (dispatch, navigation) => {
 
         dispatch(clearUser());
         console.log('Logged out');
+        navigation.reset({
+            index: 0,
+            routes: [{ name: 'WelcomeScreen' }],
+        });
     } catch (error) {
         console.error('Logout error:', error);
     }

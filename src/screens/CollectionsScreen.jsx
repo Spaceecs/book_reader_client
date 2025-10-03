@@ -3,7 +3,8 @@ import { View, Text, TouchableOpacity, Image, TextInput, ScrollView, Modal, Dime
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Swipeable } from 'react-native-gesture-handler';
-import { getCollections, getCollection, createCollection, deleteCollection as apiDeleteCollection } from '../shared/api';
+import { useTranslation } from 'react-i18next';
+import { getCollections, createCollection, deleteCollection as apiDeleteCollection } from '../shared/api';
 import { getLocalBooks } from '../shared';
 
 const iconAudio = require('../../assets/Audio_Books.png');
@@ -16,31 +17,31 @@ const editPng = require('../../assets/Redakt_colection.png');
 const deletePng = require('../../assets/Delete_Colection.png');
 
 const iconMap = {
-  audio: require('../../assets/Audio_Books.png'),
-  download: require('../../assets/Dowload_Android.png'),
-  postponed: require('../../assets/Vidckad.png'),
-  saved: require('../../assets/Save.png'),
-  baby: require('../../assets/Colection_Baby.png'),
-  book: require('../../assets/Colection_Book.png'),
-  coffee: require('../../assets/Colection_coffe.png'),
-  death: require('../../assets/Colection_Deat.png'),
-  fire: require('../../assets/Colection_Fire.png'),
-  flag: require('../../assets/Colection_Flag.png'),
-  love: require('../../assets/Colection_Love.png'),
-  money: require('../../assets/Colection_Mone.png'),
-  frost: require('../../assets/Colection_Moroz.png'),
-  night: require('../../assets/Colection_Niht.png'),
-  pc: require('../../assets/Colection_Pc.png'),
-  cookie: require('../../assets/Colection_Pechenka.png'),
-  rating: require('../../assets/Colection_Reting.png'),
-  zorepad: require('../../assets/Colection_zorepad.png'),
+    audio: require('../../assets/Audio_Books.png'),
+    download: require('../../assets/Dowload_Android.png'),
+    postponed: require('../../assets/Vidckad.png'),
+    saved: require('../../assets/Save.png'),
+    baby: require('../../assets/Colection_Baby.png'),
+    book: require('../../assets/Colection_Book.png'),
+    coffee: require('../../assets/Colection_coffe.png'),
+    death: require('../../assets/Colection_Deat.png'),
+    fire: require('../../assets/Colection_Fire.png'),
+    flag: require('../../assets/Colection_Flag.png'),
+    love: require('../../assets/Colection_Love.png'),
+    money: require('../../assets/Colection_Mone.png'),
+    frost: require('../../assets/Colection_Moroz.png'),
+    night: require('../../assets/Colection_Niht.png'),
+    pc: require('../../assets/Colection_Pc.png'),
+    cookie: require('../../assets/Colection_Pechenka.png'),
+    rating: require('../../assets/Colection_Reting.png'),
+    zorepad: require('../../assets/Colection_zorepad.png'),
 };
 
 const systemRows = [
-  { id: 'audio', title: 'Аудіо книги', icon: iconAudio, route: 'CollectionAudio' },
-  { id: 'saved', title: 'Збережені', icon: iconSaved, route: 'CollectionSaved' },
-  { id: 'downloaded', title: 'Завантажені на пристрій', icon: iconDownloaded, route: 'CollectionDownloaded' },
-  { id: 'postponed', title: 'Відкладені', icon: iconPostponed, route: 'CollectionPostponed' },
+    { id: 'audio', icon: iconMap.audio, route: 'CollectionAudio' },
+    { id: 'saved', icon: iconMap.saved, route: 'CollectionSaved' },
+    { id: 'downloaded', icon: iconMap.download, route: 'CollectionDownloaded' },
+    { id: 'postponed', icon: iconMap.postponed, route: 'CollectionPostponed' },
 ];
 
 const RESERVED_COLLECTION_NAMES = new Set(['Збережені', 'Відкладені']);
@@ -52,30 +53,31 @@ const AVAILABLE_WIDTH = SCREEN_WIDTH - 32 - 24;
 const ICON_PILL_SIZE = Math.floor((AVAILABLE_WIDTH - ICON_GAP * (ICON_COLS - 1)) / ICON_COLS);
 
 export function CollectionsScreen({ navigation }) {
-  const insets = useSafeAreaInsets();
+    const { t } = useTranslation();
+    const insets = useSafeAreaInsets();
 
-  const [search, setSearch] = useState('');
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [nameDraft, setNameDraft] = useState('');
-  const [iconDraft, setIconDraft] = useState('audio');
-  const [colorDraft, setColorDraft] = useState('#2E8B57');
-  const [pinnedDraft, setPinnedDraft] = useState(false);
+    const [search, setSearch] = useState('');
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [editingId, setEditingId] = useState(null);
+    const [nameDraft, setNameDraft] = useState('');
+    const [iconDraft, setIconDraft] = useState('audio');
+    const [colorDraft, setColorDraft] = useState('#2E8B57');
+    const [pinnedDraft, setPinnedDraft] = useState(false);
 
-  const [collections, setCollections] = useState([]);
-  const [downloadedCount, setDownloadedCount] = useState(0);
-  const [isSortVisible, setIsSortVisible] = useState(false);
-  const SORT_OPTIONS = [
-    { key: 'title', label: 'Назва (за алфавітом)' },
-    { key: 'updated', label: 'За датою оновлення' },
-    { key: 'created', label: 'За датою додавання' },
-    { key: 'count', label: 'За кількістю книг у колекції' },
-  ];
-  const [sortKey, setSortKey] = useState('title');
-  const [sortDir, setSortDir] = useState('asc');
+    const [collections, setCollections] = useState([]);
+    const [downloadedCount, setDownloadedCount] = useState(0);
+    const [isSortVisible, setIsSortVisible] = useState(false);
+    const SORT_OPTIONS = [
+        { key: 'title', label: t("collections.sort.nameAsc") },
+        { key: 'updated', label: t("collections.sort.updated") },
+        { key: 'created', label: t("collections.sort.created") },
+        { key: 'count', label: t("collections.sort.count") },
+    ];
+    const [sortKey, setSortKey] = useState('title');
+    const [sortDir, setSortDir] = useState('asc');
 
-  const iconChoices = Object.keys(iconMap);
-  const colorChoices = ['#000000', '#9e9e9e', '#e5e7eb', '#22c55e', '#ef4444', '#f59e0b', '#6366f1'];
+    const iconChoices = Object.keys(iconMap);
+    const colorChoices = ['#000000', '#9e9e9e', '#e5e7eb', '#22c55e', '#ef4444', '#f59e0b', '#6366f1'];
 
   const filteredCollections = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -101,10 +103,10 @@ export function CollectionsScreen({ navigation }) {
     return list.filter(c => String(c.name || c.title || '').toLowerCase().includes(q));
   }, [search, collections, sortKey, sortDir]);
 
-  const chunk = (arr, size) => arr.reduce((rows, key, idx) => {
-    if (idx % size === 0) rows.push([key]); else rows[rows.length - 1].push(key);
-    return rows;
-  }, []);
+    const chunk = (arr, size) => arr.reduce((rows, key, idx) => {
+        if (idx % size === 0) rows.push([key]); else rows[rows.length - 1].push(key);
+        return rows;
+    }, []);
 
   const openCreate = () => {
     setEditingId(null);
@@ -134,7 +136,7 @@ export function CollectionsScreen({ navigation }) {
         // simple local edit (no PATCH in API spec); recreate by delete/create could be used later
         setCollections(prev => prev.map(c => c.id === editingId ? { ...c, name: trimmed } : c));
       } else {
-        const created = await createCollection({ name: trimmed, icon: iconDraft, color: colorDraft, pinned: pinnedDraft });
+        const created = await createCollection(trimmed);
         setCollections(prev => [created, ...prev]);
       }
     } catch(_) {}
@@ -157,218 +159,237 @@ export function CollectionsScreen({ navigation }) {
     })();
   }, []);
 
-  const pinned = filteredCollections.filter(c => c.pinned);
-  const others = filteredCollections.filter(c => !c.pinned);
+    const pinned = filteredCollections.filter(c => c.pinned);
+    const others = filteredCollections.filter(c => !c.pinned);
 
-  const renderLeftActions = (item) => (
-    <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 0, marginLeft: 16, marginRight: -25, height: '100%', zIndex: 1 }}>
-      <TouchableOpacity
-        style={{ height: 60, width: 90, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#22c55e', marginTop: -10, marginRight: 0 }}
-        activeOpacity={0.85}
-        onPress={() => togglePin(item.id)}
-      >
-        <Image source={pinPng} style={{ width: 20, height: 20, tintColor: '#fff', resizeMode: 'contain' }} />
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={{ height: 60, width: 90, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#2563eb', marginTop: -10, marginLeft: -20 }}
-        activeOpacity={0.85}
-        onPress={() => openEdit(item)}
-      >
-        <Image source={editPng} style={{ width: 20, height: 20, tintColor: '#fff', resizeMode: 'contain' }} />
-      </TouchableOpacity>
-    </View>
-  );
+    const renderLeftActions = (item) => (
+        <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 0, marginLeft: 16, marginRight: -25, height: '100%', zIndex: 1 }}>
+            <TouchableOpacity
+                style={{ height: 60, width: 90, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#22c55e', marginTop: -10, marginRight: 0 }}
+                activeOpacity={0.85}
+                onPress={() => togglePin(item.id)}
+            >
+                <Image source={pinPng} style={{ width: 20, height: 20, tintColor: '#fff', resizeMode: 'contain' }} />
+            </TouchableOpacity>
+            <TouchableOpacity
+                style={{ height: 60, width: 90, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#2563eb', marginTop: -10, marginLeft: -20 }}
+                activeOpacity={0.85}
+                onPress={() => openEdit(item)}
+            >
+                <Image source={editPng} style={{ width: 20, height: 20, tintColor: '#fff', resizeMode: 'contain' }} />
+            </TouchableOpacity>
+        </View>
+    );
 
-  const renderRightActions = (item) => (
-    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 16, height: '100%', marginLeft: -25 }}>
-      <TouchableOpacity
-        style={{ height: 60, width: 90, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#ef4444', marginTop: -10 }}
-        activeOpacity={0.85}
-        onPress={() => deleteCollection(item.id)}
-      >
-        <Image source={deletePng} style={{ width: 22, height: 22, tintColor: '#fff', resizeMode: 'contain' }} />
-      </TouchableOpacity>
-    </View>
-  );
+    const renderRightActions = (item) => (
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 16, height: '100%', marginLeft: -25 }}>
+            <TouchableOpacity
+                style={{ height: 60, width: 90, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#ef4444', marginTop: -10 }}
+                activeOpacity={0.85}
+                onPress={() => deleteCollection(item.id)}
+            >
+                <Image source={deletePng} style={{ width: 22, height: 22, tintColor: '#fff', resizeMode: 'contain' }} />
+            </TouchableOpacity>
+        </View>
+    );
 
     return (
         <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation?.openDrawer?.()}>
-          <Ionicons name="menu" size={24} color="#0F0F0F" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Колекції</Text>
-        <View style={styles.headerRight}>
-          <TouchableOpacity onPress={() => setIsSortVisible(true)} style={{ marginRight: 16 }}>
-            <Ionicons name="swap-vertical" size={20} color="#0F0F0F" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={openCreate}>
-            <Ionicons name="add" size={22} color="#0F0F0F" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={styles.searchBar}>
-        <Ionicons name="search" size={18} color="#666" />
-        <TextInput style={styles.searchInput} placeholder="Пошук" placeholderTextColor="#9e9e9e" value={search} onChangeText={setSearch} />
-      </View>
-
-      <ScrollView contentContainerStyle={{ paddingBottom: 20 + insets.bottom }}>
-        {pinned.map(item => (
-          <View key={`p-${item.id}`} style={[styles.row, { borderColor: '#c7eadb', backgroundColor: '#f7fffb' }]}> 
-            <View style={styles.rowLeft}>
-              <View style={[styles.rowIconCircle, { backgroundColor: item.color || '#2E8B57' }]}> 
-                {iconMap[item.icon] ? (
-                  <Image source={iconMap[item.icon]} style={{ width: 18, height: 18, tintColor: '#fff', resizeMode: 'contain' }} />
-                ) : (
-                  <Ionicons name={item.icon || 'folder'} size={18} color="#fff" />
-                )}
-              </View>
-              <View>
-                <Text style={styles.rowTitle}>{item.title || item.name}</Text>
-                <Text style={styles.rowSubtitle}>{item.count}</Text>
-              </View>
-            </View>
-            <TouchableOpacity onPress={() => togglePin(item.id)}>
-              <Image source={pinPng} style={{ width: 18, height: 18, tintColor: '#2E8B57', resizeMode: 'contain' }} />
-            </TouchableOpacity>
-          </View>
-        ))}
-
-        {others.map(item => (
-          <Swipeable key={String(item.id)} renderLeftActions={() => renderLeftActions(item)} renderRightActions={() => renderRightActions(item)} overshootLeft={false} overshootRight={false} friction={2} leftThreshold={1} rightThreshold={24}>
-            <TouchableOpacity style={styles.row} activeOpacity={0.85} onPress={() => {
-              navigation && navigation.navigate && navigation.navigate('CollectionDetails', { collectionId: item.id });
-            }}> 
-              <View style={styles.rowLeft}>
-                <View style={[styles.rowIconCircle, { backgroundColor: item.color || '#e5e7eb' }]}>
-                  {iconMap[item.icon] ? (
-                    <Image source={iconMap[item.icon]} style={{ width: 18, height: 18, tintColor: '#fff', resizeMode: 'contain' }} />
-                  ) : (
-                    <Ionicons name={item.icon || 'folder'} size={18} color="#fff" />
-                  )}
-                </View>
-                <View>
-                  <Text style={styles.rowTitle}>{item.name || item.title || 'Без назви'}</Text>
-                  <Text style={styles.rowSubtitle}>{String(item.count != null ? item.count : (Array.isArray(item.books) ? item.books.length : 0))}</Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color="#888" />
-            </TouchableOpacity>
-          </Swipeable>
-        ))}
-
-        {systemRows.map(row => {
-          let countText = '0';
-          if (row.id === 'downloaded') countText = String(downloadedCount || 0);
-          if (row.id === 'saved') {
-            const c = collections.find(c => (c.name || c.title) === 'Збережені');
-            countText = String((c && (c.count || (Array.isArray(c.books) ? c.books.length : 0))) || 0);
-          }
-          if (row.id === 'postponed') {
-            const c = collections.find(c => (c.name || c.title) === 'Відкладені');
-            countText = String((c && (c.count || (Array.isArray(c.books) ? c.books.length : 0))) || 0);
-          }
-          return (
-          <TouchableOpacity key={row.id} style={styles.row} onPress={() => navigation && navigation.navigate && navigation.navigate(row.route)}>
-            <View style={styles.rowLeft}>
-              <Image source={row.icon} style={styles.rowIcon} />
-              <View>
-                <Text style={styles.rowTitle}>{row.title}</Text>
-                <Text style={styles.rowSubtitle}>{countText}</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color="#888" />
-          </TouchableOpacity>
-        )})}
-      </ScrollView>
-
-      <Modal visible={isSortVisible} transparent animationType="slide" onRequestClose={() => setIsSortVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={() => setIsSortVisible(false)} />
-          <View style={[styles.sheet, { paddingBottom: 16 + insets.bottom }]}> 
-            <View style={styles.sheetHandle} />
-            <View style={styles.sheetHeaderRow}>
-              <TouchableOpacity onPress={() => setIsSortVisible(false)} style={{ padding: 4 }}>
-                <Ionicons name="chevron-back" size={22} color="#0F0F0F" />
-              </TouchableOpacity>
-              <Text style={styles.sheetTitle}>Сортування</Text>
-              <TouchableOpacity onPress={() => setSortDir(prev => prev === 'asc' ? 'desc' : 'asc')} style={{ padding: 4 }}>
-                <Ionicons name={sortDir === 'asc' ? 'arrow-up' : 'arrow-down'} size={20} color="#2E8B57" />
-              </TouchableOpacity>
-            </View>
-            {SORT_OPTIONS.map(opt => {
-              const active = sortKey === opt.key;
-              return (
-                <TouchableOpacity key={opt.key} style={styles.sortRow} onPress={() => setSortKey(opt.key)}>
-                  <Text style={styles.sortText}>{opt.label}</Text>
-                  <View style={[styles.radioOuter, active && { borderColor: '#2E8B57' }]}>
-                    {active && <View style={styles.radioInner} />}
-                  </View>
+            {/* Header */}
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation?.openDrawer?.()}>
+                    <Ionicons name="menu" size={24} color="#0F0F0F" />
                 </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
-      </Modal>
-
-      <Modal transparent visible={isModalVisible} animationType="slide" onRequestClose={() => setIsModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={() => setIsModalVisible(false)} />
-          <View style={[styles.sheet, { paddingBottom: 16 + insets.bottom }]}> 
-            <View style={styles.sheetHandle} />
-            <View style={styles.sheetHeaderRow}>
-              <TouchableOpacity onPress={() => setIsModalVisible(false)}>
-                <Text style={styles.sheetHeaderBtn}>Скасувати</Text>
-              </TouchableOpacity>
-              <Text style={styles.sheetTitle}>Нова колекція</Text>
-              <TouchableOpacity onPress={saveCollection}>
-                <Text style={[styles.sheetHeaderBtn, { color: '#2E8B57' }]}>Зберегти</Text>
-              </TouchableOpacity>
-            </View>
-            <TextInput value={nameDraft} onChangeText={setNameDraft} placeholder="Назва колекції" style={styles.nameInput} />
-            <View style={styles.blockBox}>
-              <Text style={styles.blockTitle}>Обрати іконку</Text>
-              {chunk(iconChoices, ICON_COLS).map((rowKeys, rowIdx) => (
-                <View key={`r-${rowIdx}`} style={{ flexDirection: 'row', marginBottom: rowIdx === iconChoices.length - 1 ? 0 : ICON_GAP }}>
-                  {rowKeys.map((key, idx) => {
-                    const active = iconDraft === key;
-                    const isLast = idx === rowKeys.length - 1;
-                    return (
-                      <TouchableOpacity
-                        key={key}
-                        style={[styles.iconPill, active && styles.iconPillActive, { width: ICON_PILL_SIZE, height: ICON_PILL_SIZE, marginRight: isLast ? 0 : ICON_GAP }]}
-                        onPress={() => setIconDraft(key)}
-                      >
-                        <Image source={iconMap[key]} style={{ width: 18, height: 18, tintColor: active ? '#fff' : '#0F0F0F', resizeMode: 'contain' }} />
-                      </TouchableOpacity>
-                    );
-                  })}
+                <Text style={styles.headerTitle}>{t("collections.title")}</Text>
+                <View style={styles.headerRight}>
+                    <TouchableOpacity onPress={() => setIsSortVisible(true)} style={{ marginRight: 16 }}>
+                        <Ionicons name="swap-vertical" size={20} color="#0F0F0F" />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={openCreate}>
+                        <Ionicons name="add" size={22} color="#0F0F0F" />
+                    </TouchableOpacity>
                 </View>
-              ))}
             </View>
-            <View style={styles.blockBox}>
-              <Text style={styles.blockTitle}>Обрати колір теми</Text>
-              <View style={styles.colorRow}>
-                {colorChoices.map(c => {
-                  const active = colorDraft === c;
-                  return (
-                    <TouchableOpacity key={c} style={[styles.colorDot, { backgroundColor: c }, active && styles.colorDotActive]} onPress={() => setColorDraft(c)} />
-                  );
+
+            {/* Search */}
+            <View style={styles.searchBar}>
+                <Ionicons name="search" size={18} color="#666" />
+                <TextInput
+                    style={styles.searchInput}
+                    placeholder={t("collections.searchPlaceholder")}
+                    placeholderTextColor="#9e9e9e"
+                    value={search}
+                    onChangeText={setSearch}
+                />
+            </View>
+
+            <ScrollView contentContainerStyle={{ paddingBottom: 20 + insets.bottom }}>
+                {/* Pinned Collections */}
+                {pinned.map(item => (
+                    <View key={`p-${item.id}`} style={[styles.row, { borderColor: '#c7eadb', backgroundColor: '#f7fffb' }]}>
+                        <View style={styles.rowLeft}>
+                            <View style={[styles.rowIconCircle, { backgroundColor: item.color }]}>
+                                {iconMap[item.icon] ? (
+                                    <Image source={iconMap[item.icon]} style={{ width: 18, height: 18, tintColor: '#fff', resizeMode: 'contain' }} />
+                                ) : (
+                                    <Ionicons name={item.icon} size={18} color="#fff" />
+                                )}
+                            </View>
+                            <View>
+                                <Text style={styles.rowTitle}>{item.title || item.name || t("collections.unnamed")}</Text>
+                                <Text style={styles.rowSubtitle}>{item.count}</Text>
+                            </View>
+                        </View>
+                        <TouchableOpacity onPress={() => togglePin(item.id)}>
+                            <Image source={pinPng} style={{ width: 18, height: 18, tintColor: '#2E8B57', resizeMode: 'contain' }} />
+                        </TouchableOpacity>
+                    </View>
+                ))}
+
+                {/* Other Collections */}
+                {others.map(item => (
+                    <Swipeable key={String(item.id)} renderLeftActions={() => renderLeftActions(item)} renderRightActions={() => renderRightActions(item)} overshootLeft={false} overshootRight={false} friction={2} leftThreshold={1} rightThreshold={24}>
+                        <TouchableOpacity style={styles.row} activeOpacity={0.85} onPress={() => {
+                            navigation?.navigate?.('CollectionDetails', { collectionId: item.id });
+                        }}>
+                            <View style={styles.rowLeft}>
+                                <View style={[styles.rowIconCircle, { backgroundColor: item.color || '#e5e7eb' }]}>
+                                    {iconMap[item.icon] ? (
+                                        <Image source={iconMap[item.icon]} style={{ width: 18, height: 18, tintColor: '#fff', resizeMode: 'contain' }} />
+                                    ) : (
+                                        <Ionicons name={item.icon || 'folder'} size={18} color="#fff" />
+                                    )}
+                                </View>
+                                <View>
+                                    <Text style={styles.rowTitle}>{item.name || item.title || t("collections.unnamed")}</Text>
+                                    <Text style={styles.rowSubtitle}>{String(item.count != null ? item.count : (Array.isArray(item.books) ? item.books.length : 0))}</Text>
+                                </View>
+                            </View>
+                            <Ionicons name="chevron-forward" size={18} color="#888" />
+                        </TouchableOpacity>
+                    </Swipeable>
+                ))}
+
+                {/* System Rows */}
+                {systemRows.map(row => {
+                    let countText = '0';
+                    if (row.id === 'downloaded') countText = String(downloadedCount || 0);
+                    if (row.id === 'saved') {
+                        const c = collections.find(c => (c.name || c.title) === t("collections.system.saved"));
+                        countText = String((c && (c.count || (Array.isArray(c.books) ? c.books.length : 0))) || 0);
+                    }
+                    if (row.id === 'postponed') {
+                        const c = collections.find(c => (c.name || c.title) === t("collections.system.postponed"));
+                        countText = String((c && (c.count || (Array.isArray(c.books) ? c.books.length : 0))) || 0);
+                    }
+                    return (
+                        <TouchableOpacity key={row.id} style={styles.row} onPress={() => navigation?.navigate?.(row.route)}>
+                            <View style={styles.rowLeft}>
+                                <Image source={row.icon} style={styles.rowIcon} />
+                                <View>
+                                    <Text style={styles.rowTitle}>{t(`collections.system.${row.id}`)}</Text>
+                                    <Text style={styles.rowSubtitle}>{countText}</Text>
+                                </View>
+                            </View>
+                            <Ionicons name="chevron-forward" size={18} color="#888" />
+                        </TouchableOpacity>
+                    );
                 })}
-              </View>
-            </View>
-            <TouchableOpacity style={styles.pinRow} onPress={() => setPinnedDraft(v => !v)}>
-              <View style={[styles.checkbox, pinnedDraft && styles.checkboxChecked]}>
-                {pinnedDraft && <Ionicons name="checkmark" size={14} color="#fff" />}
-              </View>
-              <Text style={styles.pinLabel}>Закріпити</Text>
-            </TouchableOpacity>
-          </View>
+            </ScrollView>
+
+            {/* Sorting Modal */}
+            <Modal visible={isSortVisible} transparent animationType="slide" onRequestClose={() => setIsSortVisible(false)}>
+                <View style={styles.modalOverlay}>
+                    <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={() => setIsSortVisible(false)} />
+                    <View style={[styles.sheet, { paddingBottom: 16 + insets.bottom }]}>
+                        <View style={styles.sheetHandle} />
+                        <View style={styles.sheetHeaderRow}>
+                            <TouchableOpacity onPress={() => setIsSortVisible(false)} style={{ padding: 4 }}>
+                                <Ionicons name="chevron-back" size={22} color="#0F0F0F" />
+                            </TouchableOpacity>
+                            <Text style={styles.sheetTitle}>{t("collections.sort.title")}</Text>
+                            <TouchableOpacity onPress={() => setSortDir(prev => prev === 'asc' ? 'desc' : 'asc')} style={{ padding: 4 }}>
+                                <Ionicons name={sortDir === 'asc' ? 'arrow-up' : 'arrow-down'} size={20} color="#2E8B57" />
+                            </TouchableOpacity>
+                        </View>
+                        {SORT_OPTIONS.map(opt => {
+                            const active = sortKey === opt.key;
+                            return (
+                                <TouchableOpacity key={opt.key} style={styles.sortRow} onPress={() => setSortKey(opt.key)}>
+                                    <Text style={styles.sortText}>{opt.label}</Text>
+                                    <View style={[styles.radioOuter, active && { borderColor: '#2E8B57' }]}>
+                                        {active && <View style={styles.radioInner} />}
+                                    </View>
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Create/Edit Modal */}
+            <Modal transparent visible={isModalVisible} animationType="slide" onRequestClose={() => setIsModalVisible(false)}>
+                <View style={styles.modalOverlay}>
+                    <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={() => setIsModalVisible(false)} />
+                    <View style={[styles.sheet, { paddingBottom: 16 + insets.bottom }]}>
+                        <View style={styles.sheetHandle} />
+                        <View style={styles.sheetHeaderRow}>
+                            <TouchableOpacity onPress={() => setIsModalVisible(false)}>
+                                <Text style={styles.sheetHeaderBtn}>{t("collections.modal.cancel")}</Text>
+                            </TouchableOpacity>
+                            <Text style={styles.sheetTitle}>{t("collections.modal.newTitle")}</Text>
+                            <TouchableOpacity onPress={saveCollection}>
+                                <Text style={[styles.sheetHeaderBtn, { color: '#2E8B57' }]}>{t("collections.modal.save")}</Text>
+                            </TouchableOpacity>
+                        </View>
+                        <TextInput
+                            value={nameDraft}
+                            onChangeText={setNameDraft}
+                            placeholder={t("collections.modal.placeholder")}
+                            style={styles.nameInput}
+                        />
+                        <View style={styles.blockBox}>
+                            <Text style={styles.blockTitle}>{t("collections.modal.chooseIcon")}</Text>
+                            {chunk(iconChoices, ICON_COLS).map((rowKeys, rowIdx) => (
+                                <View key={`r-${rowIdx}`} style={{ flexDirection: 'row', marginBottom: rowIdx === iconChoices.length - 1 ? 0 : ICON_GAP }}>
+                                    {rowKeys.map((key, idx) => {
+                                        const active = iconDraft === key;
+                                        const isLast = idx === rowKeys.length - 1;
+                                        return (
+                                            <TouchableOpacity
+                                                key={key}
+                                                style={[styles.iconPill, active && styles.iconPillActive, { width: ICON_PILL_SIZE, height: ICON_PILL_SIZE, marginRight: isLast ? 0 : ICON_GAP }]}
+                                                onPress={() => setIconDraft(key)}
+                                            >
+                                                <Image source={iconMap[key]} style={{ width: 18, height: 18, tintColor: active ? '#fff' : '#0F0F0F', resizeMode: 'contain' }} />
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </View>
+                            ))}
+                        </View>
+                        <View style={styles.blockBox}>
+                            <Text style={styles.blockTitle}>{t("collections.modal.chooseColor")}</Text>
+                            <View style={styles.colorRow}>
+                                {colorChoices.map(c => {
+                                    const active = colorDraft === c;
+                                    return (
+                                        <TouchableOpacity key={c} style={[styles.colorDot, { backgroundColor: c }, active && styles.colorDotActive]} onPress={() => setColorDraft(c)} />
+                                    );
+                                })}
+                            </View>
+                        </View>
+                        <TouchableOpacity style={styles.pinRow} onPress={() => setPinnedDraft(v => !v)}>
+                            <View style={[styles.checkbox, pinnedDraft && styles.checkboxChecked]}>
+                                {pinnedDraft && <Ionicons name="checkmark" size={14} color="#fff" />}
+                            </View>
+                            <Text style={styles.pinLabel}>{t("collections.modal.pin")}</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </View>
-      </Modal>
-    </View>
-  );
+    );
 }
 
 const styles = StyleSheet.create({

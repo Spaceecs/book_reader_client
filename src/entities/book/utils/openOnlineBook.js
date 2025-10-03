@@ -9,9 +9,8 @@ export async function openOnlineBook(id, book, dispatch, navigation) {
 
         console.log("book.id", book.id);
         console.log("book.name", book.title);
+        console.log("book.author", book.author);
         const localOnlineBook = await getOnlineBooksByOnlineId(id);
-
-        console.log(localOnlineBook);
 
         let newLocalOnlineBook
 
@@ -22,17 +21,17 @@ export async function openOnlineBook(id, book, dispatch, navigation) {
                 encoding: FileSystem.EncodingType.Base64,
             });
 
-            await addOnlineBook(
-                book.id,
-                book.title,
-                filePath,
-                book.format,
-                base64,
-                book.imageUrl,
-                book.author,
-                book.publisher || '',
-                book.language || ''
-            );
+            await addOnlineBook({
+                onlineId: book.id,
+                title: book.title,
+                filePath: filePath,
+                format: book.format,
+                base64: base64,
+                imageUrl: book.imageUrl,
+                author: book.author,
+                publisher: book.publisher || '',
+                language: book.language || ''
+            });
 
             newLocalOnlineBook = await getOnlineBooksByOnlineId(book.id);
 
@@ -42,7 +41,6 @@ export async function openOnlineBook(id, book, dispatch, navigation) {
             }
         } else {
             newLocalOnlineBook = localOnlineBook
-            console.log("newBook", newLocalOnlineBook)
         }
 
         dispatch(setLastBook(newLocalOnlineBook));

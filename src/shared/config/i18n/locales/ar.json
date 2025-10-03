@@ -1,0 +1,237 @@
+{
+  "welcomeScreen": {
+    "welcomeTitle": "مرحباً!",
+    "welcomeText": "مرحباً بك في مجتمع عشاق الكتب الواعين!\nمعاً سنجعل القراءة عادة ممتعة، ونساعدك على اكتشاف\nعوالم جديدة، وتكون كتبك المفضلة دائماً بين يديك.",
+    "login": "تسجيل الدخول",
+    "register": "إنشاء حساب"
+  },
+  "login": {
+    "title": "تسجيل الدخول",
+    "username": "اسم المستخدم",
+    "enterUsername": "أدخل اسم المستخدم",
+    "password": "كلمة المرور",
+    "enterPassword": "أدخل كلمة المرور",
+    "signIn": "تسجيل الدخول",
+    "noAccount": "ليس لديك حساب؟",
+    "register": "إنشاء حساب",
+    "error": "اسم المستخدم أو كلمة المرور غير صحيحة",
+    "enterEmail": "أدخل البريد الإلكتروني",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "or": "أو"
+  },
+  "settings": {
+    "settings": "الإعدادات",
+    "language": "اللغة",
+    "brightnessGesture": "السطوع بالإيماءة",
+    "brightnessDescription": "اضبط السطوع عن طريق السحب لأعلى أو لأسفل على الحافة اليسرى للشاشة",
+    "screenOff": "إيقاف الشاشة",
+    "screenOffDescription": "الحفاظ على الشاشة مضاءة",
+    "scanFiles": "مسح الملفات",
+    "changePassword": "تغيير كلمة المرور",
+    "deviceList": "قائمة الأجهزة",
+    "onlyWIFIDownload": "التنزيل عبر Wi-Fi فقط",
+    "support": "الاتصال بالدعم",
+    "rateApp": "تقييم التطبيق",
+    "aboutApp": "حول التطبيق",
+    "logout": "تسجيل الخروج"
+  },
+  "drawerMenu": {
+    "Home": "الرئيسية",
+    "Settings": "الإعدادات",
+    "Library": "المكتبة",
+    "AddBook": "إضافة كتاب",
+    "Collections": "المجموعات",
+    "readMore": "اقرأ المزيد",
+    "Trash": "سلة المحذوفات",
+    "Feedback": "إرسال ملاحظات"
+  },
+  "validation": {
+    "username": {
+      "min": "يجب أن يكون اسم المستخدم {{count}} أحرف على الأقل",
+      "required": "اسم المستخدم مطلوب"
+    },
+    "email": {
+      "format": "صيغة البريد الإلكتروني غير صالحة",
+      "min": "يجب أن يكون البريد الإلكتروني {{count}} أحرف على الأقل",
+      "required": "البريد الإلكتروني مطلوب"
+    },
+    "password": {
+      "min": "يجب أن تكون كلمة المرور {{count}} أحرف على الأقل",
+      "pattern": "يمكن أن تحتوي كلمة المرور على أحرف وأرقام فقط، بدون رموز خاصة",
+      "required": "كلمة المرور مطلوبة"
+    },
+    "confirmPassword": {
+      "oneOf": "كلمات المرور غير متطابقة",
+      "required": "تأكيد كلمة المرور مطلوب"
+    }
+  },
+  "register": {
+    "title": "إنشاء حساب",
+    "name": "الاسم",
+    "namePlaceholder": "اسمك الكامل",
+    "email": "البريد الإلكتروني",
+    "emailPlaceholder": "بريدك الإلكتروني",
+    "password": "كلمة المرور",
+    "passwordPlaceholder": "كلمة المرور الخاصة بك",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "confirmPasswordPlaceholder": "كرر كلمة المرور الخاصة بك",
+    "submit": "إنشاء حساب",
+    "submitting": "يرجى الانتظار...",
+    "divider": "أو",
+    "social": {
+      "google": "Google",
+      "apple": "Apple",
+      "facebook": "Facebook"
+    },
+    "redirectText": "هل لديك حساب بالفعل؟",
+    "redirectLink": "تسجيل الدخول",
+    "errorRegister": "خطأ في التسجيل"
+  },
+  "forgotPassword": {
+    "title": "نسيت كلمة المرور؟",
+    "emailLabel": "البريد الإلكتروني",
+    "emailPlaceholder": "أدخل بريدك الإلكتروني",
+    "sendBtn": "إرسال الرابط",
+    "rememberText": "تتذكر كلمة المرور؟",
+    "loginLink": "تسجيل الدخول"
+  },
+  "resetPassword": {
+    "backBtn": "رجوع",
+    "title": "إنشاء كلمة مرور جديدة",
+    "subtitle": "يجب أن تكون كلمة المرور الجديدة مختلفة عن كلمات المرور المستخدمة سابقاً.",
+    "passwordLabel": "كلمة المرور",
+    "passwordPlaceholder": "كلمة المرور الخاصة بك",
+    "confirmPasswordLabel": "تأكيد كلمة المرور",
+    "confirmPasswordPlaceholder": "تأكيد كلمة المرور الخاصة بك",
+    "submitBtn": "إعادة تعيين كلمة المرور"
+  },
+  "header": "البحث عن كتاب...",
+  "novelty": "الإصدارات الجديدة",
+  "topRated": "الأعلى تقييماً",
+  "more": "المزيد",
+  "readMore": "اقرأ المزيد",
+  "continueReading": "مواصلة القراءة",
+  "tabs": {
+    "Home": "الرئيسية",
+    "Library": "المكتبة",
+    "Import": "استيراد",
+    "Profile": "الملف الشخصي",
+    "Premium": "بريميوم"
+  },
+  "libraryScreen": {
+    "tabs": {
+      "books": "الكتب",
+      "audiobooks": "الكتب الصوتية"
+    },
+    "filters": {
+      "all_books": "جميع الكتب",
+      "reading": "أقرأ",
+      "read": "مقروء",
+      "unread": "غير مقروء",
+      "all": "الكل"
+    },
+    "search": {
+      "placeholder": "بحث"
+    },
+    "empty_list": "القائمة فارغة",
+    "read_status": {
+      "title": "حالة القراءة",
+      "all": "الكل",
+      "reading": "أقرأ",
+      "read": "مقروء",
+      "unread": "غير مقروء"
+    },
+    "actions": {
+      "info": "معلومات",
+      "mark_reading": "تعليم كمقروء",
+      "rate_book": "تقييم الكتاب",
+      "mark_read": "تعليم كمقروء",
+      "collections": "المجموعات",
+      "share": "مشاركة",
+      "delete": "حذف"
+    },
+    "collections": {
+      "saved": "المحفوظة",
+      "postponed": "المؤجلة"
+    },
+    "rate_book": {
+      "title": "تقييم الكتاب",
+      "save": "حفظ"
+    },
+    "sort": {
+      "title": "الترتيب",
+      "title_alpha": "عنوان الكتاب (أ-ي)",
+      "author_alpha": "المؤلف (أ-ي)",
+      "date_added": "حسب تاريخ الإضافة",
+      "page_count": "حسب عدد الصفحات"
+    },
+    "filter": {
+      "title": "تصفية",
+      "clear": "مسح",
+      "language": "اللغة",
+      "genre": "النوع",
+      "publisher": "الناشر",
+      "not_selected": "—"
+    },
+    "collections_modal": {
+      "title": "إضافة إلى المجموعة",
+      "audio_books": "الكتب الصوتية",
+      "downloaded": "تم التنزيل على الجهاز"
+    },
+    "errors": {
+      "load_books_failed": "فشل في تحميل الكتب:",
+      "delete_book_error": "خطأ في حذف الكتاب:"
+    },
+    "bookCard": {
+      "read": "مقروء",
+      "reading": "أقرأ",
+      "no_title": "بدون عنوان"
+    }
+  },
+  "collections": {
+    "title": "المجموعات",
+    "searchPlaceholder": "بحث",
+    "system": {
+      "audio": "الكتب الصوتية",
+      "saved": "المحفوظة",
+      "downloaded": "تم التنزيل على الجهاز",
+      "postponed": "المؤجلة"
+    },
+    "sort": {
+      "title": "ترتيب",
+      "nameAsc": "الاسم (أ-ي)",
+      "updated": "حسب تاريخ التحديث",
+      "created": "حسب تاريخ الإنشاء",
+      "count": "حسب عدد الكتب",
+      "asc": "تصاعدي",
+      "desc": "تنازلي"
+    },
+    "modal": {
+      "newTitle": "مجموعة جديدة",
+      "cancel": "إلغاء",
+      "save": "حفظ",
+      "placeholder": "اسم المجموعة",
+      "chooseIcon": "اختر الأيقونة",
+      "chooseColor": "اختر لون السمة",
+      "pin": "تثبيت"
+    },
+    "unnamed": "بدون اسم"
+  },
+  "trash": {
+    "title": "سلة المحذوفات",
+    "autoClean": "تنظيف تلقائي بعد 30 يوماً",
+    "restored": "تم استعادة الكتاب\n\"{{title}}\" تمت استعادته إلى مكتبتك",
+    "deletedForever": "تم حذف الكتاب نهائياً\n\"{{title}}\" تم حذفه نهائياً",
+    "emptyTitle": "سلة المحذوفات فارغة",
+    "emptySubtitle": "ستظهر كتبك المحذوفة هنا",
+    "fetchError": "فشل في تحميل الكتب",
+    "clearAllError": "خطأ في حذف جميع الكتب"
+  },
+  "trashBookCard": {
+    "restore": "استعادة",
+    "deleteForever": "حذف",
+    "pageInfo": "الصفحة {{currentPage}} من {{totalPages}}",
+    "removedAgo": "تم الحذف {{deletedAt}}"
+  },
+  "publicBooks": "الكتب العامة"
+}

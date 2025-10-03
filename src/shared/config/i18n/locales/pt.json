@@ -1,0 +1,237 @@
+{
+  "welcomeScreen": {
+    "welcomeTitle": "Bem-vindo!",
+    "welcomeText": "Bem-vindo à comunidade de amantes conscientes de livros!\nJuntos faremos da leitura um hábito prazeroso, ajudaremos você a descobrir \nnovos mundos e ter sempre seus livros favoritos à mão.",
+    "login": "Entrar",
+    "register": "Registrar"
+  },
+  "login": {
+    "title": "Entrar",
+    "username": "Nome de usuário",
+    "enterUsername": "Digite o nome de usuário",
+    "password": "Senha",
+    "enterPassword": "Digite a senha",
+    "signIn": "Entrar",
+    "noAccount": "Não tem uma conta?",
+    "register": "Registrar",
+    "error": "Nome de usuário ou senha inválidos",
+    "enterEmail": "Digite o email",
+    "forgotPassword": "Esqueceu a senha?",
+    "or": "ou"
+  },
+  "settings": {
+    "settings": "Configurações",
+    "language": "Idioma",
+    "brightnessGesture": "Brilho por gesto",
+    "brightnessDescription": "Ajuste o brilho deslizando para cima ou para baixo na borda esquerda da tela",
+    "screenOff": "Tela Desligada",
+    "screenOffDescription": "Manter a tela ligada",
+    "scanFiles": "Escanear Arquivos",
+    "changePassword": "Alterar Senha",
+    "deviceList": "Lista de Dispositivos",
+    "onlyWIFIDownload": "Baixar apenas via Wi-Fi",
+    "support": "Contatar Suporte",
+    "rateApp": "Avaliar App",
+    "aboutApp": "Sobre o App",
+    "logout": "Sair"
+  },
+  "drawerMenu": {
+    "Home": "Início",
+    "Settings": "Configurações",
+    "Library": "Biblioteca",
+    "AddBook": "Adicionar Livro",
+    "Collections": "Coleções",
+    "readMore": "Ler Mais",
+    "Trash": "Lixeira",
+    "Feedback": "Enviar Feedback"
+  },
+  "validation": {
+    "username": {
+      "min": "Nome de usuário deve ter pelo menos {{count}} caracteres",
+      "required": "Nome de usuário é obrigatório"
+    },
+    "email": {
+      "format": "Formato de email inválido",
+      "min": "Email deve ter pelo menos {{count}} caracteres",
+      "required": "Email é obrigatório"
+    },
+    "password": {
+      "min": "Senha deve ter pelo menos {{count}} caracteres",
+      "pattern": "Senha pode conter apenas letras e números, sem símbolos especiais",
+      "required": "Senha é obrigatória"
+    },
+    "confirmPassword": {
+      "oneOf": "As senhas não coincidem",
+      "required": "Confirmação de senha é obrigatória"
+    }
+  },
+  "register": {
+    "title": "Registrar",
+    "name": "Nome",
+    "namePlaceholder": "Seu nome completo",
+    "email": "Email",
+    "emailPlaceholder": "Seu email",
+    "password": "Senha",
+    "passwordPlaceholder": "Sua senha",
+    "confirmPassword": "Confirmar Senha",
+    "confirmPasswordPlaceholder": "Repita sua senha",
+    "submit": "Registrar",
+    "submitting": "Por favor aguarde...",
+    "divider": "Ou",
+    "social": {
+      "google": "Google",
+      "apple": "Apple",
+      "facebook": "Facebook"
+    },
+    "redirectText": "Já tem uma conta?",
+    "redirectLink": "Entrar",
+    "errorRegister": "Erro de registro"
+  },
+  "forgotPassword": {
+    "title": "Esqueceu a Senha?",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Digite seu email",
+    "sendBtn": "Enviar Link",
+    "rememberText": "Lembra sua senha?",
+    "loginLink": "Entrar"
+  },
+  "resetPassword": {
+    "backBtn": "Voltar",
+    "title": "Criar Nova Senha",
+    "subtitle": "Sua nova senha deve ser diferente das senhas usadas anteriormente.",
+    "passwordLabel": "Senha",
+    "passwordPlaceholder": "Sua senha",
+    "confirmPasswordLabel": "Confirmar Senha",
+    "confirmPasswordPlaceholder": "Confirme sua senha",
+    "submitBtn": "Redefinir Senha"
+  },
+  "header": "Pesquisar um livro...",
+  "novelty": "Novos Lançamentos",
+  "topRated": "Mais Bem Avaliados",
+  "more": "mais",
+  "readMore": "Ler Mais",
+  "continueReading": "Continuar Lendo",
+  "tabs": {
+    "Home": "Início",
+    "Library": "Biblioteca",
+    "Import": "Importar",
+    "Profile": "Perfil",
+    "Premium": "Premium"
+  },
+  "libraryScreen": {
+    "tabs": {
+      "books": "Livros",
+      "audiobooks": "Audiolivros"
+    },
+    "filters": {
+      "all_books": "Todos os Livros",
+      "reading": "Lendo",
+      "read": "Lidos",
+      "unread": "Não Lidos",
+      "all": "Todos"
+    },
+    "search": {
+      "placeholder": "Pesquisar"
+    },
+    "empty_list": "Lista está vazia",
+    "read_status": {
+      "title": "Status de Leitura",
+      "all": "Todos",
+      "reading": "Lendo",
+      "read": "Lidos",
+      "unread": "Não Lidos"
+    },
+    "actions": {
+      "info": "Informação",
+      "mark_reading": "Marcar como Lendo",
+      "rate_book": "Avaliar Livro",
+      "mark_read": "Marcar como Lido",
+      "collections": "Coleções",
+      "share": "Compartilhar",
+      "delete": "Excluir"
+    },
+    "collections": {
+      "saved": "Salvos",
+      "postponed": "Adiados"
+    },
+    "rate_book": {
+      "title": "Avaliar Livro",
+      "save": "Salvar"
+    },
+    "sort": {
+      "title": "Ordenar",
+      "title_alpha": "Título (A-Z)",
+      "author_alpha": "Autor (A-Z)",
+      "date_added": "Por Data de Adição",
+      "page_count": "Por Número de Páginas"
+    },
+    "filter": {
+      "title": "Filtrar",
+      "clear": "Limpar",
+      "language": "Idioma",
+      "genre": "Gênero",
+      "publisher": "Editora",
+      "not_selected": "—"
+    },
+    "collections_modal": {
+      "title": "Adicionar à Coleção",
+      "audio_books": "Audiolivros",
+      "downloaded": "Baixados no Dispositivo"
+    },
+    "errors": {
+      "load_books_failed": "Falha ao carregar livros:",
+      "delete_book_error": "Erro ao excluir livro:"
+    },
+    "bookCard": {
+      "read": "Lido",
+      "reading": "Lendo",
+      "no_title": "Sem título"
+    }
+  },
+  "collections": {
+    "title": "Coleções",
+    "searchPlaceholder": "Pesquisar",
+    "system": {
+      "audio": "Audiolivros",
+      "saved": "Salvos",
+      "downloaded": "Baixados no dispositivo",
+      "postponed": "Adiados"
+    },
+    "sort": {
+      "title": "Ordenar",
+      "nameAsc": "Nome (A-Z)",
+      "updated": "Por Data de Atualização",
+      "created": "Por Data de Criação",
+      "count": "Por Número de Livros",
+      "asc": "Ascendente",
+      "desc": "Descendente"
+    },
+    "modal": {
+      "newTitle": "Nova Coleção",
+      "cancel": "Cancelar",
+      "save": "Salvar",
+      "placeholder": "Nome da Coleção",
+      "chooseIcon": "Escolher Ícone",
+      "chooseColor": "Escolher Cor do Tema",
+      "pin": "Fixar"
+    },
+    "unnamed": "Sem nome"
+  },
+  "trash": {
+    "title": "Lixeira",
+    "autoClean": "Limpeza automática após 30 dias",
+    "restored": "Livro restaurado\n\"{{title}}\" restaurado na sua biblioteca",
+    "deletedForever": "Livro excluído permanentemente\n\"{{title}}\" excluído permanentemente",
+    "emptyTitle": "Lixeira está vazia",
+    "emptySubtitle": "Seus livros excluídos aparecerão aqui",
+    "fetchError": "Falha ao carregar livros",
+    "clearAllError": "Erro ao excluir todos os livros"
+  },
+  "trashBookCard": {
+    "restore": "Restaurar",
+    "deleteForever": "Excluir",
+    "pageInfo": "Página {{currentPage}} de {{totalPages}}",
+    "removedAgo": "Excluído {{deletedAt}}"
+  },
+  "publicBooks": "Livros Públicos"
+}

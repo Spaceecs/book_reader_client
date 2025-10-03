@@ -8,16 +8,8 @@ export async function getCollections() {
   return data;
 }
 
-export async function createCollection(payloadOrName) {
-  const body = typeof payloadOrName === 'string'
-    ? { name: payloadOrName }
-    : {
-        name: String(payloadOrName?.name || '').trim(),
-        icon: payloadOrName?.icon || undefined,
-        color: payloadOrName?.color || undefined,
-        pinned: Boolean(payloadOrName?.pinned),
-      };
-  const { data } = await myApi.post('/collections', body);
+export async function createCollection(name) {
+  const { data } = await myApi.post('/collections', { name });
   return data;
 }
 

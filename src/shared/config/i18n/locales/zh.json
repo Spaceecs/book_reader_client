@@ -1,0 +1,237 @@
+{
+  "welcomeScreen": {
+    "welcomeTitle": "欢迎！",
+    "welcomeText": "欢迎来到有意识的书籍爱好者社区！\n我们将一起让阅读成为一种愉快的习惯，帮助您发现\n新世界，并始终将您最喜欢的书籍放在手边。",
+    "login": "登录",
+    "register": "注册"
+  },
+  "login": {
+    "title": "登录",
+    "username": "用户名",
+    "enterUsername": "输入用户名",
+    "password": "密码",
+    "enterPassword": "输入密码",
+    "signIn": "登录",
+    "noAccount": "没有账户？",
+    "register": "注册",
+    "error": "用户名或密码错误",
+    "enterEmail": "输入邮箱",
+    "forgotPassword": "忘记密码？",
+    "or": "或"
+  },
+  "settings": {
+    "settings": "设置",
+    "language": "语言",
+    "brightnessGesture": "手势调节亮度",
+    "brightnessDescription": "通过在屏幕左侧边缘上下滑动来调节亮度",
+    "screenOff": "屏幕关闭",
+    "screenOffDescription": "保持屏幕开启",
+    "scanFiles": "扫描文件",
+    "changePassword": "更改密码",
+    "deviceList": "设备列表",
+    "onlyWIFIDownload": "仅通过Wi-Fi下载",
+    "support": "联系支持",
+    "rateApp": "评价应用",
+    "aboutApp": "关于应用",
+    "logout": "退出登录"
+  },
+  "drawerMenu": {
+    "Home": "首页",
+    "Settings": "设置",
+    "Library": "图书馆",
+    "AddBook": "添加书籍",
+    "Collections": "收藏集",
+    "readMore": "阅读更多",
+    "Trash": "回收站",
+    "Feedback": "发送反馈"
+  },
+  "validation": {
+    "username": {
+      "min": "用户名至少{{count}}个字符",
+      "required": "用户名是必需的"
+    },
+    "email": {
+      "format": "无效的邮箱格式",
+      "min": "邮箱至少{{count}}个字符",
+      "required": "邮箱是必需的"
+    },
+    "password": {
+      "min": "密码至少{{count}}个字符",
+      "pattern": "密码只能包含字母和数字，不能包含特殊符号",
+      "required": "密码是必需的"
+    },
+    "confirmPassword": {
+      "oneOf": "密码不匹配",
+      "required": "密码确认是必需的"
+    }
+  },
+  "register": {
+    "title": "注册",
+    "name": "姓名",
+    "namePlaceholder": "您的全名",
+    "email": "邮箱",
+    "emailPlaceholder": "您的邮箱",
+    "password": "密码",
+    "passwordPlaceholder": "您的密码",
+    "confirmPassword": "确认密码",
+    "confirmPasswordPlaceholder": "重复您的密码",
+    "submit": "注册",
+    "submitting": "请稍候...",
+    "divider": "或",
+    "social": {
+      "google": "Google",
+      "apple": "Apple",
+      "facebook": "Facebook"
+    },
+    "redirectText": "已有账户？",
+    "redirectLink": "登录",
+    "errorRegister": "注册错误"
+  },
+  "forgotPassword": {
+    "title": "忘记密码？",
+    "emailLabel": "邮箱",
+    "emailPlaceholder": "输入您的邮箱",
+    "sendBtn": "发送链接",
+    "rememberText": "记得密码？",
+    "loginLink": "登录"
+  },
+  "resetPassword": {
+    "backBtn": "返回",
+    "title": "创建新密码",
+    "subtitle": "您的新密码必须与之前使用的密码不同。",
+    "passwordLabel": "密码",
+    "passwordPlaceholder": "您的密码",
+    "confirmPasswordLabel": "确认密码",
+    "confirmPasswordPlaceholder": "确认您的密码",
+    "submitBtn": "重置密码"
+  },
+  "header": "搜索书籍...",
+  "novelty": "新书发布",
+  "topRated": "最高评分",
+  "more": "更多",
+  "readMore": "阅读更多",
+  "continueReading": "继续阅读",
+  "tabs": {
+    "Home": "首页",
+    "Library": "图书馆",
+    "Import": "导入",
+    "Profile": "个人资料",
+    "Premium": "高级版"
+  },
+  "libraryScreen": {
+    "tabs": {
+      "books": "书籍",
+      "audiobooks": "有声书"
+    },
+    "filters": {
+      "all_books": "所有书籍",
+      "reading": "正在阅读",
+      "read": "已读",
+      "unread": "未读",
+      "all": "全部"
+    },
+    "search": {
+      "placeholder": "搜索"
+    },
+    "empty_list": "列表为空",
+    "read_status": {
+      "title": "阅读状态",
+      "all": "全部",
+      "reading": "正在阅读",
+      "read": "已读",
+      "unread": "未读"
+    },
+    "actions": {
+      "info": "信息",
+      "mark_reading": "标记为正在阅读",
+      "rate_book": "评价书籍",
+      "mark_read": "标记为已读",
+      "collections": "收藏集",
+      "share": "分享",
+      "delete": "删除"
+    },
+    "collections": {
+      "saved": "已保存",
+      "postponed": "已推迟"
+    },
+    "rate_book": {
+      "title": "评价书籍",
+      "save": "保存"
+    },
+    "sort": {
+      "title": "排序",
+      "title_alpha": "标题 (A-Z)",
+      "author_alpha": "作者 (A-Z)",
+      "date_added": "按添加日期",
+      "page_count": "按页数"
+    },
+    "filter": {
+      "title": "筛选",
+      "clear": "清除",
+      "language": "语言",
+      "genre": "类型",
+      "publisher": "出版社",
+      "not_selected": "—"
+    },
+    "collections_modal": {
+      "title": "添加到收藏集",
+      "audio_books": "有声书",
+      "downloaded": "已下载到设备"
+    },
+    "errors": {
+      "load_books_failed": "加载书籍失败：",
+      "delete_book_error": "删除书籍错误："
+    },
+    "bookCard": {
+      "read": "已读",
+      "reading": "正在阅读",
+      "no_title": "无标题"
+    }
+  },
+  "collections": {
+    "title": "收藏集",
+    "searchPlaceholder": "搜索",
+    "system": {
+      "audio": "有声书",
+      "saved": "已保存",
+      "downloaded": "已下载到设备",
+      "postponed": "已推迟"
+    },
+    "sort": {
+      "title": "排序",
+      "nameAsc": "名称 (A-Z)",
+      "updated": "按更新日期",
+      "created": "按创建日期",
+      "count": "按书籍数量",
+      "asc": "升序",
+      "desc": "降序"
+    },
+    "modal": {
+      "newTitle": "新建收藏集",
+      "cancel": "取消",
+      "save": "保存",
+      "placeholder": "收藏集名称",
+      "chooseIcon": "选择图标",
+      "chooseColor": "选择主题颜色",
+      "pin": "固定"
+    },
+    "unnamed": "未命名"
+  },
+  "trash": {
+    "title": "回收站",
+    "autoClean": "30天后自动清理",
+    "restored": "书籍已恢复\n\"{{title}}\"已恢复到您的图书馆",
+    "deletedForever": "书籍永久删除\n\"{{title}}\"已永久删除",
+    "emptyTitle": "回收站为空",
+    "emptySubtitle": "您删除的书籍将出现在这里",
+    "fetchError": "加载书籍失败",
+    "clearAllError": "删除所有书籍错误"
+  },
+  "trashBookCard": {
+    "restore": "恢复",
+    "deleteForever": "删除",
+    "pageInfo": "第{{currentPage}}页，共{{totalPages}}页",
+    "removedAgo": "删除于{{deletedAt}}"
+  },
+  "publicBooks": "公共书籍"
+}

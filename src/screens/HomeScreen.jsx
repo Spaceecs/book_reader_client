@@ -1,12 +1,22 @@
-import {ScrollView, View, ActivityIndicator, StyleSheet, Text, Dimensions, StatusBar, Modal, TouchableOpacity} from "react-native";
-import React, { useEffect, useState } from "react";
+import {
+    ScrollView,
+    View,
+    ActivityIndicator,
+    StyleSheet,
+    Text,
+    Dimensions,
+    StatusBar,
+    Modal,
+    TouchableOpacity
+} from "react-native";
+import React, {useCallback, useEffect, useState} from "react";
 import { useDispatch } from "react-redux";
 import { BookListWidget, LOBookWidget, DynamicBooksSection } from "../widgets";
 import { Ionicons } from '@expo/vector-icons';
 import { getCollections, addBookToCollection, removeBookFromCollection, createCollection } from '../shared/api';
 import { getHomePageBooks, getMe } from "../entities";
 import {MainHeader} from "../shared";
-import {useNavigation} from "@react-navigation/native";
+import {useFocusEffect, useNavigation} from "@react-navigation/native";
 
 export function HomeScreen() {
     const dispatch = useDispatch();
@@ -46,20 +56,29 @@ export function HomeScreen() {
         fetchUser();
     }, [dispatch]);
 
-    useEffect(() => {
-        const fetchBooks = async () => {
-            try {
-                const response = await getHomePageBooks();
-                setBooks(response);
-            } catch (error) {
-                console.error("Failed to fetch books:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
+    useFocusEffect(
+        useCallback(() => {
+            let isActive = true;
 
-        fetchBooks();
-    }, []);
+            const fetchBooks = async () => {
+                try {
+                    const response = await getHomePageBooks();
+                    if (isActive) setBooks(response);
+                } catch (error) {
+                    console.error("Failed to fetch books:", error);
+                } finally {
+                    if (isActive) setLoading(false);
+                }
+            };
+
+            fetchBooks();
+
+            return () => {
+                isActive = false;
+            };
+        }, [])
+    );
+
 
     if (loading) {
         return (

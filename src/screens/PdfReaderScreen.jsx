@@ -13,10 +13,9 @@ import {
     addBookmark,
     deleteBookmark, getOnlineBookById,
     isBookmarked,
-    updateBookProgress,
     getBookmarksByBook,
     getCommentsByBook,
-    addComment,
+    addComment, getLocalBookById, updateOnlineBookProgress, updateLocalBookProgress,
 } from '../shared';
 import { ReadingBottomToolbar, ReadingSettingsModal, ReadingChaptersDrawer, ReadingTextSelectionToolbar, ReadingTextSelectionModal, ReadingCommentInputModal } from '../widgets';
 import { Ionicons } from '@expo/vector-icons';
@@ -144,9 +143,15 @@ export default function PdfReaderScreen({ route }) {
                 try { setCurrentChapterIndex(getChapterIndexFromPage(page, chapters)); } catch(_) {}
                 if (book?.id) {
                     console.log(`📖 Прогрес: ${page} з ${totalPages} id: ${book.id}`);
-                    await updateBookProgress(book.id, page, totalPages);
-                    const newBook = await getOnlineBookById(book.id);
-                    dispatch(setLastBook(newBook));
+                    if (book.onlineId) {
+                        await updateOnlineBookProgress(book.id, page, totalPages);
+                        const newBook = await getOnlineBookById(book.id);
+                        dispatch(setLastBook(newBook));
+                    } else {
+                        await updateLocalBookProgress(book.id, page, totalPages);
+                        const newBook = await getLocalBookById(book.id);
+                        dispatch(setLastBook(newBook));
+                    }
                 }
                 try {
                     const b = await getBookmarksByBook(String(book.id));
