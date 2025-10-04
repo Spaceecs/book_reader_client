@@ -14,13 +14,23 @@ export default function TextSelectionModal({
   onHighlight,
   onCopy,
   onDelete,
+  anchor,
 }) {
   return (
     <Modal visible={!!visible} transparent animationType="fade" onRequestClose={onClose}>
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>
-            <View style={styles.toolbar}>
+            <View style={[
+              styles.toolbar,
+              anchor && typeof anchor.x === 'number' && typeof anchor.y === 'number' ? {
+                position: 'absolute',
+                left: Math.max(8, anchor.x),
+                top: Math.max(80, anchor.y),
+                maxWidth: '94%',
+                flexWrap: 'nowrap',
+              } : null,
+            ]}>
               <TouchableOpacity style={styles.button} onPress={() => onHighlight && onHighlight('green')}>
                 <View style={[styles.colorCircle, { backgroundColor: 'green' }]} />
               </TouchableOpacity>

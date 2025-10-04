@@ -5,7 +5,7 @@ import Slider from '@react-native-community/slider';
 import { WebView } from 'react-native-webview';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
-import { ReadingBottomToolbar, ReadingSettingsModal, ReadingChaptersDrawer, ReadingTextSelectionToolbar } from '../widgets';
+import { ReadingBottomToolbar, ReadingSettingsModal, ReadingChaptersDrawer, ReadingTextSelectionToolbar, ReadingTextSelectionModal } from '../widgets';
 import {
     addBookmark,
     deleteBookmark, getOnlineBookById,
@@ -44,6 +44,7 @@ export default function EpubReaderScreen({ route }) {
     const [expandedChapterIds, setExpandedChapterIds] = useState([]);
     const [selectionVisible, setSelectionVisible] = useState(false);
     const [selectionPosition, setSelectionPosition] = useState({ x: 20, y: 180 });
+    const [viewerLayout, setViewerLayout] = useState({ x: 0, y: 0, width: 0, height: 0 });
     const [autoScrollSpeed, setAutoScrollSpeed] = useState(50);
     const [autoDetectSpeed, setAutoDetectSpeed] = useState(false);
     const [uiFontSize, setUiFontSize] = useState(16);
@@ -575,6 +576,15 @@ export default function EpubReaderScreen({ route }) {
     // Enforce font size/safe padding and detect scrollability/taps per injected document
     rendition.hooks.content.register(function(contents) {
         try {
+            // Ensure text can be selected inside EPUB iframe
+            try {
+                var docSel = contents && contents.document;
+                if (docSel && docSel.head) {
+                    var selStyle = docSel.createElement('style');
+                    selStyle.innerHTML = "*{ -webkit-user-select:text !important; user-select:text !important; }";
+                    docSel.head.appendChild(selStyle);
+                }
+            } catch(_) {}
             function checkScrollability() {
                 try {
                     var win = contents.window; var doc = contents.document;
@@ -598,6 +608,14 @@ export default function EpubReaderScreen({ route }) {
 
             var win = contents.window;
             var doc = contents.document;
+            // Bridge to ReactNative from inside iframe
+            var bridge = null;
+            try {
+                bridge = (win && win.parent && win.parent.ReactNativeWebView)
+                    ? win.parent.ReactNativeWebView
+                    : (window.ReactNativeWebView || null);
+            } catch(_) { bridge = (window.ReactNativeWebView || null); }
+            function postToRN(payload){ try { bridge && bridge.postMessage(JSON.stringify(payload)); } catch(_) {} }
             var scroller = doc.scrollingElement || doc.documentElement || doc.body;
 
             win.addEventListener('resize', function(){ setTimeout(checkScrollability, 100); }, { passive: true });
@@ -629,6 +647,41 @@ export default function EpubReaderScreen({ route }) {
                     var txt = sel && sel.toString ? sel.toString() : '';
                     if (typeof txt === 'string') {
                         window.lastSelectedText = txt.trim();
+                        if (window.lastSelectedText && window.lastSelectedText.length) {
+                            var rect = null;
+                            try {
+                                var r = sel.getRangeAt && sel.rangeCount > 0 ? sel.getRangeAt(0) : null;
+                                if (r && r.getBoundingClientRect) {
+                                    var b = r.getBoundingClientRect();
+                                    var fx = 0, fy = 0;
+                                    try {
+                                        var fe = win && win.frameElement ? win.frameElement : null;
+                                        if (fe && fe.getBoundingClientRect) {
+                                            var fb = fe.getBoundingClientRect();
+                                            fx = fb.left || 0; fy = fb.top || 0;
+                                        }
+                                    } catch(__) {}
+                                    var nx = 0, ny = 0;
+                                    try {
+                                        var ww = win.innerWidth || 1; var wh = win.innerHeight || 1;
+                                        nx = (b.left + (b.width||0)/2) / ww;
+                                        ny = (b.top + (b.height||0)) / wh; // bottom edge of selection
+                                        var nw = (b.width || 0) / ww; // normalized width
+                                        var nh = (b.height || 0) / wh; // normalized height
+                                    } catch(__) { var nw = 0, nh = 0; }
+                                    rect = { x: b.left, y: b.top, w: b.width, h: b.height, absX: (fx + b.left), absY: (fy + b.top), nx: nx, ny: ny, nw: nw, nh: nh };
+                                }
+                            } catch(_) {}
+                            try {
+                                postToRN({
+                                    type: 'selection',
+                                    text: String(window.lastSelectedText || ''),
+                                    rect: rect || null,
+                                });
+                            } catch(_) {
+                                try { if (typeof window.postSelectedText === 'function') { window.postSelectedText(); } } catch(__) {}
+                            }
+                        }
                     }
                 } catch(_) {}
             }
@@ -774,9 +827,57 @@ export default function EpubReaderScreen({ route }) {
         if (parsed.type === 'selection') {
             const text = (parsed && parsed.text) || '';
             setLastSelectedText(text);
+            try {
+                const rect = parsed && parsed.rect;
+                if (rect) {
+                    const screenW = Number(viewerLayout && viewerLayout.width) || 0;
+                    const screenX = Number(viewerLayout && viewerLayout.x) || 0;
+                    const screenY = Number(viewerLayout && viewerLayout.y) || 0;
+
+                    let anchorX = null;
+                    let anchorY = null;
+                    let approxWidth = 0;
+
+                    if (typeof rect.nx === 'number' && typeof rect.ny === 'number' && screenW > 0) {
+                        const baseX = screenX + rect.nx * screenW;
+                        const baseY = screenY + rect.ny * (Number(viewerLayout.height) || 0);
+                        anchorX = baseX;
+                        anchorY = baseY;
+                        if (typeof rect.nw === 'number') approxWidth = rect.nw * screenW;
+                    } else if (typeof rect.absX === 'number' && typeof rect.absY === 'number') {
+                        anchorX = rect.absX;
+                        anchorY = rect.absY;
+                        approxWidth = Number(rect.w) || 0;
+                    } else if (typeof rect.x === 'number' && typeof rect.y === 'number') {
+                        anchorX = rect.x;
+                        anchorY = rect.y;
+                        approxWidth = Number(rect.w) || 0;
+                    }
+
+                    if (anchorX != null && anchorY != null) {
+                        // size of our floating toolbar (approx)
+                        const toolbarW = Math.max(160, Math.min(320, approxWidth ? approxWidth + 96 : 220));
+                        const toolbarH = 52; // approximate height of toolbar
+                        const margin = 8;
+                        const rightBound = (screenX + screenW) - margin;
+
+                        // initial left by centering to selection
+                        const left = Math.max(margin, Math.round(anchorX - toolbarW / 2));
+                        const clampedLeft = Math.min(left, Math.max(margin, rightBound - toolbarW));
+
+                        // prefer show under selection, otherwise above if near bottom
+                        const bottomBound = (screenY + (Number(viewerLayout.height) || 0)) - margin;
+                        let top = Math.max(80, Math.round(anchorY + 8));
+                        if ((top + toolbarH) > bottomBound) {
+                            top = Math.max(80, Math.round(anchorY - toolbarH - 8));
+                        }
+
+                        setSelectionPosition({ x: clampedLeft, y: top });
+                    }
+                }
+            } catch(_) {}
             if (text && text.trim().length > 0) {
                 setSelectionVisible(true);
-                // Position is approximated; for simplicity, keep toolbar at saved position
             }
         }
 
@@ -982,6 +1083,12 @@ export default function EpubReaderScreen({ route }) {
                 javaScriptEnabled
                 style={{ flex: 1 }}
                 onMessage={handleMessage}
+                onLayout={(e) => {
+                    try {
+                        const { x, y, width, height } = e.nativeEvent.layout || {};
+                        setViewerLayout({ x: Number(x)||0, y: Number(y)||0, width: Number(width)||0, height: Number(height)||0 });
+                    } catch(_) {}
+                }}
             />
 
             {/* Top search overlay bar + suggestions */}
@@ -1061,17 +1168,18 @@ export default function EpubReaderScreen({ route }) {
             />
 
             {selectionVisible && (
-                <ReadingTextSelectionToolbar
-                    style={{ position: 'absolute', top: selectionPosition.y, left: selectionPosition.x }}
-                    onTranslate={() => { setSelectionVisible(false); }}
-                    onUnderline={() => { setSelectionVisible(false); }}
-                    onCopy={() => { setSelectionVisible(false); }}
-                    onComment={() => {
+                <ReadingTextSelectionModal
+                    visible={selectionVisible}
+                    onClose={() => setSelectionVisible(false)}
+                    onAddComment={() => {
                         setSelectionVisible(false);
                         setCommentText('');
                         setCommentModalVisible(true);
                     }}
-                    onColorPicker={() => setSelectionVisible(false)}
+                    onHighlight={() => { setSelectionVisible(false); }}
+                    onCopy={() => { setSelectionVisible(false); }}
+                    onDelete={() => { setSelectionVisible(false); }}
+                    anchor={selectionPosition}
                 />
             )}
 
@@ -1144,7 +1252,7 @@ export default function EpubReaderScreen({ route }) {
                             const cm = Array.isArray(commentsList) ? commentsList : [];
                             const mapped = [
                                 ...bm.map((b) => ({ id: `bm_${b.id}`, type: 'Закладка', meta: `Ст ${b.position}`, text: String(b.chapter || '').trim(), page: b.position, kind: 'bookmark' })),
-                                ...cm.map((c) => ({ id: `cm_${c.id}`, type: 'Коментар', meta: `Сторінка ${c.page}`, text: c.selectedText || c.comment || '', page: c.page, kind: 'comment' })),
+                                ...cm.map((c) => ({ id: `cm_${c.id}`, type: 'Коментар', meta: `Сторінка ${c.page}`, text: (c.comment || c.selectedText || '').trim(), page: c.page, kind: 'comment' })),
                             ];
                             return mapped.length ? mapped : [];
                         } catch(_) { return []; }
@@ -1185,20 +1293,24 @@ export default function EpubReaderScreen({ route }) {
                 <Modal visible transparent animationType="slide" onRequestClose={() => setCommentModalVisible(false)}>
                     <View style={styles.overlayCenter}>
                         <TouchableOpacity style={styles.overlayFill} activeOpacity={1} onPress={() => setCommentModalVisible(false)} />
-                        <View style={styles.centerCard}>
+                        <View style={[styles.centerCard, { maxHeight: Math.round((typeof window !== 'undefined' && window.innerHeight ? window.innerHeight : 800) * 0.85) }] }>
                             <Text style={styles.sheetTitle}>Коментар</Text>
-                            <Text style={{ color: '#666', marginBottom: 8 }}>{(lastSelectedText || '').slice(0, 180)}</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Введіть коментар"
-                                placeholderTextColor="#999"
-                                value={commentText}
-                                onChangeText={setCommentText}
-                                multiline
-                            />
-                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 12 }}>
-                                <TouchableOpacity onPress={() => setCommentModalVisible(false)} style={{ marginRight: 12 }}>
-                                    <Text style={{ color: '#444' }}>Скасувати</Text>
+                            <ScrollView style={{ flexGrow: 1 }} contentContainerStyle={{ paddingBottom: 8 }}>
+                                <Text style={{ color: '#666', marginBottom: 8 }}>{String(lastSelectedText || '')}</Text>
+                                <TextInput
+                                    style={styles.commentInput}
+                                    placeholder="Введіть коментар"
+                                    placeholderTextColor="#999"
+                                    value={commentText}
+                                    onChangeText={setCommentText}
+                                    multiline
+                                    numberOfLines={6}
+                                    textAlignVertical="top"
+                                />
+                            </ScrollView>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+                                <TouchableOpacity onPress={() => setCommentModalVisible(false)} style={{ flex: 1, paddingVertical: 10, borderRadius: 12, backgroundColor: '#fff', borderWidth: 1, borderColor: '#d9d9d9', alignItems: 'center', marginRight: 8 }}>
+                                    <Text style={{ color: '#111', fontWeight: '600' }}>Скасувати</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity onPress={async () => {
                                     try {
@@ -1207,8 +1319,8 @@ export default function EpubReaderScreen({ route }) {
                                         }
                                     } catch (_) {}
                                     setCommentModalVisible(false);
-                                }}>
-                                    <Text style={{ color: '#008655', fontWeight: '700' }}>Зберегти</Text>
+                                }} style={{ flex: 1, paddingVertical: 10, borderRadius: 12, backgroundColor: '#fff', borderWidth: 1, borderColor: '#d9d9d9', alignItems: 'center', marginLeft: 8 }}>
+                                    <Text style={{ color: '#111', fontWeight: '600' }}>Ок</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -1343,13 +1455,14 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         gap: 10,
     },
-    input: {
+    commentInput: {
         flex: 1,
         borderWidth: 1,
         borderColor: '#ccc',
-        padding: 8,
-        borderRadius: 5,
+        padding: 12,
+        borderRadius: 10,
         backgroundColor: '#fff',
+        minHeight: 140,
     },
     resultContainer: {
         padding: 8,
