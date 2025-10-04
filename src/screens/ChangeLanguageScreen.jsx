@@ -61,7 +61,7 @@ export function ChangeLanguageScreen() {
                                 value={language === item.code}
                                 onValueChange={() => dispatch(setLanguage(item.code))}
                                 trackColor={{ false: "#ccc", true: "#2E8B57" }}
-                                thumbColor={language === item.code ? "#2E8B57" : "#f4f3f4"}
+                                thumbColor={language === item.code ? "#f4f3f4" : "#f4f3f4"}
                             />
                         </View>
                     )}
