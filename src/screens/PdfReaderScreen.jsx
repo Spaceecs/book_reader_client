@@ -331,7 +331,7 @@ export default function PdfReaderScreen({ route }) {
                     onChangeTab={setDrawerTab}
                     bookmarks={[
                         ...bookmarksList.map((b) => ({ id: `bm_${b.id}`, type: 'Закладка', meta: `Ст ${b.position}`, text: (b.chapter||'').trim(), page: b.position, kind:'bookmark' })),
-                        ...commentsList.map((c) => ({ id: `cm_${c.id}`, type: 'Коментар', meta: `Сторінка ${c.page}`, text: c.selectedText || c.comment || '', page: c.page, kind:'comment' })),
+                        ...commentsList.map((c) => ({ id: `cm_${c.id}`, type: 'Коментар', meta: `Сторінка ${c.page}`, text: (c.comment || c.selectedText || '').trim(), page: c.page, kind:'comment' })),
                     ]}
                     onSelectBookmark={(item) => {
                         const p = Number(item && item.page);
