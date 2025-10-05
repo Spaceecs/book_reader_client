@@ -450,7 +450,7 @@ export default function PdfReaderScreen({ route }) {
                             searchDebounceRef.current = setTimeout(() => {
                                 try {
                                     const val = String(t || '').trim();
-                                    if (val.length === 0) {
+                                    if (val.length < 2) {
                                         setShowResults(false);
                                         setSearchResults([]);
                                         viewerRef.current?.injectJavaScript('window.clearSearch(); true;');
@@ -463,18 +463,15 @@ export default function PdfReaderScreen({ route }) {
                         }}
                         returnKeyType="search"
                         onSubmitEditing={() => {
-                            const q = JSON.stringify(String(searchTerm||'').trim());
-                            viewerRef.current?.injectJavaScript(`window.searchInPdf(${q}); true;`);
+                            const val = String(searchTerm||'').trim();
+                            if (val.length >= 2) {
+                                const q = JSON.stringify(val);
+                                viewerRef.current?.injectJavaScript(`window.searchInPdf(${q}); true;`);
+                            }
                         }}
                     />
                     <View style={styles.topSearchControls}>
                         <Text style={styles.topSearchCount}>{searchState.total > 0 ? `${(searchState.activeIndex+1)} / ${searchState.total}` : '0 / 0'}</Text>
-                        <TouchableOpacity style={styles.navBtn} onPress={() => viewerRef.current?.injectJavaScript('window.searchPrev(); true;')}>
-                            <Text style={styles.navLabel}>◀</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.navBtn} onPress={() => viewerRef.current?.injectJavaScript('window.searchNext(); true;')}>
-                            <Text style={styles.navLabel}>▶</Text>
-                        </TouchableOpacity>
                         <TouchableOpacity style={styles.closeBtn} onPress={() => { setSearchVisible(false); viewerRef.current?.injectJavaScript('window.clearSearch(); true;'); }}>
                             <Text style={styles.closeLabel}>✕</Text>
                         </TouchableOpacity>

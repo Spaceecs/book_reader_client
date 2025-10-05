@@ -30,8 +30,11 @@ export const PdfViewer = forwardRef(({ base64, currentPage = 1, searchTerm = '',
   .pageWrapper { position: relative; background: var(--page-bg); }
   canvas { display:block; margin:0 auto 16px auto; filter: var(--canvas-filter); mix-blend-mode: var(--canvas-blend); }
   .textLayer { color: var(--text-color); }
+  /* support both legacy (whole-span) and precise (nested) highlights */
   .textLayer span.highlight { background: yellow; }
-  .textLayer span.active-highlight { background: #ffcc00; outline: 2px solid #ffcc00; }
+  .textLayer span .highlight { background: yellow; }
+  .textLayer span.active-highlight { outline: 2px solid #ffcc00; }
+  .textLayer span.active-highlight .highlight { background: #ffcc00; }
 </style>
 </head>
 <body>
@@ -76,11 +79,46 @@ export const PdfViewer = forwardRef(({ base64, currentPage = 1, searchTerm = '',
     } catch(_) {}
   }
 
+  function escapeHtml(s){
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function unwrapAllHighlights(root){
+    try {
+      const marks = (root || document).querySelectorAll('.textLayer span .highlight');
+      marks.forEach(mark => {
+        const parent = mark.parentNode;
+        if (!parent) return;
+        const text = document.createTextNode(mark.textContent || '');
+        parent.replaceChild(text, mark);
+        // merge adjacent text nodes if any
+        if (parent.normalize) parent.normalize();
+      });
+      // also remove legacy whole-span classes if any
+      (root || document).querySelectorAll('.textLayer span.highlight').forEach(s=>s.classList.remove('highlight'));
+      (root || document).querySelectorAll('.textLayer span.active-highlight').forEach(s=>s.classList.remove('active-highlight'));
+    } catch(_) {}
+  }
+
   function highlightText(textLayerDiv, term) {
     const spans = textLayerDiv.querySelectorAll('span');
+    const needle = String(term||'');
+    if (!needle) return;
+    const lowerNeedle = needle.toLowerCase();
     spans.forEach(span => {
-      if(span.textContent.toLowerCase().includes(term.toLowerCase())) {
-        span.classList.add('highlight');
+      const original = span.textContent || '';
+      const lower = original.toLowerCase();
+      const pos = lower.indexOf(lowerNeedle);
+      if (pos !== -1) {
+        const before = original.slice(0, pos);
+        const match = original.slice(pos, pos + needle.length);
+        const after = original.slice(pos + needle.length);
+        span.innerHTML = '' + escapeHtml(before) + '<span class="highlight">' + escapeHtml(match) + '</span>' + escapeHtml(after);
       }
     });
   }
@@ -290,9 +328,10 @@ export const PdfViewer = forwardRef(({ base64, currentPage = 1, searchTerm = '',
       const term = String(query || '').trim();
       const spans = document.querySelectorAll('.textLayer span');
       const results = [];
-      // reset highlights
-      spans.forEach(s=>{ s.classList.remove('highlight'); s.classList.remove('active-highlight'); });
-      if (!term) {
+      // reset highlights (both legacy and nested)
+      unwrapAllHighlights(document);
+      // guard: ignore very short queries to avoid noisy single-letter matches
+      if (!term || term.length < 2) {
         window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'searchResults', results: [] }));
         window._search = { term: '', indices: [], active: -1 };
         postSearchState();
@@ -308,7 +347,11 @@ export const PdfViewer = forwardRef(({ base64, currentPage = 1, searchTerm = '',
           const excerpt = text.slice(Math.max(0, pos - 30), pos + q.length + 30);
           results.push({ index, excerpt });
           matchIndices.push(index);
-          span.classList.add('highlight');
+          // precise wrap inside span
+          const before = text.slice(0, pos);
+          const match = text.slice(pos, pos + q.length);
+          const after = text.slice(pos + q.length);
+          span.innerHTML = '' + escapeHtml(before) + '<span class="highlight">' + escapeHtml(match) + '</span>' + escapeHtml(after);
         }
       });
       // set active to first result
@@ -372,8 +415,7 @@ export const PdfViewer = forwardRef(({ base64, currentPage = 1, searchTerm = '',
 
   window.clearSearch = function(){
     try {
-      document.querySelectorAll('.textLayer span.highlight').forEach(s=>s.classList.remove('highlight'));
-      document.querySelectorAll('.textLayer span.active-highlight').forEach(s=>s.classList.remove('active-highlight'));
+      unwrapAllHighlights(document);
       window._search = { term: '', indices: [], active: -1 };
       postSearchState();
     } catch(_) {}

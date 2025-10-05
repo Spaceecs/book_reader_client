@@ -475,6 +475,21 @@ export default function EpubReaderScreen({ route }) {
         const results = [];
         const spineItems = book.spine.spineItems;
 
+        // Clear previous highlights
+        try {
+            const prev = Array.isArray(window._search.results) ? window._search.results : [];
+            prev.forEach(r => { try { rendition.annotations.remove(r.cfi, 'highlight'); } catch(_) {} });
+        } catch(_) {}
+
+        // Guard: ignore too-short queries to avoid noisy single-letter matches
+        const term = String(query || '').trim();
+        if (!term || term.length < 2) {
+            window._search = { results: [], active: -1, term: '' };
+            window.postSearchState && window.postSearchState();
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'searchResults', results: [] }));
+            return;
+        }
+
         for (let i = 0; i < spineItems.length; i++) {
             const item = spineItems[i];
             try {
@@ -484,17 +499,30 @@ export default function EpubReaderScreen({ route }) {
                 if (!body) { try{ await item.unload(); }catch(_){}; continue; }
 
                 const walker = doc.createTreeWalker(body, NodeFilter.SHOW_TEXT, null, false);
+                const q = term.toLowerCase();
+                function isWordChar(ch){ try { return /[\p{L}\p{N}_]/u.test(ch||'') || /[A-Za-z0-9_]/.test(ch||''); } catch(_) { return /[A-Za-z0-9_]/.test(ch||''); } }
                 while (walker.nextNode()) {
                     const node = walker.currentNode;
-                    const text = node.textContent || '';
-                    const q = String(query||'');
-                    const idx = text.toLowerCase().indexOf(q.toLowerCase());
-                    if (idx !== -1) {
-                        const range = doc.createRange();
-                        range.setStart(node, idx);
-                        range.setEnd(node, idx + q.length);
-                        const cfi = item.cfiFromRange(range);
-                        results.push({ cfi, excerpt: text.slice(Math.max(0, idx - 30), idx + q.length + 30) });
+                    const text = String(node.textContent || '');
+                    const lower = text.toLowerCase();
+                    let from = 0;
+                    while (from <= lower.length - q.length) {
+                        const idx = lower.indexOf(q, from);
+                        if (idx === -1) break;
+                        const left = idx > 0 ? lower[idx - 1] : '';
+                        const right = idx + q.length < lower.length ? lower[idx + q.length] : '';
+                        const leftOk = !isWordChar(left);
+                        const rightOk = !isWordChar(right);
+                        if (leftOk && rightOk) {
+                            try {
+                                const range = doc.createRange();
+                                range.setStart(node, idx);
+                                range.setEnd(node, idx + q.length);
+                                const cfi = item.cfiFromRange(range);
+                                results.push({ cfi, excerpt: text.slice(Math.max(0, idx - 30), idx + q.length + 30) });
+                            } catch(_) {}
+                        }
+                        from = idx + q.length;
                     }
                 }
                 await item.unload();
@@ -1124,12 +1152,6 @@ export default function EpubReaderScreen({ route }) {
                     />
                     <View style={styles.topSearchControls}>
                         <Text style={styles.topSearchCount}>{searchState.total > 0 ? `${(searchState.activeIndex+1)} / ${searchState.total}` : '0 / 0'}</Text>
-                        <TouchableOpacity style={styles.navBtn} onPress={() => sendCommand('window.searchPrev()')}>
-                            <Text style={styles.navLabel}>◀</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.navBtn} onPress={() => sendCommand('window.searchNext()')}>
-                            <Text style={styles.navLabel}>▶</Text>
-                        </TouchableOpacity>
                         <TouchableOpacity style={styles.closeBtn} onPress={() => { setSearchVisible(false); sendCommand('window.clearSearch()'); }}>
                             <Text style={styles.closeLabel}>✕</Text>
                         </TouchableOpacity>
