@@ -479,6 +479,8 @@ export default function EpubReaderScreen({ route }) {
         try {
             const prev = Array.isArray(window._search.results) ? window._search.results : [];
             prev.forEach(r => { try { rendition.annotations.remove(r.cfi, 'highlight'); } catch(_) {} });
+            // also clear any lingering dom wrappers before new highlights
+            try { if (typeof window.clearDomSelections === 'function') window.clearDomSelections(); } catch(_) {}
         } catch(_) {}
 
         // Guard: ignore too-short queries to avoid noisy single-letter matches
@@ -537,6 +539,8 @@ export default function EpubReaderScreen({ route }) {
         if (results.length > 0) {
             try { await rendition.display(results[0].cfi); } catch(_) {}
             try { window.highlightSearchResults(results); } catch(_) {}
+        } else {
+            try { window.clearDomSelections && window.clearDomSelections(); } catch(_) {}
         }
 
         window.postSearchState();
@@ -586,9 +590,48 @@ export default function EpubReaderScreen({ route }) {
            const list = Array.isArray(window._search.results) ? window._search.results : [];
            list.forEach(r => { try { rendition.annotations.remove(r.cfi, 'highlight'); } catch(_) {} });
            window._search = { results: [], active: -1, term: '' };
+           try { window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'searchResults', results: [] })); } catch(_) {}
            window.postSearchState();
+            try { if (typeof window.clearDomSelections === 'function') window.clearDomSelections(); } catch(_) {}
        } catch(_) {}
    };
+
+   // Hard clear: remove any leftover 'search-highlight' annotations even if not in window._search.results
+   window.clearSearchHard = function(){
+        try {
+            if (window.rendition && window.rendition.annotations && window.rendition.annotations._annotations) {
+                var arr = Array.isArray(window.rendition.annotations._annotations) ? window.rendition.annotations._annotations.slice() : [];
+                arr.forEach(function(a){
+                    try {
+                        if (a && a.cfiRange) {
+                            window.rendition.annotations.remove(a.cfiRange, 'highlight');
+                        }
+                    } catch(_) {}
+                });
+            }
+            try { if (typeof window.clearDomSelections === 'function') window.clearDomSelections(); } catch(_) {}
+        } catch(_) {}
+   };
+
+    // Clear any text selections inside EPUB iframes and remove leftover highlight elements
+    window.clearDomSelections = function(){
+        try {
+            var iframes = document.querySelectorAll('iframe');
+            iframes.forEach(function(fr){
+                try {
+                    var w = fr.contentWindow; var d = fr.contentDocument;
+                    if (w && w.getSelection) {
+                        var sel = w.getSelection();
+                        if (sel && sel.removeAllRanges) sel.removeAllRanges();
+                    }
+                    if (d) {
+                        try { d.querySelectorAll('.epubjs-hl').forEach(function(el){ try { el.parentNode && el.parentNode.removeChild(el); } catch(_) {} }); } catch(_) {}
+                    }
+                } catch(_) {}
+            });
+            try { var s = window.getSelection && window.getSelection(); if (s && s.removeAllRanges) s.removeAllRanges(); } catch(_) {}
+        } catch(_) {}
+    };
 
     // Detect user scroll near bottom to show toolbar
     // Also toggle via CFI location percent if available
@@ -804,15 +847,14 @@ export default function EpubReaderScreen({ route }) {
         }
 
         if (parsed.type === 'searchResults') {
-            if (!parsed.results || parsed.results.length === 0) {
-                Alert.alert('Нічого не знайдено');
-            } else {
-                setSearchResults(parsed.results);
+            const list = Array.isArray(parsed.results) ? parsed.results : [];
+            if (list.length > 0) {
+                setSearchResults(list);
                 setShowResults(true);
-                webViewRef.current?.injectJavaScript(`
-            window.highlightSearchResults(${JSON.stringify(parsed.results)});
-            true;
-          `);
+            } else {
+                // no modal/alert; just clear suggestions panel
+                setSearchResults([]);
+                setShowResults(false);
             }
         }
 
@@ -915,6 +957,18 @@ export default function EpubReaderScreen({ route }) {
             } catch (_) {}
         }
     };
+
+    // Clear EPUB search state and highlights when search overlay is closed
+    useEffect(() => {
+        if (!searchVisible) {
+            try {
+                setSearchQuery('');
+                setShowResults(false);
+                setSearchResults([]);
+                sendCommand('window.clearSearch()');
+            } catch(_) {}
+        }
+    }, [searchVisible]);
 
     useEffect(() => () => {
         if (progressTimerRef.current) clearTimeout(progressTimerRef.current);
@@ -1152,7 +1206,17 @@ export default function EpubReaderScreen({ route }) {
                     />
                     <View style={styles.topSearchControls}>
                         <Text style={styles.topSearchCount}>{searchState.total > 0 ? `${(searchState.activeIndex+1)} / ${searchState.total}` : '0 / 0'}</Text>
-                        <TouchableOpacity style={styles.closeBtn} onPress={() => { setSearchVisible(false); sendCommand('window.clearSearch()'); }}>
+                        <TouchableOpacity style={styles.closeBtn} onPress={() => {
+                            try {
+                                setSearchQuery('');
+                                setShowResults(false);
+                                setSearchResults([]);
+                                // fully clear in iframe immediately (twice to outpace async highlight)
+                                sendCommand('window.clearSearch(); window.clearSearchHard && window.clearSearchHard();');
+                                setTimeout(() => { try { sendCommand('window.clearSearch(); window.clearSearchHard && window.clearSearchHard();'); } catch(_) {} }, 50);
+                            } catch(_) {}
+                            setSearchVisible(false);
+                        }}>
                             <Text style={styles.closeLabel}>✕</Text>
                         </TouchableOpacity>
                     </View>
