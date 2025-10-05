@@ -52,6 +52,43 @@ export function EpubViewer({ path, bookId }) {
     window.book = book;
     window.rendition = rendition;
     window.currentFontSize = 100;
+
+    // Optional: search clearing helpers for consistency with Reader screen
+    window.clearSearch = function(){
+      try {
+        if (window._search && Array.isArray(window._search.results)) {
+          window._search.results.forEach(function(r){ try { rendition.annotations.remove(r.cfi, 'highlight'); } catch(_){} });
+        }
+        window._search = { results: [], active: -1, term: '' };
+        try { window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'searchResults', results: [] })); } catch(_) {}
+        try { if (typeof window.clearDomSelections === 'function') window.clearDomSelections(); } catch(_) {}
+      } catch(_) {}
+    };
+    window.clearSearchHard = function(){
+      try {
+        if (rendition && rendition.annotations && rendition.annotations._annotations) {
+          var list = Array.isArray(rendition.annotations._annotations) ? rendition.annotations._annotations.slice() : [];
+          list.forEach(function(a){
+            try { if (a && a.cfiRange) { rendition.annotations.remove(a.cfiRange, 'highlight'); } } catch(_){}
+          });
+        }
+        try { if (typeof window.clearDomSelections === 'function') window.clearDomSelections(); } catch(_) {}
+      } catch(_) {}
+    };
+
+    window.clearDomSelections = function(){
+      try {
+        var ifr = document.querySelector('iframe');
+        if (ifr) {
+          try {
+            var w = ifr.contentWindow; var d = ifr.contentDocument;
+            if (w && w.getSelection) { var sel = w.getSelection(); if (sel && sel.removeAllRanges) sel.removeAllRanges(); }
+            if (d) { try { d.querySelectorAll('.epubjs-hl').forEach(function(el){ try { el.parentNode && el.parentNode.removeChild(el); } catch(_){} }); } catch(_){} }
+          } catch(_) {}
+        }
+        try { var s = window.getSelection && window.getSelection(); if (s && s.removeAllRanges) s.removeAllRanges(); } catch(_) {}
+      } catch(_) {}
+    };
   </script>
 </body>
 </html>

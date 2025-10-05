@@ -201,6 +201,18 @@ export default function PdfReaderScreen({ route }) {
         }
     };
 
+    // Clear search state and highlights when search overlay is closed
+    useEffect(() => {
+        if (!searchVisible) {
+            try {
+                setSearchTerm('');
+                setShowResults(false);
+                setSearchResults([]);
+                viewerRef.current?.injectJavaScript('window.clearSearch(); true;');
+            } catch(_) {}
+        }
+    }, [searchVisible]);
+
     const getChapterIndexFromPage = (page, toc) => {
         try {
             const list = Array.isArray(toc) ? toc : [];
