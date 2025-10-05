@@ -18,12 +18,20 @@ export function LibraryBookCard({ book, readingProgressMap, onLongPress, onPress
     const statusColor = isRead ? '#008655' : isReading ? '#FFB743' : '#9e9e9e';
     const statusBg = isRead ? '#0086554D' : isReading ? '#FFB7434D' : '#eeeeee';
 
+    const getPlaceholder = () => {
+        if (book?.filePath?.endsWith('.pdf')) return require('../../../../assets/pdf_placeholder.png');
+        if (book?.filePath?.endsWith('.epub')) return require('../../../../assets/epub_placeholder.png');
+        return require('../../../../assets/placeholder-cover.png');
+    };
+
+    const isPlaceholder = !book?.imageUrl;
+
     return (
         <View style={styles.card}>
             <TouchableOpacity activeOpacity={0.88} onPress={onPress} delayLongPress={350} onLongPress={onLongPress}>
                 <Image
-                    source={book?.imageUrl ? { uri: book.imageUrl } : require('../../../../assets/placeholder-cover.png')}
-                    style={styles.cover}
+                    source={isPlaceholder ? getPlaceholder() : { uri: book.imageUrl }}
+                    style={[styles.cover, isPlaceholder && { resizeMode: 'contain', padding: 16 }]}
                 />
                 <Text style={styles.title} numberOfLines={2}>{book?.title || t('libraryScreen.bookCard.no_title')}</Text>
                 {!!book?.author && <Text style={styles.author} numberOfLines={1}>{book.author}</Text>}

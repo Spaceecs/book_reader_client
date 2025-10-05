@@ -127,6 +127,14 @@ export function ReadMoreCard({ book }) {
         );
     };
 
+    const getPlaceholder = () => {
+        if (book?.filePath?.endsWith('.pdf')) return require('../../../../assets/pdf_placeholder.png');
+        if (book?.filePath?.endsWith('.epub')) return require('../../../../assets/epub_placeholder.png');
+        return require('../../../../assets/placeholder-cover.png');
+    };
+
+    const isPlaceholder = !book?.imageUrl;
+
     if (!book) return null;
 
     return (
@@ -141,8 +149,8 @@ export function ReadMoreCard({ book }) {
         >
             <View style={styles.card}>
                 <Image
-                    source={book.imageUrl ? { uri: book.imageUrl } : require("../../../../assets/placeholder-cover.png")}
-                    style={styles.cover}
+                    source={isPlaceholder ? getPlaceholder() : { uri: book.imageUrl }}
+                    style={[styles.cover, isPlaceholder && { resizeMode: 'contain', padding: 16 }]}
                 />
                 <View style={styles.info}>
                     <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
